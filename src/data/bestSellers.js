@@ -1,0 +1,58 @@
+export const bestSellers = [
+  {
+    id: 'banana',
+    name: 'Banana',
+    price: 'Rs. 90.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1574226516831-e1dff420e8d7?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'fresh-strawberry',
+    name: 'Fresh Strawberry - Indian',
+    price: 'Rs. 2,500.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'blackberry',
+    name: 'Fresh Blackberry - 125 Grams',
+    price: 'Rs. 1,600.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'pears-packham',
+    name: 'Pears Packham (1 kg)',
+    price: 'Rs. 400.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'dragon-fruit',
+    name: 'Dragon Fruit - White',
+    price: 'Rs. 225.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'chaunsa-mango',
+    name: 'Chaunsa Mangoes - 1 KG',
+    price: 'Rs. 499.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'peaches-australia',
+    name: 'Peaches - Australia',
+    price: 'Rs. 950.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1506806732259-39c2d0268443?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    id: 'apple-washington',
+    name: 'Apple - Washington',
+    price: 'Rs. 275.00',
+    description: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=600&q=80',
+  },
+]
