@@ -3,37 +3,37 @@ export const categories = [
     id: 'fresh-fruits',
     label: 'Fresh Fruits',
     image:
-      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/40113536_7-fresho-dragon-fruit-red-flesh.jpg',
   },
   {
     id: 'premium',
     label: 'Premium',
     image:
-      'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
   },
   {
     id: 'imported',
     label: 'Imported Fruits',
     image:
-      'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/40083980_9-fresho-blueberry.jpg',
   },
   {
     id: 'seasonal',
     label: 'Seasonal Fruits',
     image:
-      'https://images.unsplash.com/photo-1562967916-eb82221dfbba?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/10000013_26-fresho-avocado.jpg',
   },
   {
     id: 'exotic',
     label: 'Exotic Fruits',
     image:
-      'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/20001175_18-fresho-litchi.jpg',
   },
   {
     id: 'tropical',
     label: 'Tropical fruits',
     image:
-      'https://images.unsplash.com/photo-1570651614152-46f0d0c8f72f?auto=format&fit=crop&w=500&q=80',
+      'https://www.bbassets.com/media/uploads/p/l/40019777_6-fresho-grapes-red-globe-indian.jpg',
   },
   {
     id: 'melons',
