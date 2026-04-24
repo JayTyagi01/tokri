@@ -8,7 +8,7 @@ import Reviews from '../components/Reviews'
 
 export default function Home() {
   return (
-    <main className="bg-slate-50 pb-16">
+    <main className="pb-16">
       <Banner />
       <Categories />
       <BestSellers />

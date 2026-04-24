@@ -5,29 +5,24 @@ import { useCart } from '../context/CartContext'
 export default function BestSellers() {
   const { addItem, openDrawer } = useCart()
   return (
-    <section className="bg-slate-50 py-6">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section>
+      <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-emerald-600">
-              Shop Our
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-              Bestsellers
+            <h2 className="text-[52px] font-bold text-black">
+              <span className="font-light">Shop Our </span>Bestsellers
             </h2>
-          </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {bestSellers.map((product) => (
             <article
               key={product.id}
-              className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              className="relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition"
             >
-              <span className="inline-flex rounded-full bg-emerald-900 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-white">
+              <span className="absolute top-2 left-2 inline-flex rounded-full bg-emerald-900 px-4 py-1 text-xs font-medium text-white">
                 {product.description}
               </span>
-              <div className="mt-5 overflow-hidden rounded-[1.5rem] bg-slate-50">
+              <div className="overflow-hidden rounded-lg bg-slate-50">
                 <img
                   src={product.image}
                   alt={product.name}

@@ -9,7 +9,7 @@ export default function Header({ onLoginClick }) {
   return (
     <header className="top-0 z-50 shadow-sm">
       <div className="bg-emerald-950 text-emerald-100">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2 text-center text-xs font-medium sm:flex-row sm:items-center sm:justify-between sm:text-sm sm:px-6 lg:px-8">
+        <div className="mx-auto flex flex-col gap-2 px-4 py-2 text-center text-xs font-medium sm:flex-row sm:items-center sm:justify-between sm:text-sm sm:px-6 lg:px-8">
           <p className="mx-auto sm:mx-0 lg:text-base">
             Get 10% OFF Your First Order - Use Code: <span className="font-semibold text-white">WELCOME10</span>
           </p>
@@ -34,9 +34,9 @@ export default function Header({ onLoginClick }) {
       </div>
 
       <div className="bg-white border-b border-slate-200">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="mx-auto flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex items-center justify-between lg:flex-col lg:gap-4 lg:items-start">
-            <div className="text-3xl font-black tracking-tight">LOGO</div>
+            <div className="text-3xl font-bold tracking-tight">LOGO</div>
 
             {/* Mobile Menu Toggle */}
             <button
@@ -53,15 +53,15 @@ export default function Header({ onLoginClick }) {
 
           {/* Desktop Layout - Hidden on Mobile */}
           <div className="hidden lg:flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <div className="hidden rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 sm:flex sm:items-center sm:gap-2">
+            <div className="text-sm text-slate-700 sm:flex sm:items-center sm:gap-2">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
                   <path d="M12 2C8.1 2 5 5.1 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5Z" />
                 </svg>
               </span>
               <div>
-                <div className="text-xs uppercase tracking-[0.24em] text-slate-500">Deliver To</div>
-                <p className="text-sm font-medium text-slate-900">70 New Ln, Staten Island, New York</p>
+                <div className="text-xs text-black font-medium">Deliver To</div>
+                <p className="text-sm font-medium text-[#595959]">70 New Ln, Staten Island, New York</p>
               </div>
             </div>
           </div>
@@ -81,25 +81,25 @@ export default function Header({ onLoginClick }) {
                 id="site-search"
                 type="search"
                 placeholder="Search for products, categories or brands..."
-                className="h-14 w-full rounded-full border border-slate-200 bg-slate-50 px-14 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                className="h-12 w-full rounded-full border border-slate-200 px-14 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
               />
             </div>
           </div>
 
           {/* Desktop Buttons - Hidden on Mobile */}
-          <div className="hidden lg:flex flex-col gap-3 sm:flex-row sm:items-center sm:self-auto">
+          <div className="hidden lg:flex flex-col gap-6 sm:flex-row sm:items-center sm:self-auto">
             <button
               onClick={onLoginClick}
-              className="w-full rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 sm:w-auto"
+              className="h-12 w-full rounded-full bg-emerald-950 px-10 py-3 text-[16px] font-semibold text-white shadow-sm transition hover:bg-emerald-800 sm:w-auto"
             >
               Login
             </button>
             <button
               onClick={openDrawer}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:w-auto"
+              className="relative"
             >
-              <ShoppingBagIcon />
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{totalCount}</span>
+              <ShoppingBagIcon width="30" height="30" />
+              <span className="w-[20px] h-[20px] rounded-full bg-black text-[13px] font-semibold text-white absolute -top-1 -right-2">{totalCount}</span>
             </button>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function Header({ onLoginClick }) {
                 </svg>
               </span>
               <div>
-                <div className="text-xs uppercase tracking-[0.24em] text-slate-500">Deliver To</div>
+                <div className="text-xs text-slate-500">Deliver To</div>
                 <p className="text-sm font-medium text-slate-900">70 New Ln, Staten Island</p>
               </div>
             </div>

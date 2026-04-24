@@ -1,27 +1,30 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import kiwiImg from '../assets/kiwi.png'
+import Exoticfruits from '../assets/exotic-fruits.png'
+import importedFruitsImg from '../assets/imported-fruits.png'
+import freshFruitsImg from '../assets/fresh-fruits.png'
+import mangoImg from '../assets/mango.png'
+
 
 export default function ShopOurRange() {
   const categories = [
     {
-      id: 'exotic',
       title: 'Exotic Fruits',
       label: 'Premium',
       description: 'Handpicked tropical selections for fresh flavor.',
       buttonText: 'Shop Now',
-      bg: 'bg-emerald-500',
       textColor: 'text-white',
       glow: 'radial-gradient(circle at top left, rgba(236, 253, 245, 0.55), transparent 35%)',
-      image: 'https://www.bbassets.com/media/uploads/p/l/20001175_18-fresho-litchi.jpg',
-      imageLabel: 'Litchi',
+      image: Exoticfruits,
+      imageLabel: 'Exotic Avocado',
       products: [
         {
           id: 'exotic-1',
           name: 'Plums Imported',
           price: 'Rs. 149.00',
           accent: 'bg-slate-950',
-          image: 'https://www.bbassets.com/media/uploads/p/l/20001175_18-fresho-litchi.jpg',
+          image: kiwiImg,
           description: 'Sweet, smooth texture with a rich purple hue.',
         },
         {
@@ -29,7 +32,7 @@ export default function ShopOurRange() {
           name: 'Red Grapes Globe',
           price: 'Rs. 600.00',
           accent: 'bg-rose-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40083980_9-fresho-blueberry.jpg',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40113536_7-fresho-dragon-fruit-red-flesh.jpg',
           description: 'Perfect for snacking, salads, and fresh desserts.',
         },
         {
@@ -37,29 +40,27 @@ export default function ShopOurRange() {
           name: 'Malta Orange Imported',
           price: 'Rs. 280.00',
           accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/10000013_26-fresho-avocado.jpg',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Zesty citrus with a juicy, refreshing bite.',
         },
       ],
     },
     {
-      id: 'imported',
       title: 'Imported Fruits',
       label: 'Flat 20% Off',
       description: 'Seasonal imports with bright aroma and sweetness.',
       buttonText: 'Shop Now',
-      bg: 'bg-amber-300',
       textColor: 'text-slate-950',
       glow: 'radial-gradient(circle at top right, rgba(255, 247, 205, 0.9), transparent 40%)',
-      image: 'https://www.bbassets.com/media/uploads/p/l/40083980_9-fresho-blueberry.jpg',
-      imageLabel: 'Blueberry',
+      image: importedFruitsImg,
+      imageLabel: 'Dragon Fruit',
       products: [
         {
           id: 'imported-1',
           name: 'Mango Slices',
           price: 'Rs. 220.00',
           accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40019777_6-fresho-grapes-red-globe-indian.jpg',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Fresh mango with rich tropical sweetness.',
         },
         {
@@ -75,29 +76,27 @@ export default function ShopOurRange() {
           name: 'Berry Mix',
           price: 'Rs. 340.00',
           accent: 'bg-fuchsia-500',
-          image: 'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=500&q=80',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Assorted berries for smoothies and snacks.',
         },
       ],
     },
     {
-      id: 'fresh-fruits',
       title: 'Fresh Fruits',
       label: 'Big Season Sale',
       description: 'Locally sourced favorites ready to enjoy today.',
       buttonText: 'Shop Now',
-      bg: 'bg-orange-400',
       textColor: 'text-white',
       glow: 'radial-gradient(circle at bottom right, rgba(255, 236, 179, 0.55), transparent 45%)',
-      image: 'https://www.bbassets.com/media/uploads/p/l/40113536_7-fresho-dragon-fruit-red-flesh.jpg',
-      imageLabel: 'Dragon Fruit',
+      image: freshFruitsImg,
+      imageLabel: 'Ripe Mango',
       products: [
         {
           id: 'fresh-1',
           name: 'Plums Imported',
           price: 'Rs. 149.00',
           accent: 'bg-slate-950',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40113536_7-fresho-dragon-fruit-red-flesh.jpg',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Sweet, smooth texture with a rich purple hue.',
         },
         {
@@ -105,7 +104,7 @@ export default function ShopOurRange() {
           name: 'Red Grapes Globe',
           price: 'Rs. 600.00',
           accent: 'bg-rose-500',
-          image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=500&q=80',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Perfect for snacking, salads, and fresh desserts.',
         },
         {
@@ -113,7 +112,7 @@ export default function ShopOurRange() {
           name: 'Malta Orange Imported',
           price: 'Rs. 280.00',
           accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40019777_6-fresho-grapes-red-globe-indian.jpg',
+          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
           description: 'Zesty citrus with a juicy, refreshing bite.',
         },
       ],
@@ -121,7 +120,6 @@ export default function ShopOurRange() {
   ]
 
   const { addItem, openDrawer } = useCart()
-  const navigate = useNavigate()
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0)
   const [activeProductIndex, setActiveProductIndex] = useState(0)
 
@@ -146,17 +144,12 @@ export default function ShopOurRange() {
   }
 
   return (
-    <section className="px-6 py-6 sm:px-10 lg:px-16">
+    <section className="my-14">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.36em] text-emerald-600">
-              Shop Our
-            </p>
-            <h2 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Range
-            </h2>
-          </div>
+          <h2 className="text-[52px] font-bold text-black">
+            <span className="font-light">Shop By </span>Range
+          </h2>
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
@@ -165,9 +158,13 @@ export default function ShopOurRange() {
             return (
               <article
                 key={card.title}
-                onClick={() => navigate(`/category/${card.id}`)}
-                className={`relative overflow-hidden rounded-[2rem] border p-6 shadow-xl transition ${isSelected
-                  ? 'border-emerald-500 shadow-[0_28px_60px_rgba(16,185,129,0.18)]'
+                style={{
+                  backgroundImage: `url(${card.image})`,
+                  backgroundSize: 'cover',
+                  backgroundRepeat: 'no-repeat'
+                }}
+                className={`relative h-[460px] overflow-hidden rounded-xl border p-6 shadow-xl transition ${isSelected
+                  ? 'shadow-[0_28px_60px_rgba(16,185,129,0.18)]'
                   : 'border-white/40'
                   } ${card.bg} ${card.textColor}`}
               >
@@ -175,12 +172,12 @@ export default function ShopOurRange() {
                   className="pointer-events-none absolute inset-0 opacity-60"
                   style={{ background: card.glow }}
                 />
-                <div className="relative flex h-full flex-col justify-between gap-6">
+                <div className="relative flex h-full flex-col">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.28em] opacity-90">
+                    <p className="text-md">
                       {card.label}
                     </p>
-                    <h3 className="mt-4 text-4xl font-semibold leading-tight">
+                    <h3 className="text-4xl font-bold leading-tight">
                       {card.title}
                     </h3>
                     <p className="mt-3 max-w-xs text-sm opacity-90">
@@ -189,32 +186,28 @@ export default function ShopOurRange() {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleCategoryClick(index) }}
-                    className="inline-flex w-max items-center justify-center rounded-full border border-white/70 bg-white/10 px-5 py-2 text-sm font-semibold transition hover:bg-white/20"
+                    onClick={() => handleCategoryClick(index)}
+                    className="mt-4 inline-flex w-max items-center justify-center rounded-full border border-white/70 bg-white/10 px-5 py-2 text-sm font-semibold transition hover:bg-white/20"
                   >
                     {card.buttonText}
                   </button>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex h-full w-[70%] items-center justify-center overflow-hidden">
-                      <img src={card.image} alt={card.title} className="h-full w-full object-cover" />
-                    </div>
-                  </div>
                 </div>
               </article>
             )
           })}
         </div>
 
-        <div className="mt-6 grid gap-8 xl:grid-cols-[1.3fr_1fr] xl:items-stretch">
-          <div className="flex h-full w-full items-center justify-center rounded-[2rem] overflow-hidden">
-            <img src={activeCategory.image} alt={activeCategory.imageLabel} className="h-full w-full object-cover" />
+        <div className="my-20 flex items-center justify-center gap-10">
+          <div className="flex w-full max-w-[500px] items-center justify-center rounded-xl overflow-hidden">
+            <img src={mangoImg} alt={activeCategory.imageLabel} className="h-full w-full object-cover" />
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-5 w-full">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.28em] text-slate-500">Fresh Fruits</p>
-                <h3 className="text-3xl font-semibold text-slate-900">Choose one</h3>
+                <h2 className="text-[52px] font-bold text-black">
+                  <span className="font-light">Fresh </span>Fruits
+                </h2>
               </div>
               <button className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
                 Shop All
@@ -227,13 +220,13 @@ export default function ShopOurRange() {
                 return (
                   <div
                     key={product.name}
-                    onClick={() => navigate(`/product/${product.id}`)}
-                    className={`cursor-pointer rounded-[1.75rem] border p-5 text-left transition ${isActive
-                        ? 'border-emerald-500 bg-emerald-50 shadow-[0_12px_30px_rgba(16,185,129,0.12)]'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    onClick={() => setActiveProductIndex(index)}
+                    className={`cursor-pointer rounded-xl border p-3 text-left transition ${isActive
+                      ? 'shadow-sm'
+                      : 'relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition'
                       }`}
                   >
-                    <div className="flex items-center justify-center rounded-[1.5rem] overflow-hidden shadow-sm h-24 w-full" style={{ backgroundColor: 'rgba(243,244,246,0.9)' }}>
+                    <div className="flex items-center justify-center rounded-md overflow-hidden shadow-sm w-full" style={{ backgroundColor: 'rgba(243,244,246,0.9)' }}>
                       <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
                     </div>
                     <div className="mt-5">
@@ -242,8 +235,11 @@ export default function ShopOurRange() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); addItem(product); openDrawer() }}
-                      className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                      onClick={() => {
+                        addItem(product)
+                        openDrawer()
+                      }}
+                      className="rounded-full w-full mt-3 border border-emerald-900 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 hover:text-white transition hover:bg-emerald-800"
                     >
                       Add To Cart
                     </button>
