@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -13,8 +17,8 @@
   --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
     rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --heading: 'Plus Jakarta Sans', system-ui, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 }
 
@@ -42,8 +46,8 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--sans);
-  font-size: 18px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--text);
   background: var(--bg);
   text-rendering: optimizeLegibility;
@@ -101,4 +105,138 @@ code {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.cms-page-content {
+  line-height: 1.75;
+}
+
+.cms-page-content > * + * {
+  margin-top: 1rem;
+}
+
+.cms-page-content h1,
+.cms-page-content h2,
+.cms-page-content h3 {
+  color: #0f172a;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cms-page-content h2 {
+  font-size: 1.5rem;
+}
+
+.cms-page-content h3 {
+  font-size: 1.25rem;
+}
+
+.cms-page-content p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.cms-page-content ul,
+.cms-page-content ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.cms-page-content a {
+  color: #047857;
+  text-decoration: underline;
+}
+
+.cms-page-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.cms-page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.cms-page-content th,
+.cms-page-content td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.product-detail h1,
+.product-detail h2 {
+  margin: 0;
+  font-size: unset;
+  letter-spacing: normal;
+  line-height: inherit;
+  color: inherit;
+}
+
+.search-placeholder-line {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.search-placeholder-track {
+  animation: search-placeholder-scroll 36s linear infinite;
+}
+
+@keyframes search-placeholder-scroll {
+  0%,
+  7% {
+    transform: translateY(0);
+  }
+  8.33%,
+  15.33% {
+    transform: translateY(-3rem);
+  }
+  16.66%,
+  23.66% {
+    transform: translateY(-6rem);
+  }
+  25%,
+  32% {
+    transform: translateY(-9rem);
+  }
+  33.33%,
+  40.33% {
+    transform: translateY(-12rem);
+  }
+  41.66%,
+  48.66% {
+    transform: translateY(-15rem);
+  }
+  50%,
+  57% {
+    transform: translateY(-18rem);
+  }
+  58.33%,
+  65.33% {
+    transform: translateY(-21rem);
+  }
+  66.66%,
+  73.66% {
+    transform: translateY(-24rem);
+  }
+  75%,
+  82% {
+    transform: translateY(-27rem);
+  }
+  83.33%,
+  90.33% {
+    transform: translateY(-30rem);
+  }
+  91.66%,
+  99% {
+    transform: translateY(-33rem);
+  }
+  100% {
+    transform: translateY(-36rem);
+  }
 }

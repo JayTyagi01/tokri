@@ -1,0 +1,186 @@
+/* WordPress-inspired Tokriii CMS theme */
+
+:root {
+  --tokri-sidebar: #1d2327;
+  --tokri-sidebar-hover: #2c3338;
+  --tokri-sidebar-active: #2271b1;
+  --tokri-accent: #2271b1;
+  --tokri-bg: #f0f0f1;
+  --tokri-card: #ffffff;
+  --tokri-border: #c3c4c7;
+  --tokri-text: #1d2327;
+}
+
+body {
+  background: var(--tokri-bg) !important;
+}
+
+[data-css="sidebar"] {
+  background: var(--tokri-sidebar) !important;
+  border-right: 1px solid #101517 !important;
+}
+
+[data-css="sidebar"] a,
+[data-css="sidebar"] button,
+[data-css="sidebar"] span,
+[data-css="sidebar"] p,
+[data-css="sidebar"] h1,
+[data-css="sidebar"] h2,
+[data-css="sidebar"] h3,
+[data-css="sidebar"] label {
+  color: #f0f0f1 !important;
+}
+
+/* Navigation icons (SVG) inside the dark sidebar */
+[data-css="sidebar"] svg {
+  color: #f0f0f1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+[data-css="sidebar"] a:hover,
+[data-css="sidebar"] button:hover {
+  background: var(--tokri-sidebar-hover) !important;
+  color: #fff !important;
+}
+
+[data-css="sidebar"] a.active,
+[data-css="sidebar"] .adminjs_Sidebar-active {
+  background: var(--tokri-sidebar-active) !important;
+  color: #fff !important;
+}
+
+/* Brand / logo text at the top of the sidebar */
+[data-css="sidebar"] [data-css="logo"],
+[data-css="sidebar"] [data-css="logo"] *,
+[data-css="logo"],
+[data-css="logo"] * {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+section[data-css="logged-in"] {
+  background: var(--tokri-bg) !important;
+}
+
+[data-css="app-content"],
+.adminjs_Box[data-css="app-content"] {
+  background: var(--tokri-bg) !important;
+}
+
+[data-css="action-header"],
+.tokri-panel,
+.tokri-stat-card,
+.tokri-settings-panel {
+  background: var(--tokri-card) !important;
+  border: 1px solid var(--tokri-border) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04) !important;
+}
+
+.tokri-dashboard-hero {
+  background: linear-gradient(135deg, #022c22, #047857) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 4px !important;
+}
+
+.tokri-stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tokri-stat-card {
+  min-height: 140px;
+}
+
+.tokri-dashboard-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .tokri-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tokri-quick-actions {
+  gap: 10px;
+}
+
+.tokri-quick-actions a {
+  text-decoration: none !important;
+}
+
+.tokri-recent-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tokri-recent-table th,
+.tokri-recent-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e4e7;
+}
+
+.tokri-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: var(--tokri-card);
+  border: 1px solid var(--tokri-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tokri-settings-tab {
+  appearance: none;
+  border: 0;
+  border-right: 1px solid var(--tokri-border);
+  background: #f6f7f7;
+  color: var(--tokri-text);
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tokri-settings-tab:last-child {
+  border-right: 0;
+}
+
+.tokri-settings-tab.is-active {
+  background: var(--tokri-accent);
+  color: #fff;
+}
+
+.tokri-settings-tab:hover:not(.is-active) {
+  background: #fff;
+}
+
+.tokri-settings-form [data-css="drawer-footer"] {
+  background: var(--tokri-card) !important;
+  border-top: 1px solid var(--tokri-border) !important;
+}
+
+/* Rich text editor area */
+.tox-tinymce {
+  border-radius: 10px !important;
+  border-color: #cbd5e1 !important;
+}
+
+.tox .tox-toolbar__primary {
+  background: #f8fafc !important;
+}
+
+.ql-container {
+  min-height: 220px;
+  font-family: inherit;
+}
+
+/* Cleaner record list tables */
+table {
+  background: var(--tokri-card);
+}

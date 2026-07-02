@@ -1,0 +1,68 @@
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const en = JSON.parse(
+  readFileSync(join(__dirname, '../../node_modules/adminjs/lib/locale/en/translation.json'), 'utf8'),
+)
+
+const navLabels = {
+  Catalog: 'Catalog',
+  Content: 'Content',
+  Sales: 'Sales',
+  Marketing: 'Marketing',
+  Settings: 'Settings',
+  Team: 'Team',
+}
+
+const resourceLabels = {
+  Products: 'Products',
+  Categories: 'Categories',
+  'Media Library': 'Media Library',
+  Pages: 'Pages',
+  Reviews: 'Reviews',
+  Orders: 'Orders',
+  Coupons: 'Coupons',
+  General: 'General',
+  Team: 'Team',
+}
+
+export const adminLocale = {
+  language: 'en',
+  availableLanguages: ['en'],
+  debug: false,
+  translations: {
+    en: {
+      ...en,
+      labels: {
+        ...en.labels,
+        ...navLabels,
+        ...resourceLabels,
+      },
+      components: {
+        ...en.components,
+        Login: {
+          ...en.components.Login,
+          welcomeHeader: 'Tokriii CMS',
+          welcomeMessage: 'Sign in to manage your store, products, and website content.',
+          properties: {
+            ...en.components.Login.properties,
+            email: 'Email or username',
+          },
+        },
+      },
+      resources: {
+        Product: { labels: { Products: 'Products' } },
+        Category: { labels: { Categories: 'Categories' } },
+        Media: { labels: { 'Media Library': 'Media Library' } },
+        Page: { labels: { Pages: 'Pages' } },
+        Review: { labels: { Reviews: 'Reviews' } },
+        Order: { labels: { Orders: 'Orders' } },
+        Coupon: { labels: { Coupons: 'Coupons' } },
+        Setting: { labels: { General: 'General' } },
+        User: { labels: { Team: 'Team' } },
+      },
+    },
+  },
+}

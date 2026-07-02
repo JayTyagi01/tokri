@@ -6,17 +6,22 @@ import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import CategoryPage from './pages/CategoryPage'
 import CartPage from './pages/CartPage'
-import About from './pages/About'
-import Careers from './pages/Careers'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsConditions from './pages/TermsConditions'
+import CmsPage from './pages/CmsPage'
 import MyAccount from './pages/MyAccount'
-import HelpFaqs from './pages/HelpFaqs'
-import ReturnsPolicy from './pages/ReturnsPolicy'
-import SupportCenter from './pages/SupportCenter'
 import CartDrawer from './components/CartDrawer'
 import { CartProvider } from './context/CartContext'
+import { AuthProvider } from './context/AuthContext'
 import Footer from './components/Footer'
+
+const CMS_PAGE_PATHS = [
+  '/about',
+  '/careers',
+  '/privacy-policy',
+  '/terms-and-conditions',
+  '/help-faqs',
+  '/returns-policy',
+  '/support-center',
+]
 
 function ScrollToTop() {
   const location = useLocation()
@@ -32,29 +37,28 @@ function App() {
   const [showLogin, setShowLogin] = useState(false)
 
   return (
-    <CartProvider>
-      <div className="min-h-screen">
-        <ScrollToTop />
-        <Header onLoginClick={() => setShowLogin(true)} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/product/:productId" element={<ProductDetail />} />
-          <Route path="/category/:categoryId" element={<CategoryPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-and-conditions" element={<TermsConditions />} />
-          <Route path="/account" element={<MyAccount />} />
-          <Route path="/help-faqs" element={<HelpFaqs />} />
-          <Route path="/returns-policy" element={<ReturnsPolicy />} />
-          <Route path="/support-center" element={<SupportCenter />} />
-        </Routes>
-        <CartDrawer />
-        <Footer />
-        {showLogin && <LoginPopup onClose={() => setShowLogin(false)} />}
-      </div>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <div className="min-h-screen">
+          <ScrollToTop />
+          <Header onLoginClick={() => setShowLogin(true)} />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/product/:productId" element={<ProductDetail />} />
+            <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/account" element={<MyAccount />} />
+            <Route path="/p/:slug" element={<CmsPage />} />
+            {CMS_PAGE_PATHS.map((path) => (
+              <Route key={path} path={path} element={<CmsPage />} />
+            ))}
+          </Routes>
+          <CartDrawer />
+          <Footer />
+          {showLogin && <LoginPopup onClose={() => setShowLogin(false)} />}
+        </div>
+      </CartProvider>
+    </AuthProvider>
   )
 }
 

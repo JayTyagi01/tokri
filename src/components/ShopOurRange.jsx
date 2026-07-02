@@ -1,151 +1,149 @@
-import { useState } from 'react'
-import { useCart } from '../context/CartContext'
-import kiwiImg from '../assets/kiwi.png'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Exoticfruits from '../assets/exotic-fruits.png'
 import importedFruitsImg from '../assets/imported-fruits.png'
 import freshFruitsImg from '../assets/fresh-fruits.png'
 import mangoImg from '../assets/mango.png'
+import { fetchJson, normalizeProducts } from '../lib/api'
+import CartControl from './CartControl'
 
+const discountPercent = (product) => {
+  const price = Number(product.priceValue)
+  const oldPrice = Number(product.oldPriceValue)
+  if (!oldPrice || !price || oldPrice <= price) return 0
+  return Math.round((1 - price / oldPrice) * 100)
+}
+
+const rangeCategories = [
+  {
+    title: 'Exotic Fruits',
+    slug: 'exotic',
+    label: 'Premium',
+    description: 'Handpicked tropical selections for fresh flavor.',
+    buttonText: 'Shop Now',
+    textColor: 'text-white',
+    glow: 'radial-gradient(circle at top left, rgba(236, 253, 245, 0.55), transparent 35%)',
+    image: Exoticfruits,
+    imageLabel: 'Exotic Avocado',
+  },
+  {
+    title: 'Imported Fruits',
+    slug: 'imported',
+    label: 'Flat 20% Off',
+    description: 'Seasonal imports with bright aroma and sweetness.',
+    buttonText: 'Shop Now',
+    textColor: 'text-slate-950',
+    glow: 'radial-gradient(circle at top right, rgba(255, 247, 205, 0.9), transparent 40%)',
+    image: importedFruitsImg,
+    imageLabel: 'Dragon Fruit',
+  },
+  {
+    title: 'Fresh Fruits',
+    slug: 'fresh-fruits',
+    label: 'Big Season Sale',
+    description: 'Locally sourced favorites ready to enjoy today.',
+    buttonText: 'Shop Now',
+    textColor: 'text-white',
+    glow: 'radial-gradient(circle at bottom right, rgba(255, 236, 179, 0.55), transparent 45%)',
+    image: freshFruitsImg,
+    imageLabel: 'Ripe Mango',
+  },
+]
+
+const MAX_PRODUCTS = 9
+
+function ProductCard({ product, onNavigate }) {
+  const off = discountPercent(product)
+  const target = `/product/${product.slug || product.id}`
+
+  return (
+    <article
+      onClick={() => onNavigate(target)}
+      className="group flex h-full cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md"
+    >
+      <div className="relative mb-2 h-32 overflow-hidden rounded-lg bg-slate-50 sm:h-36">
+        {off > 0 && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-bold leading-none text-white shadow">
+            {off}% OFF
+          </span>
+        )}
+        <img
+          src={product.image}
+          alt={product.name}
+          className="h-full w-full object-cover transition group-hover:scale-105"
+          loading="lazy"
+        />
+      </div>
+      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight text-slate-900">
+        {product.name}
+      </h3>
+      {product.weight && (
+        <p className="mt-1 text-xs text-slate-500">{product.weight}</p>
+      )}
+      <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+        <div className="leading-tight">
+          <span className="block text-sm font-semibold text-slate-900 whitespace-nowrap">
+            {product.price}
+          </span>
+          {off > 0 && product.oldPrice && (
+            <span className="block text-xs text-slate-400 line-through whitespace-nowrap">
+              {product.oldPrice}
+            </span>
+          )}
+        </div>
+        <span onClick={(event) => event.stopPropagation()}>
+          <CartControl product={product} />
+        </span>
+      </div>
+    </article>
+  )
+}
 
 export default function ShopOurRange() {
-  const categories = [
-    {
-      title: 'Exotic Fruits',
-      label: 'Premium',
-      description: 'Handpicked tropical selections for fresh flavor.',
-      buttonText: 'Shop Now',
-      textColor: 'text-white',
-      glow: 'radial-gradient(circle at top left, rgba(236, 253, 245, 0.55), transparent 35%)',
-      image: Exoticfruits,
-      imageLabel: 'Exotic Avocado',
-      products: [
-        {
-          id: 'exotic-1',
-          name: 'Plums Imported',
-          price: 'Rs. 149.00',
-          accent: 'bg-slate-950',
-          image: kiwiImg,
-          description: 'Sweet, smooth texture with a rich purple hue.',
-        },
-        {
-          id: 'exotic-2',
-          name: 'Red Grapes Globe',
-          price: 'Rs. 600.00',
-          accent: 'bg-rose-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40113536_7-fresho-dragon-fruit-red-flesh.jpg',
-          description: 'Perfect for snacking, salads, and fresh desserts.',
-        },
-        {
-          id: 'exotic-3',
-          name: 'Malta Orange Imported',
-          price: 'Rs. 280.00',
-          accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Zesty citrus with a juicy, refreshing bite.',
-        },
-      ],
-    },
-    {
-      title: 'Imported Fruits',
-      label: 'Flat 20% Off',
-      description: 'Seasonal imports with bright aroma and sweetness.',
-      buttonText: 'Shop Now',
-      textColor: 'text-slate-950',
-      glow: 'radial-gradient(circle at top right, rgba(255, 247, 205, 0.9), transparent 40%)',
-      image: importedFruitsImg,
-      imageLabel: 'Dragon Fruit',
-      products: [
-        {
-          id: 'imported-1',
-          name: 'Mango Slices',
-          price: 'Rs. 220.00',
-          accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Fresh mango with rich tropical sweetness.',
-        },
-        {
-          id: 'imported-2',
-          name: 'Kiwi Imported',
-          price: 'Rs. 199.00',
-          accent: 'bg-green-600',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Tart and juicy, perfect for morning salads.',
-        },
-        {
-          id: 'imported-3',
-          name: 'Berry Mix',
-          price: 'Rs. 340.00',
-          accent: 'bg-fuchsia-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Assorted berries for smoothies and snacks.',
-        },
-      ],
-    },
-    {
-      title: 'Fresh Fruits',
-      label: 'Big Season Sale',
-      description: 'Locally sourced favorites ready to enjoy today.',
-      buttonText: 'Shop Now',
-      textColor: 'text-white',
-      glow: 'radial-gradient(circle at bottom right, rgba(255, 236, 179, 0.55), transparent 45%)',
-      image: freshFruitsImg,
-      imageLabel: 'Ripe Mango',
-      products: [
-        {
-          id: 'fresh-1',
-          name: 'Plums Imported',
-          price: 'Rs. 149.00',
-          accent: 'bg-slate-950',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Sweet, smooth texture with a rich purple hue.',
-        },
-        {
-          id: 'fresh-2',
-          name: 'Red Grapes Globe',
-          price: 'Rs. 600.00',
-          accent: 'bg-rose-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Perfect for snacking, salads, and fresh desserts.',
-        },
-        {
-          id: 'fresh-3',
-          name: 'Malta Orange Imported',
-          price: 'Rs. 280.00',
-          accent: 'bg-orange-500',
-          image: 'https://www.bbassets.com/media/uploads/p/l/40204133_5-fresho-apple-washington-economy.jpg',
-          description: 'Zesty citrus with a juicy, refreshing bite.',
-        },
-      ],
-    },
-  ]
+  const navigate = useNavigate()
+  const [activeCategoryIndex, setActiveCategoryIndex] = useState(2)
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const trackRef = useRef(null)
 
-  const { addItem, openDrawer } = useCart()
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState(0)
-  const [activeProductIndex, setActiveProductIndex] = useState(0)
+  const activeCategory = rangeCategories[activeCategoryIndex]
+  const isSlider = products.length > 3
 
-  const activeCategory = categories[activeCategoryIndex]
-  const activeProducts = activeCategory.products
+  useEffect(() => {
+    let ignore = false
+    setLoading(true)
+
+    fetchJson(`/products?category=${encodeURIComponent(activeCategory.slug)}&limit=${MAX_PRODUCTS}`)
+      .then((items) => {
+        if (!ignore) setProducts(normalizeProducts(items).slice(0, MAX_PRODUCTS))
+      })
+      .catch(() => {
+        if (!ignore) setProducts([])
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [activeCategory.slug])
 
   const handleCategoryClick = (index) => {
     setActiveCategoryIndex(index)
-    setActiveProductIndex(0)
   }
 
-  const handlePrevious = () => {
-    setActiveProductIndex((current) =>
-      current === 0 ? activeProducts.length - 1 : current - 1,
-    )
-  }
-
-  const handleNext = () => {
-    setActiveProductIndex((current) =>
-      current === activeProducts.length - 1 ? 0 : current + 1,
-    )
+  const scrollByCard = (direction) => {
+    const track = trackRef.current
+    if (!track) return
+    const amount = track.clientWidth * 0.85
+    track.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
 
   return (
     <section className="my-14">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-[52px] font-bold text-black">
             <span className="font-light">Shop By </span>Range
@@ -153,7 +151,7 @@ export default function ShopOurRange() {
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {categories.map((card, index) => {
+          {rangeCategories.map((card, index) => {
             const isSelected = index === activeCategoryIndex
             return (
               <article
@@ -161,12 +159,12 @@ export default function ShopOurRange() {
                 style={{
                   backgroundImage: `url(${card.image})`,
                   backgroundSize: 'cover',
-                  backgroundRepeat: 'no-repeat'
+                  backgroundRepeat: 'no-repeat',
                 }}
                 className={`relative h-[460px] overflow-hidden rounded-xl border p-6 shadow-xl transition ${isSelected
-                  ? 'shadow-[0_28px_60px_rgba(16,185,129,0.18)]'
+                  ? 'border-emerald-400 shadow-[0_28px_60px_rgba(16,185,129,0.18)]'
                   : 'border-white/40'
-                  } ${card.bg} ${card.textColor}`}
+                  } ${card.textColor}`}
               >
                 <div
                   className="pointer-events-none absolute inset-0 opacity-60"
@@ -174,15 +172,9 @@ export default function ShopOurRange() {
                 />
                 <div className="relative flex h-full flex-col">
                   <div>
-                    <p className="text-md">
-                      {card.label}
-                    </p>
-                    <h3 className="text-4xl font-bold leading-tight">
-                      {card.title}
-                    </h3>
-                    <p className="mt-3 max-w-xs text-sm opacity-90">
-                      {card.description}
-                    </p>
+                    <p className="text-md">{card.label}</p>
+                    <h3 className="text-4xl font-bold leading-tight">{card.title}</h3>
+                    <p className="mt-3 max-w-xs text-sm opacity-90">{card.description}</p>
                   </div>
                   <button
                     type="button"
@@ -197,74 +189,86 @@ export default function ShopOurRange() {
           })}
         </div>
 
-        <div className="my-20 flex items-center justify-center gap-10">
-          <div className="flex w-full max-w-[500px] items-center justify-center rounded-xl overflow-hidden">
-            <img src={mangoImg} alt={activeCategory.imageLabel} className="h-full w-full object-cover" />
+        <div className="my-20 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
+          <div className="mx-auto w-full max-w-[280px] sm:max-w-[320px] lg:mx-0 lg:max-w-none">
+            <div className="overflow-hidden rounded-xl shadow-sm">
+              <img
+                src={mangoImg}
+                alt={activeCategory.imageLabel}
+                className="aspect-[4/5] w-full max-h-[360px] object-cover sm:max-h-[400px] lg:max-h-[420px]"
+              />
+            </div>
           </div>
 
-          <div className="space-y-5 w-full">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-[52px] font-bold text-black">
-                  <span className="font-light">Fresh </span>Fruits
-                </h2>
+          <div className="w-full min-w-0 space-y-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-3xl font-bold text-black sm:text-4xl lg:text-[44px]">
+                <span className="font-light">{activeCategory.title.split(' ')[0]} </span>
+                {activeCategory.title.split(' ').slice(1).join(' ') || 'Fruits'}
+              </h2>
+              <Link
+                to={`/category/${activeCategory.slug}`}
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                View {activeCategory.title}
+              </Link>
+            </div>
+
+            {loading ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+                Loading products...
               </div>
-              <button className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                Shop All
-              </button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {activeProducts.map((product, index) => {
-                const isActive = index === activeProductIndex
-                return (
-                  <div
-                    key={product.name}
-                    onClick={() => setActiveProductIndex(index)}
-                    className={`cursor-pointer rounded-xl border p-3 text-left transition ${isActive
-                      ? 'shadow-sm'
-                      : 'relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition'
-                      }`}
+            ) : products.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+                No products in this category yet.
+              </div>
+            ) : (
+              <div className="relative">
+                {isSlider && (
+                  <button
+                    type="button"
+                    onClick={() => scrollByCard(-1)}
+                    aria-label="Previous products"
+                    className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:flex"
                   >
-                    <div className="flex items-center justify-center rounded-md overflow-hidden shadow-sm w-full" style={{ backgroundColor: 'rgba(243,244,246,0.9)' }}>
-                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="mt-5">
-                      <h4 className="text-base font-semibold text-slate-900">{product.name}</h4>
-                      <p className="mt-2 text-sm text-slate-500">{product.price}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addItem(product)
-                        openDrawer()
-                      }}
-                      className="rounded-full w-full mt-3 border border-emerald-900 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 hover:text-white transition hover:bg-emerald-800"
-                    >
-                      Add To Cart
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
 
-            <div className="flex items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
-              >
-                ←
-              </button>
-              <span className="text-sm font-semibold text-slate-700">{activeProducts[activeProductIndex].name}</span>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
-              >
-                →
-              </button>
-            </div>
+                <div
+                  ref={trackRef}
+                  className={
+                    isSlider
+                      ? 'flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-hide'
+                      : 'grid gap-4 grid-cols-2 sm:grid-cols-3'
+                  }
+                >
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className={
+                        isSlider
+                          ? 'w-[72%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
+                          : ''
+                      }
+                    >
+                      <ProductCard product={product} onNavigate={navigate} />
+                    </div>
+                  ))}
+                </div>
+
+                {isSlider && (
+                  <button
+                    type="button"
+                    onClick={() => scrollByCard(1)}
+                    aria-label="Next products"
+                    className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:flex"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

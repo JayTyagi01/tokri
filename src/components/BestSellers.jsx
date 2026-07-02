@@ -1,57 +1,91 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { bestSellers } from '../data/bestSellers'
-import { useCart } from '../context/CartContext'
+import { fetchJson, normalizeProducts } from '../lib/api'
+import CartControl from './CartControl'
+
+const discountPercent = (product) => {
+  const price = Number(product.priceValue)
+  const oldPrice = Number(product.oldPriceValue)
+  if (!oldPrice || !price || oldPrice <= price) return 0
+  return Math.round((1 - price / oldPrice) * 100)
+}
 
 export default function BestSellers() {
-  const { addItem, openDrawer } = useCart()
+  const navigate = useNavigate()
+  const [products, setProducts] = useState(bestSellers)
+
+  useEffect(() => {
+    let ignore = false
+
+    fetchJson('/products?flag=bestSeller&limit=12')
+      .then((items) => {
+        if (!ignore && items.length) setProducts(normalizeProducts(items))
+      })
+      .catch(() => {})
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   return (
     <section>
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-[52px] font-bold text-black">
-              <span className="font-light">Shop Our </span>Bestsellers
-            </h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-black">
+            <span className="font-light">Shop Our </span>Bestsellers
+          </h2>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {bestSellers.map((product) => (
-            <article
-              key={product.id}
-              className="relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition"
-            >
-              <span className="absolute top-2 left-2 inline-flex rounded-full bg-emerald-900 px-4 py-1 text-xs font-medium text-white">
-                {product.description}
-              </span>
-              <div className="overflow-hidden rounded-lg bg-slate-50">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="h-48 w-full object-cover"
-                />
-              </div>
-              <div className="mt-5 text-center">
-                <h3 className="text-lg font-semibold text-slate-900">{product.name}</h3>
-                <p className="mt-2 text-sm text-slate-500">{product.price}</p>
-                <div className="mt-5 flex flex-col gap-3">
-                  <Link
-                    to={`/product/${product.id}`}
-                    className="rounded-full bg-emerald-950 px-4 py-3 text-sm font-semibold text-white text-center transition hover:bg-emerald-800"
-                  >
-                    View details
-                  </Link>
-                  <button
-                    onClick={() => {
-                      addItem(product)
-                      openDrawer()
-                    }}
-                    className="rounded-full border border-emerald-900 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 hover:text-white transition hover:bg-emerald-800"
-                  >
-                    Add To Cart
-                  </button>
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+          {products.slice(0, 12).map((product) => {
+            const off = discountPercent(product)
+            const target = `/product/${product.slug || product.id}`
+
+            return (
+              <article
+                key={product.id}
+                onClick={() => navigate(target)}
+                className="group relative flex h-full cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md"
+              >
+                <div className="relative mb-2 h-36 overflow-hidden rounded-lg bg-slate-50">
+                  {off > 0 && (
+                    <span className="absolute left-2 top-2 z-10 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-bold leading-none text-white shadow">
+                      {off}% OFF
+                    </span>
+                  )}
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition group-hover:scale-105"
+                    loading="lazy"
+                  />
                 </div>
-              </div>
-            </article>
-          ))}
+                <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight text-slate-900">
+                  {product.name}
+                </h3>
+                {product.weight && (
+                  <p className="mt-1 text-xs text-slate-500">{product.weight}</p>
+                )}
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                  <div className="leading-tight">
+                    <span className="block text-sm font-semibold text-slate-900 whitespace-nowrap">
+                      {product.price}
+                    </span>
+                    {off > 0 && product.oldPrice && (
+                      <span className="block text-xs text-slate-400 line-through whitespace-nowrap">
+                        {product.oldPrice}
+                      </span>
+                    )}
+                  </div>
+                  <span onClick={(event) => event.stopPropagation()}>
+                    <CartControl product={product} />
+                  </span>
+                </div>
+              </article>
+            )
+          })}
         </div>
       </div>
     </section>

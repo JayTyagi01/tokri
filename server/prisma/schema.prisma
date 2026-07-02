@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  staff
+  admin
+  super_admin
+}
+
+enum CouponType {
+  percent
+  flat
+}
+
+enum OrderStatus {
+  pending
+  paid
+  packed
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String?
+  username           String?             @unique
+  phone              String?             @unique
+  email              String?             @unique
+  password           String?
+  role               UserRole            @default(customer)
+  isActive           Boolean             @default(true)
+  addresses          Json?
+  orders             Order[]
+  permissions        AdminPermission?
+  passwordResetTokens PasswordResetToken[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model AdminPermission {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manageProducts Boolean @default(false)
+  manageCatalog  Boolean @default(false)
+  manageMedia    Boolean @default(false)
+  manageOrders   Boolean @default(false)
+  manageCoupons  Boolean @default(false)
+  manageContent  Boolean @default(false)
+  manageSettings Boolean @default(false)
+  manageUsers    Boolean @default(false)
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  label       String
+  title       String?
+  subtitle    String?   @db.Text
+  description String?   @db.Text
+  image       String?
+  bannerImage String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  description   String?  @db.Text
+  priceValue    Decimal  @db.Decimal(10, 2)
+  oldPriceValue Decimal? @db.Decimal(10, 2)
+  currency      String   @default("INR")
+  weight        String?
+  image         String?
+  mediaId       String?
+  media         Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  badge         String?
+  isBestSeller  Boolean  @default(false)
+  isImported    Boolean  @default(false)
+  isFeatured    Boolean  @default(false)
+  stock         Int      @default(100)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  reviews       Review[]
+  orderItems    OrderItem[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isBestSeller])
+  @@index([isImported])
+  @@index([isActive])
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  filename     String
+  originalName String
+  path         String    @unique
+  folder       String    @default("general")
+  mimeType     String
+  size         Int
+  products     Product[]
+  createdAt    DateTime  @default(now())
+}
+
+model Coupon {
+  id           String     @id @default(cuid())
+  code         String     @unique
+  type         CouponType @default(percent)
+  value        Decimal    @db.Decimal(10, 2)
+  minCart      Decimal?   @db.Decimal(10, 2)
+  maxDiscount  Decimal?   @db.Decimal(10, 2)
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  usageLimit   Int?
+  usedCount    Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNo         String        @unique
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status          OrderStatus   @default(pending)
+  paymentStatus   PaymentStatus @default(pending)
+  itemsTotal      Decimal       @db.Decimal(10, 2)
+  deliveryCharge  Decimal       @db.Decimal(10, 2) @default(25)
+  handlingCharge  Decimal       @db.Decimal(10, 2) @default(2)
+  smallCartCharge Decimal       @db.Decimal(10, 2) @default(0)
+  discount        Decimal       @db.Decimal(10, 2) @default(0)
+  grandTotal      Decimal       @db.Decimal(10, 2)
+  couponCode      String?
+  address         Json?
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  items           OrderItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name       String
+  priceValue Decimal @db.Decimal(10, 2)
+  quantity   Int
+  image      String?
+  weight     String?
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title      String
+  content    String   @db.Text
+  name       String
+  image      String?
+  rating     Int      @default(5)
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  body        String?  @db.LongText
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  id                Int      @id @default(1)
+  storeName         String?  @default("Tokriii")
+  storeTagline      String?
+  storeEmail        String?
+  storePhone1       String?
+  storePhone2       String?
+  storeAddress      String?  @db.Text
+  promoBanner       String?  @db.Text
+  earlyDelivery     String?
+  colorPrimary      String?  @default("#022c22")
+  colorPrimaryLight String?  @default("#047857")
+  colorAccent       String?  @default("#fbbf24")
+  colorBackground   String?  @default("#ffffff")
+  colorFooterFrom   String?  @default("#020617")
+  colorFooterVia    String?  @default("#0c1612")
+  fontFamily        String?  @default("Plus Jakarta Sans")
+  homeBannerEnabled         Boolean @default(true)
+  homeCategoriesEnabled     Boolean @default(true)
+  homeBestSellersEnabled    Boolean @default(true)
+  homeBestSellersTitle      String? @default("Shop Our Bestsellers")
+  homeShopOurRangeEnabled   Boolean @default(true)
+  homeFruitHighlightEnabled Boolean @default(true)
+  homeImportedFruitsEnabled Boolean @default(true)
+  homeReviewsEnabled        Boolean @default(true)
+  razorpayEnabled           Boolean @default(false)
+  razorpayKeyId             String?
+  razorpayKeySecret         String?
+  twilioEnabled             Boolean @default(false)
+  twilioAccountSid          String?
+  twilioAuthToken           String?
+  twilioSmsFrom             String?
+  twilioWhatsappFrom        String?
+  store             Json?
+  theme             Json?
+  home              Json?
+  payment           Json?
+  messaging         Json?
+  updatedAt         DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OtpRequest {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}

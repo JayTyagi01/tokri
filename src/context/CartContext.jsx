@@ -54,6 +54,11 @@ export function CartProvider({ children }) {
     setCartItems((items) => items.filter((item) => item.id !== productId))
   }
 
+  const getItemQuantity = (productId) => {
+    const found = cartItems.find((item) => item.id === productId)
+    return found ? found.quantity : 0
+  }
+
   const openDrawer = () => setShowDrawer(true)
   const closeDrawer = () => setShowDrawer(false)
 
@@ -79,6 +84,7 @@ export function CartProvider({ children }) {
         addItem,
         updateQuantity,
         removeItem,
+        getItemQuantity,
         totalCount,
         itemsTotal,
         deliveryCharge,

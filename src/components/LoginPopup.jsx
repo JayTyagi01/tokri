@@ -1,8 +1,10 @@
 ﻿import React, { useState } from 'react'
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
+import { useAuth } from '../context/AuthContext'
 
 export default function LoginPopup({ onClose }) {
+  const { login } = useAuth()
   const [step, setStep] = useState(1)
   const [mobileNumber, setMobileNumber] = useState('')
   const [otp, setOtp] = useState('')
@@ -63,6 +65,7 @@ export default function LoginPopup({ onClose }) {
       text: 'You have successfully logged in!',
       confirmButtonColor: '#3085d6',
     }).then(() => {
+      login(mobileNumber)
       onClose()
       setStep(1)
       setMobileNumber('')

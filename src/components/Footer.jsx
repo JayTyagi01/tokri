@@ -1,101 +1,228 @@
-import React from 'react';
 import { Link } from 'react-router-dom'
-import { Mail, Phone, Truck, ShieldCheck, Headphones, RefreshCw } from "lucide-react";
+import { Truck, ShieldCheck, Clock, Leaf, Mail, Phone, MapPin } from 'lucide-react'
+import tokriLogo from '../assets/tokri-logo.png'
+import playStoreIcon from '../assets/play-store.svg'
+
+const socialLinks = [
+  {
+    label: 'Facebook',
+    href: 'https://facebook.com',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Instagram',
+    href: 'https://instagram.com',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 2.163c5.486 0 5.986.024 8.012.072 2.063.048 3.125.25 4.138.896.98.64 1.713 1.374 1.927 2.386.646 1.013.848 2.075.896 4.138.046 2.026.07 2.526.07 8.012s-.024 5.986-.072 8.012c-.048 2.063-.25 3.125-.896 4.138a5.48 5.48 0 0 1-1.927 2.386c-.98.64-1.975.848-4.138.896-2.026.046-2.526.07-8.012.07s-5.986-.024-8.012-.072c-2.063-.048-3.125-.25-4.138-.896a5.48 5.48 0 0 1-2.386-1.927c-.64-.98-.848-1.975-.896-4.138C2.187 17.986 2.163 17.486 2.163 12s.024-5.986.072-8.012c.048-2.063.25-3.125.896-4.138a5.48 5.48 0 0 1 1.927-2.386c.98-.64 1.975-.848 4.138-.896C6.014 2.187 6.514 2.163 12 2.163zm0 3.675a5.487 5.487 0 1 0 0 10.974 5.487 5.487 0 0 0 0-10.974zm0 9.008a3.505 3.505 0 1 1 0-7.01 3.505 3.505 0 0 1 0 7.01zm5.878-9.87a1.28 1.28 0 1 0 0 2.56 1.28 1.28 0 0 0 0-2.56z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Threads',
+    href: 'https://threads.net',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798c-.31-.71-.873-1.3-1.634-1.75c-.192 1.352-.622 2.446-1.284 3.272c-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964c-.065-1.19.408-2.285 1.33-3.082c.88-.76 2.119-1.207 3.583-1.291a14 14 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757c-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32l-1.757-1.18c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388q.163.07.321.142c1.49.7 2.58 1.761 3.154 3.07c.797 1.82.871 4.79-1.548 7.158c-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69q-.362 0-.739.021c-1.836.103-2.98.946-2.916 2.143c.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221" />
+      </svg>
+    ),
+  },
+  {
+    label: 'X',
+    href: 'https://x.com',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      </svg>
+    ),
+  },
+]
+
+const AppStoreIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 fill-slate-900" aria-hidden="true">
+    <path d="M16.365 12.67c-.03-2.86 2.35-4.27 2.37-4.28-1.29-1.87-3.3-2.13-4.01-2.16-1.7-.17-3.34 1.01-4.2 1.01-.88 0-2.22-.98-3.64-.95-1.88.03-3.6 1.09-4.57 2.77-1.95 3.38-.5 8.39 1.4 11.11.93 1.34 2.04 2.84 3.5 2.77 1.4-.06 1.93-.9 3.63-.9 1.68 0 2.14.9 3.63.87 1.5-.03 2.45-1.36 3.41-2.71 1.07-1.56 1.51-3.07 1.53-3.15-.03-.01-2.94-1.13-2.97-4.46zM13.8 3.84c.77-.93 1.29-2.22 1.15-3.51-1.11.05-2.45.74-3.24 1.66-.71.82-1.33 2.13-1.17 3.38 1.24.1 2.51-.63 3.26-1.53z" />
+  </svg>
+)
+
+const appStoreLinks = {
+  playStore: 'https://play.google.com/store/apps',
+  appStore: 'https://apps.apple.com/',
+}
 
 const Footer = () => {
   return (
-    <footer className="bg-green-900 text-white py-10">
-      {/* Top Section */}
-      <div className="flex flex-wrap justify-around items-center border-b border-gray-700 pb-6 mb-6">
-        <div className="flex items-center gap-4">
-          <Truck size={24} />
-          <p>Free Shipping</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <ShieldCheck size={24} />
-          <p>100% Secure Payment</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Headphones size={24} />
-          <p>24x7 Customer Service</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <RefreshCw size={24} />
-          <p>Free & Easy Returns</p>
+    <footer className="bg-gradient-to-b from-slate-950 via-[#0c1612] to-slate-950 text-white">
+      {/* Early order highlight */}
+      <div className="border-b border-white/10 bg-amber-400/10">
+        <div className="container mx-auto px-6 py-3 text-center">
+          <p className="text-sm font-semibold tracking-wide text-amber-200 sm:text-base">
+            Get your Tokriii before 7:00 AM
+          </p>
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Logo and Description */}
-        <div>
-          <h3 className="text-xl font-bold mb-4">LOGO</h3>
-          <p className="text-sm mb-4">
-            Your one stop shop for quality merchandise at affordable prices. Free shipping on ALL of our great products!
-          </p>
-          <p className="text-sm mb-2">E-mail: mail@fakeexample.com</p>
-          <p className="text-sm">Telephone: 909-000-70400</p>
-          <div className="flex gap-4 mt-4">
-            <a href="#" className="text-white hover:text-gray-300">🔗</a>
-            <a href="#" className="text-white hover:text-gray-300">🔗</a>
-            <a href="#" className="text-white hover:text-gray-300">🔗</a>
-            <a href="#" className="text-white hover:text-gray-300">🔗</a>
+      {/* Features bar */}
+      <div className="border-b border-white/10">
+        <div className="container mx-auto grid grid-cols-2 gap-4 px-6 py-6 md:grid-cols-4 md:gap-6">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+              <Leaf size={20} />
+            </span>
+            <p className="text-sm font-medium text-slate-200">Premium Quality Fruits</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+              <Truck size={20} />
+            </span>
+            <p className="text-sm font-medium text-slate-200">37+ Premium Varieties</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+              <Clock size={20} />
+            </span>
+            <p className="text-sm font-medium text-slate-200">Early Morning Delivery</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+              <ShieldCheck size={20} />
+            </span>
+            <p className="text-sm font-medium text-slate-200">100% Secure Payment</p>
           </div>
         </div>
+      </div>
 
-        {/* Information */}
-        <div>
-          <h4 className="text-lg font-semibold mb-4">Information</h4>
-          <ul className="text-sm space-y-2">
-            <li><Link to="/about" className="hover:underline">About us</Link></li>
-            <li><Link to="/careers" className="hover:underline">Careers</Link></li>
-            <li><Link to="/privacy-policy" className="hover:underline">Privacy policy</Link></li>
-            <li><Link to="/terms-and-conditions" className="hover:underline">Terms & condition</Link></li>
-            <li><Link to="/account" className="hover:underline">My Account</Link></li>
-          </ul>
-        </div>
+      {/* Main content */}
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
+          {/* Brand */}
+          <div className="lg:col-span-1">
+            <Link to="/" className="mb-5 block">
+              <img
+                src={tokriLogo}
+                alt="tokriii - Selling Premium / Exotic Fruits"
+                className="h-16 w-auto object-contain"
+              />
+            </Link>
+            <h3 className="text-lg font-bold text-white">TOKRIII</h3>
+            <p className="mt-1 text-sm font-medium text-amber-300">Premium Fruits for Discerning Tastes</p>
+            <p className="mt-4 text-sm leading-relaxed text-slate-400">
+              Tokriii selling premium and exotic fruits — handpicked for quality, freshness, and flavour.
+              From garden classics to rare tropical treasures, we bring the finest produce to your table.
+            </p>
 
-        {/* Customer Service */}
-        <div>
-          <h4 className="text-lg font-semibold mb-4">Customer Service</h4>
-          <ul className="text-sm space-y-2">
-            <li><Link to="/help-faqs" className="hover:underline">Help & FAQs</Link></li>
-            <li><Link to="/returns-policy" className="hover:underline">Returns Policy</Link></li>
-            <li><Link to="/terms-and-conditions" className="hover:underline">Terms & Conditions</Link></li>
-            <li><Link to="/privacy-policy" className="hover:underline">Privacy Policy</Link></li>
-            <li><Link to="/support-center" className="hover:underline">Support Center</Link></li>
-          </ul>
-        </div>
+            <ul className="mt-5 space-y-3 text-sm text-slate-300">
+              <li className="flex items-start gap-3">
+                <MapPin size={16} className="mt-0.5 shrink-0 text-emerald-400" />
+                <span>C 617 Azadpur Fruit Market, New Delhi 110033</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={16} className="shrink-0 text-emerald-400" />
+                <a href="mailto:support@tokriii.com" className="hover:text-white transition">
+                  support@tokriii.com
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone size={16} className="shrink-0 text-emerald-400" />
+                <a href="tel:9580280280" className="hover:text-white transition">
+                  9580280280
+                </a>
+                <span className="text-slate-500">/</span>
+                <a href="tel:9958697427" className="hover:text-white transition">
+                  9958697427
+                </a>
+              </li>
+            </ul>
 
-        {/* Newsletter */}
-        <div>
-          <h4 className="text-lg font-semibold mb-4">Our Newsletter</h4>
-          <p className="text-sm mb-4">Sign up for the latest offers and exclusives.</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="email"
-              placeholder="Email Address..."
-              className="px-4 py-2 rounded-full text-sm text-gray-800 w-full"
-            />
-            <button className="px-4 py-2 bg-emerald-600 text-white rounded-full text-sm hover:bg-emerald-700">
-              SUBSCRIBE
-            </button>
+            <div className="mt-6 flex gap-3">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white shadow-sm transition hover:bg-amber-400 hover:text-slate-900 hover:shadow-amber-400/20"
+                >
+                  {social.icon}
+                </a>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2 mt-4">
-            <img src="https://i.imgur.com/1X4VR6f.png" alt="Visa" className="w-8" />
-            <img src="https://i.imgur.com/1X4VR6f.png" alt="MasterCard" className="w-8" />
-            <img src="https://i.imgur.com/1X4VR6f.png" alt="PayPal" className="w-8" />
-            <img src="https://i.imgur.com/1X4VR6f.png" alt="Amex" className="w-8" />
+
+          {/* Our Range */}
+          <div>
+            <h4 className="mb-4 text-base font-semibold text-white">Our Range</h4>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                Garden & Tropical Fruits
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                Berries, Grapes & Exotic Fruits
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                Citrus, Dates & Juicy Fruits
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                37+ Premium Varieties Available
+              </li>
+            </ul>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="mb-4 text-base font-semibold text-white">Quick Links</h4>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li><Link to="/about" className="transition hover:text-white">About us</Link></li>
+              <li><Link to="/help-faqs" className="transition hover:text-white">Help & FAQs</Link></li>
+              <li><Link to="/returns-policy" className="transition hover:text-white">Returns Policy</Link></li>
+              <li><Link to="/privacy-policy" className="transition hover:text-white">Privacy Policy</Link></li>
+              <li><Link to="/terms-and-conditions" className="transition hover:text-white">Terms & Conditions</Link></li>
+            </ul>
+          </div>
+
+          {/* Download App */}
+          <div>
+            <h4 className="mb-4 text-base font-bold text-white">Download App</h4>
+            <div className="flex flex-col gap-2.5">
+              <a
+                href={appStoreLinks.playStore}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-[70%] max-w-[200px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm transition hover:bg-slate-50"
+              >
+                <img src={playStoreIcon} alt="" className="h-6 w-6 shrink-0 object-contain" aria-hidden="true" />
+                <span className="text-xs font-medium leading-tight">Get it on play store</span>
+              </a>
+              <a
+                href={appStoreLinks.appStore}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-[70%] max-w-[200px] items-center gap-2 rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-slate-900 shadow-sm transition hover:bg-slate-50"
+              >
+                <AppStoreIcon />
+                <span className="text-xs font-medium leading-tight">Get it on app store</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Copyright */}
-      <div className="text-center text-sm text-gray-400 mt-6">
-        Copyright 2026. All Right Reserved
+      <div className="border-t border-white/10">
+        <div className="container mx-auto px-6 py-5 text-center text-sm text-slate-500">
+          © 2026 Tokriii. All rights reserved.
+        </div>
       </div>
     </footer>
-  );
-};
+  )
+}
 
-export default Footer;
+export default Footer
