@@ -10,19 +10,53 @@ cd server
 cp .env.example .env   # edit DATABASE_URL if needed
 npm install
 npm run db:setup       # create tables + seed data
-npm run dev            # http://localhost:5222
+npm run dev            # API on http://localhost:5223 (see .env)
 ```
 
-## URLs
+From project root, run the storefront dev server separately:
+
+```bash
+npm run dev            # Frontend on http://localhost:5222
+```
+
+## Production URLs (tokriii.com)
+
+| Service | URL |
+|---------|-----|
+| Storefront | https://www.tokriii.com/ |
+| Admin | https://www.tokriii.com/tokri-backoffice/ |
+| API | https://server.tokriii.com/api/v1 |
+
+### Production env (`server/.env` on API server)
+
+```env
+PORT=5222
+NODE_ENV=production
+APP_URL=https://www.tokriii.com
+CLIENT_URL=https://www.tokriii.com
+API_URL=https://server.tokriii.com
+TRUST_PROXY=true
+```
+
+### Production frontend build (on www server or CI)
+
+```bash
+npm run build   # uses .env.production → VITE_API_BASE_URL=https://server.tokriii.com/api/v1
+```
+
+Serve `dist/` from Nginx on `www.tokriii.com` and proxy `/tokri-backoffice` to the API server.
+
+## Local dev URLs
 
 | URL | Description |
 |-----|-------------|
-| http://localhost:5222/admin | Admin CMS (AdminJS) |
-| http://localhost:5222/api/v1/health | API health check |
-| http://localhost:5222/api/v1/categories | Category list |
-| http://localhost:5222/api/v1/products | Product list |
-| http://localhost:5222/api/v1/products?flag=bestSeller | Best sellers |
-| http://localhost:5222/api/v1/settings/public | Store + theme settings |
+| http://localhost:5222 | Vite storefront |
+| http://localhost:5223/tokri-backoffice | Admin CMS (AdminJS) |
+| http://localhost:5223/api/v1/health | API health check |
+| http://localhost:5223/api/v1/categories | Category list |
+| http://localhost:5223/api/v1/products | Product list |
+| http://localhost:5223/api/v1/products?flag=bestSeller | Best sellers |
+| http://localhost:5223/api/v1/settings/public | Store + theme settings |
 
 ## Default admin login
 
@@ -60,7 +94,7 @@ New staff users automatically get a permission record with view-only catalog + o
 Upload images via API:
 
 ```bash
-curl -X POST http://localhost:5222/api/v1/media/upload \
+curl -X POST http://localhost:5223/api/v1/media/upload \
   -F "file=@/path/to/image.jpg" \
   -F "folder=products"
 ```

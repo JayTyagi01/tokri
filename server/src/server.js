@@ -15,9 +15,13 @@ const uploadsPath = path.join(__dirname, '../uploads')
 
 const app = express()
 
+if (env.trustProxy) {
+  app.set('trust proxy', 1)
+}
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: env.corsOrigins,
     credentials: true,
     allowedHeaders: ['Content-Type', 'X-User-Phone'],
   }),
@@ -60,9 +64,10 @@ async function start() {
   try {
     await prisma.$connect()
     app.listen(env.port, () => {
-      console.log(`Tokriii server running on http://localhost:${env.port}`)
-      console.log(`Admin panel: http://localhost:${env.port}${env.adminPath}`)
-      console.log(`API: http://localhost:${env.port}/api/v1`)
+      console.log(`Tokriii server listening on port ${env.port}`)
+      console.log(`Public site: ${env.clientUrl}`)
+      console.log(`Admin panel: ${env.appUrl}${env.adminPath}`)
+      console.log(`API: ${env.apiUrl}/api/v1`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)

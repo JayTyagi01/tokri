@@ -204,9 +204,9 @@ export async function buildAdminRouter() {
             },
           },
           custom: {
-            apiBaseUrl: `${env.appUrl}/api/v1`,
-            appUrl: env.appUrl,
-            productUrlBase: `${env.appUrl}/product`,
+            apiBaseUrl: `${env.apiUrl}/api/v1`,
+            appUrl: env.apiUrl,
+            productUrlBase: `${env.clientUrl}/product`,
           },
           properties: {
             description: { type: 'richtext', label: 'Description' },
@@ -255,8 +255,8 @@ export async function buildAdminRouter() {
             },
           },
           custom: {
-            apiBaseUrl: `${env.appUrl}/api/v1`,
-            appUrl: env.appUrl,
+            apiBaseUrl: `${env.apiUrl}/api/v1`,
+            appUrl: env.apiUrl,
             categoryUrlBase: `${env.clientUrl}/category`,
           },
           properties: {
@@ -332,8 +332,8 @@ export async function buildAdminRouter() {
             },
           },
           custom: {
-            apiBaseUrl: `${env.appUrl}/api/v1`,
-            appUrl: env.appUrl,
+            apiBaseUrl: `${env.apiUrl}/api/v1`,
+            appUrl: env.apiUrl,
           },
           properties: {
             title: { isTitle: true, label: 'Review title' },
