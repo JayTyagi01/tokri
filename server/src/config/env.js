@@ -5,7 +5,7 @@ dotenv.config()
 const adminPath = process.env.ADMIN_PATH || '/tokri-backoffice'
 
 export const env = {
-  port: Number(process.env.PORT) || 5000,
+  port: Number(process.env.PORT) || 5222,
   nodeEnv: process.env.NODE_ENV || 'development',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   adminPath: adminPath.startsWith('/') ? adminPath : `/${adminPath}`,
@@ -20,5 +20,5 @@ export const env = {
     pass: process.env.SMTP_PASS || '',
     from: process.env.SMTP_FROM || 'Tokriii <noreply@tokriii.com>',
   },
-  appUrl: process.env.APP_URL || `http://localhost:${Number(process.env.PORT) || 5000}`,
+  appUrl: process.env.APP_URL || `http://localhost:${Number(process.env.PORT) || 5222}`,
 }

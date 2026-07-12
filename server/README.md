@@ -10,19 +10,19 @@ cd server
 cp .env.example .env   # edit DATABASE_URL if needed
 npm install
 npm run db:setup       # create tables + seed data
-npm run dev            # http://localhost:5000
+npm run dev            # http://localhost:5222
 ```
 
 ## URLs
 
 | URL | Description |
 |-----|-------------|
-| http://localhost:5000/admin | Admin CMS (AdminJS) |
-| http://localhost:5000/api/v1/health | API health check |
-| http://localhost:5000/api/v1/categories | Category list |
-| http://localhost:5000/api/v1/products | Product list |
-| http://localhost:5000/api/v1/products?flag=bestSeller | Best sellers |
-| http://localhost:5000/api/v1/settings/public | Store + theme settings |
+| http://localhost:5222/admin | Admin CMS (AdminJS) |
+| http://localhost:5222/api/v1/health | API health check |
+| http://localhost:5222/api/v1/categories | Category list |
+| http://localhost:5222/api/v1/products | Product list |
+| http://localhost:5222/api/v1/products?flag=bestSeller | Best sellers |
+| http://localhost:5222/api/v1/settings/public | Store + theme settings |
 
 ## Default admin login
 
@@ -60,7 +60,7 @@ New staff users automatically get a permission record with view-only catalog + o
 Upload images via API:
 
 ```bash
-curl -X POST http://localhost:5000/api/v1/media/upload \
+curl -X POST http://localhost:5222/api/v1/media/upload \
   -F "file=@/path/to/image.jpg" \
   -F "folder=products"
 ```

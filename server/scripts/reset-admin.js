@@ -54,7 +54,7 @@ try {
   })
 
   console.log('Admin login reset successfully.')
-  console.log(`  URL:      http://localhost:${process.env.PORT || 5000}${process.env.ADMIN_PATH || '/tokri-backoffice'}`)
+  console.log(`  URL:      http://localhost:${process.env.PORT || 5222}${process.env.ADMIN_PATH || '/tokri-backoffice'}`)
   console.log(`  Email:    ${adminEmail}`)
   console.log(`  Username: tokriadmin`)
   console.log(`  Password: (value of ADMIN_PASSWORD in server/.env)`)

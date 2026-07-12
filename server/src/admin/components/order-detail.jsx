@@ -19,7 +19,7 @@ const formatDateTime = (value) => {
 const resolveImage = (value) => {
   if (!value) return ''
   if (/^(https?:|data:|blob:)/.test(value)) return value
-  if (value.startsWith('/')) return `${window.location.origin.replace(/:\d+$/, ':5000')}${value}`
+  if (value.startsWith('/')) return `${window.location.origin}${value}`
   return value
 }
 
