@@ -16,6 +16,8 @@ import {
 import { getSettingResource, ensureSettingsRecord } from './settings.js'
 import { prepareProductPayload } from './product-handlers.js'
 import { prepareCategoryPayload } from './category-handlers.js'
+import { orderEditHandler, orderListHandler, orderShowHandler } from './order-handlers.js'
+import { buildCatalogRoutes } from './catalogRoutes.js'
 import { adminLocale } from './locale.js'
 
 AdminJS.registerAdapter({
@@ -191,7 +193,6 @@ export async function buildAdminRouter() {
             list: cmsListView('manageProducts'),
             new: {
               isAccessible: canManage('manageProducts'),
-              isVisible: true,
               component: Components.ProductEdit,
               before: prepareProductPayload,
             },
@@ -222,7 +223,7 @@ export async function buildAdminRouter() {
         resource: { model: AdminJSPrisma.getModelByName('Category'), client: prisma },
         options: {
           name: 'Categories',
-          navigation: { name: 'Catalog', icon: 'ShoppingCart' },
+          navigation: { name: 'Catalog', icon: 'Grid' },
           listProperties: ['label', 'slug', 'sortOrder', 'isActive'],
           editProperties: [
             'label',
@@ -243,7 +244,6 @@ export async function buildAdminRouter() {
             show: { isVisible: false, isAccessible: canManage('manageCatalog') },
             new: {
               isAccessible: canManage('manageCatalog'),
-              isVisible: true,
               component: Components.CategoryEdit,
               before: prepareCategoryPayload,
             },
@@ -295,7 +295,7 @@ export async function buildAdminRouter() {
         resource: { model: AdminJSPrisma.getModelByName('Page'), client: prisma },
         options: {
           name: 'Pages',
-          navigation: { name: 'Content', icon: 'Document' },
+          navigation: { name: 'Content', icon: 'FileText' },
           listProperties: ['title', 'slug', 'isPublished', 'updatedAt'],
           editProperties: ['title', 'slug', 'body', 'isPublished'],
           actions: {
@@ -352,32 +352,66 @@ export async function buildAdminRouter() {
         options: {
           name: 'Orders',
           navigation: { name: null, icon: 'ShoppingBag' },
-          listProperties: ['orderNo', 'status', 'paymentStatus', 'grandTotal', 'createdAt'],
+          listProperties: ['orderNo', 'customerName', 'customerPhone', 'status', 'paymentStatus', 'grandTotal', 'createdAt'],
           showProperties: [
             'orderNo',
+            'customerName',
+            'customerPhone',
             'status',
             'paymentStatus',
+            'paymentMethod',
+            'addressFormatted',
+            'itemsJson',
             'itemsTotal',
             'deliveryCharge',
             'handlingCharge',
             'smallCartCharge',
             'discount',
             'grandTotal',
-            'couponCode',
-            'address',
-            'items',
             'createdAt',
-            'updatedAt',
           ],
+          editProperties: ['status', 'paymentStatus'],
           actions: {
             ...resourceActions('manageOrders'),
-            list: cmsListView('manageOrders'),
+            list: {
+              ...cmsListView('manageOrders'),
+              handler: orderListHandler.handler,
+            },
+            show: {
+              ...orderShowHandler,
+              component: Components.OrderDetail,
+            },
+            edit: {
+              ...orderEditHandler,
+              component: Components.OrderDetail,
+            },
             new: () => false,
             delete: () => false,
           },
           properties: {
-            orderNo: { isTitle: true },
-            items: { isVisible: { list: false, show: true, edit: false, filter: false } },
+            orderNo: { isTitle: true, label: 'Order number' },
+            customerName: {
+              label: 'Customer',
+              isVisible: { list: true, show: true, edit: false, filter: true },
+            },
+            customerPhone: {
+              label: 'Phone',
+              isVisible: { list: true, show: true, edit: false, filter: false },
+            },
+            customerEmail: { isVisible: false },
+            addressFormatted: { isVisible: false },
+            addressJson: { isVisible: false },
+            addressLabel: { isVisible: false },
+            itemsJson: { isVisible: false },
+            paymentMethod: { isVisible: false },
+            userId: { isVisible: false },
+            user: { isVisible: false },
+            address: { isVisible: false },
+            items: { isVisible: false },
+            razorpayOrderId: { isVisible: false },
+            razorpayPaymentId: { isVisible: false },
+            couponCode: { isVisible: false },
+            updatedAt: { isVisible: false },
           },
         },
       },
@@ -568,6 +602,8 @@ export async function buildAdminRouter() {
       },
     },
   )
+
+  adminRouter.use('/catalog', buildCatalogRoutes())
 
   return { admin, adminRouter }
 }

@@ -11,7 +11,11 @@ import ReviewEdit from '../src/admin/components/review-edit'
 AdminJS.UserComponents.ReviewEdit = ReviewEdit
 import SettingsEdit from '../src/admin/components/settings-edit'
 AdminJS.UserComponents.SettingsEdit = SettingsEdit
+import OrderDetail from '../src/admin/components/order-detail'
+AdminJS.UserComponents.OrderDetail = OrderDetail
 import Login from '../src/admin/components/login'
 AdminJS.UserComponents.Login = Login
+import ActionHeader from '../src/admin/components/action-header'
+AdminJS.UserComponents.ActionHeader = ActionHeader
 import DefaultRichtextEditProperty from '../src/admin/components/richtext-edit'
 AdminJS.UserComponents.DefaultRichtextEditProperty = DefaultRichtextEditProperty

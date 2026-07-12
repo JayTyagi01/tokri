@@ -17,6 +17,69 @@ export async function fetchJson(path) {
   return response.json()
 }
 
+export async function postJson(path, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Request failed')
+  }
+
+  return data
+}
+
+function authHeaders(user) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (user?.phone) headers['X-User-Phone'] = user.phone
+  return headers
+}
+
+export async function authGet(path, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: authHeaders(user),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Request failed')
+  return data
+}
+
+export async function authPost(path, user, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: authHeaders(user),
+    body: JSON.stringify(body),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Request failed')
+  return data
+}
+
+export async function authPut(path, user, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'PUT',
+    headers: authHeaders(user),
+    body: JSON.stringify(body),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Request failed')
+  return data
+}
+
+export async function authDelete(path, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'DELETE',
+    headers: authHeaders(user),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || 'Request failed')
+  return data
+}
+
 export function resolveAssetUrl(value) {
   if (!value) return PLACEHOLDER_IMAGE
   if (/^(https?:|data:|blob:)/.test(value)) return value

@@ -1,0 +1,144 @@
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import tokriLogo from '../assets/tokri-logo.png'
+import LoginImageMarquee from '../components/LoginImageMarquee'
+import { useLoginFlow } from '../hooks/useLoginFlow'
+
+const DESKTOP_BREAKPOINT = 1024
+
+export default function MobileLoginPage() {
+  const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
+  const {
+    step,
+    setStep,
+    mobileNumber,
+    setMobileNumber,
+    otp,
+    setOtp,
+    loading,
+    canContinue,
+    handleContinue,
+    handleLogin,
+  } = useLoginFlow({
+    onSuccess: () => navigate(-1),
+  })
+
+  useEffect(() => {
+    const redirectDesktop = () => {
+      if (window.innerWidth >= DESKTOP_BREAKPOINT) {
+        navigate('/', { replace: true, state: { openLogin: true } })
+      }
+    }
+
+    redirectDesktop()
+    window.addEventListener('resize', redirectDesktop)
+    return () => window.removeEventListener('resize', redirectDesktop)
+  }, [navigate])
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/profile', { replace: true })
+    }
+  }, [isLoggedIn, navigate])
+
+  if (isLoggedIn) return null
+
+  return (
+    <main className="min-h-screen bg-white lg:hidden">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-800 shadow-sm"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={18} />
+        </button>
+
+        <LoginImageMarquee />
+      </div>
+
+      <div className="px-5 pb-8">
+        <div className="flex flex-col items-center text-center">
+          <img src={tokriLogo} alt="Tokriii" className="h-14 w-auto object-contain" />
+          <p className="mt-4 text-base font-semibold text-slate-900">Log in or Sign up</p>
+        </div>
+
+        {step === 1 ? (
+          <div className="mt-8">
+            <div className="flex items-center rounded-xl border border-slate-300 bg-white px-4 py-3.5">
+              <span className="text-sm font-medium text-slate-500">+91</span>
+              <input
+                type="tel"
+                inputMode="numeric"
+                placeholder="Enter mobile number"
+                value={mobileNumber}
+                onChange={(event) =>
+                  setMobileNumber(event.target.value.replace(/\D/g, '').slice(0, 10))
+                }
+                className="ml-3 w-full bg-transparent text-base text-slate-900 outline-none"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={!canContinue}
+              className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              {loading ? 'Sending...' : 'Continue'}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <p className="text-center text-sm text-slate-600">
+              Enter the 4-digit OTP sent to +91 {mobileNumber}
+            </p>
+            <div className="mt-4 rounded-xl border border-slate-300 bg-white px-4 py-3.5">
+              <input
+                type="tel"
+                inputMode="numeric"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-slate-900 outline-none"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogin}
+              disabled={loading}
+              className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {loading ? 'Verifying...' : 'Continue'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              disabled={loading}
+              className="mt-3 w-full rounded-xl border border-slate-300 bg-white py-3.5 text-base font-semibold text-slate-700"
+            >
+              Change number
+            </button>
+          </div>
+        )}
+
+        <p className="mt-8 text-center text-xs leading-relaxed text-slate-500">
+          By continuing, you agree to our{' '}
+          <Link to="/terms-and-conditions" className="font-medium text-slate-800 underline">
+            Terms of service
+          </Link>{' '}
+          &{' '}
+          <Link to="/privacy-policy" className="font-medium text-slate-800 underline">
+            Privacy policy
+          </Link>
+        </p>
+      </div>
+    </main>
+  )
+}

@@ -2,15 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Button, H4, Icon, Label, Text } from '@adminjs/design-system'
 import { BasePropertyComponent, useNotice, useRecord } from 'adminjs'
 
-const slugify = (value) => {
-  const slug = String(value || '')
+const normalizeSlugInput = (value) => {
+  return String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-  return slug || 'category'
 }
 
 const withoutTrailingSlash = (value) => String(value || '').replace(/\/+$/, '')
@@ -38,8 +36,9 @@ const CategoryEdit = (props) => {
   const categoryUrlBase = withoutTrailingSlash(
     custom.categoryUrlBase || `${window.location.origin}/category`,
   )
-  const currentSlug = slugify(params.slug || params.label)
-  const categoryUrl = `${categoryUrlBase}/${currentSlug}`
+  const slugInput = params.slug ?? ''
+  const previewSlug = normalizeSlugInput(slugInput) || normalizeSlugInput(params.label)
+  const categoryUrl = previewSlug ? `${categoryUrlBase}/${previewSlug}` : null
 
   const imageUrl = useMemo(() => {
     if (!params.image) return ''
@@ -76,14 +75,14 @@ const CategoryEdit = (props) => {
   const onPropertyChange = (propertyPath, value, ...rest) => {
     if (propertyPath === 'slug') {
       setSlugEdited(true)
-      handleChange(propertyPath, slugify(value), ...rest)
+      handleChange(propertyPath, normalizeSlugInput(value), ...rest)
       return
     }
 
     handleChange(propertyPath, value, ...rest)
 
     if (propertyPath === 'label' && !slugEdited) {
-      handleChange('slug', slugify(value))
+      handleChange('slug', normalizeSlugInput(value))
     }
   }
 
@@ -215,7 +214,8 @@ const CategoryEdit = (props) => {
             {`${categoryUrlBase}/`}
           </Text>
           <input
-            value={currentSlug}
+            value={slugInput}
+            placeholder="Leave empty to auto-generate from label"
             onChange={(event) => onPropertyChange('slug', event.target.value)}
             style={{
               minWidth: 260,
@@ -229,12 +229,17 @@ const CategoryEdit = (props) => {
         </Box>
         <Text mt="sm" opacity={0.7}>
           Preview:{' '}
-          <a href={categoryUrl} target="_blank" rel="noreferrer">
-            {categoryUrl}
-          </a>
+          {categoryUrl ? (
+            <a href={categoryUrl} target="_blank" rel="noreferrer">
+              {categoryUrl}
+            </a>
+          ) : (
+            'Generated from category label when saved'
+          )}
         </Text>
         <Text mt="sm" opacity={0.7}>
-          If this slug already exists, the saved URL will receive a number suffix.
+          Leave empty to auto-generate from the category label. If the slug already exists, a number
+          suffix is added automatically (for example, fruits-2).
         </Text>
       </Box>
 

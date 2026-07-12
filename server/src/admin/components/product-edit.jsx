@@ -6,15 +6,13 @@ import {
   useRecord,
 } from 'adminjs'
 
-const slugify = (value) => {
-  const slug = String(value || '')
+const normalizeSlugInput = (value) => {
+  return String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-  return slug || 'product'
 }
 
 const withoutTrailingSlash = (value) => String(value || '').replace(/\/+$/, '')
@@ -39,8 +37,9 @@ const ProductEdit = (props) => {
   const productUrlBase = withoutTrailingSlash(
     custom.productUrlBase || `${window.location.origin}/product`,
   )
-  const currentSlug = slugify(params.slug || params.name)
-  const productUrl = `${productUrlBase}/${currentSlug}`
+  const slugInput = params.slug ?? ''
+  const previewSlug = normalizeSlugInput(slugInput) || normalizeSlugInput(params.name)
+  const productUrl = previewSlug ? `${productUrlBase}/${previewSlug}` : null
 
   const imageUrl = useMemo(() => {
     if (!params.image) return ''
@@ -63,14 +62,14 @@ const ProductEdit = (props) => {
   const onPropertyChange = (propertyPath, value, ...rest) => {
     if (propertyPath === 'slug') {
       setSlugEdited(true)
-      handleChange(propertyPath, slugify(value), ...rest)
+      handleChange(propertyPath, normalizeSlugInput(value), ...rest)
       return
     }
 
     handleChange(propertyPath, value, ...rest)
 
     if (propertyPath === 'name' && !slugEdited) {
-      handleChange('slug', slugify(value))
+      handleChange('slug', normalizeSlugInput(value))
     }
   }
 
@@ -164,7 +163,8 @@ const ProductEdit = (props) => {
             {`${productUrlBase}/`}
           </Text>
           <input
-            value={currentSlug}
+            value={slugInput}
+            placeholder="Leave empty to auto-generate from name"
             onChange={(event) => onPropertyChange('slug', event.target.value)}
             style={{
               minWidth: 260,
@@ -178,12 +178,17 @@ const ProductEdit = (props) => {
         </Box>
         <Text mt="sm" opacity={0.7}>
           Preview:{' '}
-          <a href={productUrl} target="_blank" rel="noreferrer">
-            {productUrl}
-          </a>
+          {productUrl ? (
+            <a href={productUrl} target="_blank" rel="noreferrer">
+              {productUrl}
+            </a>
+          ) : (
+            'Generated from product name when saved'
+          )}
         </Text>
         <Text mt="sm" opacity={0.7}>
-          If this slug already exists, the saved URL will receive a number suffix.
+          Leave empty to auto-generate from the product name. If the slug already exists, a number
+          suffix is added automatically (for example, mango-2).
         </Text>
       </Box>
 

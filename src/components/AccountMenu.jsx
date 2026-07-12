@@ -32,7 +32,9 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
 
   if (!isLoggedIn) return null
 
-  const formattedMobile = user.mobile?.replace(/(\d{5})(\d{5})/, '$1 $2') || user.mobile
+  const formattedMobile = user?.phone
+    ? `+91 ${user.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}`
+    : ''
 
   if (variant === 'mobile') {
     return (

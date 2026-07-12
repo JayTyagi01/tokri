@@ -1,82 +1,22 @@
-﻿import React, { useState } from 'react'
-import Swal from 'sweetalert2'
-import 'sweetalert2/dist/sweetalert2.min.css'
-import { useAuth } from '../context/AuthContext'
+﻿import { useLoginFlow } from '../hooks/useLoginFlow'
+import tokriLogo from '../assets/tokri-logo.png'
 
 export default function LoginPopup({ onClose }) {
-  const { login } = useAuth()
-  const [step, setStep] = useState(1)
-  const [mobileNumber, setMobileNumber] = useState('')
-  const [otp, setOtp] = useState('')
-  const [sentOtp, setSentOtp] = useState('')
-
-  const validateMobile = () => /^\d{10}$/.test(mobileNumber)
-
-  const handleContinue = () => {
-    if (!validateMobile()) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid number',
-        text: 'Please enter a valid 10-digit mobile number.',
-        confirmButtonColor: '#3085d6',
-      })
-      return
-    }
-
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString()
-    setSentOtp(generatedOtp)
-    setOtp('')
-    setStep(2)
-
-    Swal.fire({
-      icon: 'success',
-      title: 'OTP Sent',
-      text: `An OTP has been sent to +91 ${mobileNumber}.`,
-      confirmButtonColor: '#3085d6',
-    })
-
-    console.log('Mock OTP for demo:', generatedOtp)
-  }
-
-  const handleLogin = () => {
-    if (!/^\d{4}$/.test(otp)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid OTP',
-        text: 'Please enter the 4-digit OTP.',
-        confirmButtonColor: '#3085d6',
-      })
-      return
-    }
-
-    if (otp !== sentOtp) {
-      Swal.fire({
-        icon: 'error',
-        title: 'OTP Incorrect',
-        text: 'The entered OTP does not match. Please try again.',
-        confirmButtonColor: '#3085d6',
-      })
-      return
-    }
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Login Successful',
-      text: 'You have successfully logged in!',
-      confirmButtonColor: '#3085d6',
-    }).then(() => {
-      login(mobileNumber)
-      onClose()
-      setStep(1)
-      setMobileNumber('')
-      setOtp('')
-      setSentOtp('')
-    })
-  }
+  const {
+    step,
+    setStep,
+    mobileNumber,
+    setMobileNumber,
+    otp,
+    setOtp,
+    loading,
+    handleContinue,
+    handleLogin,
+  } = useLoginFlow({ onSuccess: onClose })
 
   return (
-    <div className="fixed inset-0 bg-transparent bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl p-6 w-96 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="relative flex w-full max-w-md flex-col rounded-3xl bg-white p-7 shadow-2xl sm:max-w-lg sm:p-8">
         <button
           type="button"
           onClick={onClose}
@@ -86,64 +26,73 @@ export default function LoginPopup({ onClose }) {
         </button>
 
         {step === 1 && (
-          <div>
-            <div className="mb-4 flex flex-col items-center gap-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-300 text-2xl font-black text-emerald-950">
-                B
-              </div>
-              <h2 className="text-xl font-bold text-center">India's last minute app</h2>
-              <p className="text-center text-gray-600">Log in or Sign up</p>
+          <div className="flex flex-col">
+            <div className="mb-5 flex flex-col items-center gap-3 pt-2">
+              <img src={tokriLogo} alt="Tokriii" className="h-14 w-auto object-contain" />
+              <p className="text-center text-sm text-slate-600">
+                Premium and exotic fruits — handpicked and delivered fresh.
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Sign in with your mobile number to continue
+              </p>
             </div>
 
-            <div className="flex items-center rounded-2xl border border-slate-300 bg-slate-50 p-3 mb-4">
+            <div className="mb-5 flex items-center rounded-2xl border border-slate-300 bg-slate-50 p-3">
               <span className="text-slate-500">+91</span>
               <input
                 type="text"
                 placeholder="Enter mobile number"
                 value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
+                onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className="ml-2 w-full bg-transparent text-slate-900 outline-none"
               />
             </div>
+
             <button
               type="button"
               onClick={handleContinue}
-              className="w-full rounded-2xl bg-slate-700 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              disabled={loading}
+              className="w-full rounded-2xl bg-emerald-950 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
             >
-              Continue
+              {loading ? 'Sending...' : 'Continue'}
             </button>
-            <p className="text-xs text-center text-slate-500 mt-4">
+
+            <div className="pt-6 text-center text-xs leading-relaxed text-slate-500">
               By continuing, you agree to our{' '}
-              <a href="#" className="text-slate-900 underline">Terms of service</a> &{' '}
-              <a href="#" className="text-slate-900 underline">Privacy policy</a>
-            </p>
+              <a href="/terms-and-conditions" className="text-slate-900 underline">Terms of service</a> &{' '}
+              <a href="/privacy-policy" className="text-slate-900 underline">Privacy policy</a>
+            </div>
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <h2 className="text-xl font-bold text-center mb-2">Enter OTP</h2>
-            <p className="text-center text-gray-600 mb-4">We have sent an OTP to your mobile number</p>
-            <div className="rounded-2xl border border-slate-300 bg-slate-50 p-3 mb-4">
+            <h2 className="mb-2 text-center text-xl font-bold text-slate-900">Enter OTP</h2>
+            <p className="mb-4 text-center text-gray-600">
+              We sent a 4-digit code to +91 {mobileNumber}
+            </p>
+            <div className="mb-4 rounded-2xl border border-slate-300 bg-slate-50 p-3">
               <input
                 type="text"
                 placeholder="Enter OTP"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full bg-transparent text-slate-900 outline-none"
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-slate-900 outline-none"
               />
             </div>
             <button
               type="button"
               onClick={handleLogin}
-              className="w-full rounded-2xl bg-slate-700 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              disabled={loading}
+              className="w-full rounded-2xl bg-emerald-950 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
             >
-              Login
+              {loading ? 'Verifying...' : 'Login'}
             </button>
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="mt-3 w-full rounded-2xl border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              disabled={loading}
+              className="mt-3 w-full rounded-2xl border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
             >
               Back
             </button>

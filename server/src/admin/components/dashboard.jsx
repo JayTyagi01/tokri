@@ -6,8 +6,8 @@ const api = new ApiClient()
 
 const statCards = [
   { key: 'productCount', label: 'Products', icon: 'ShoppingCart', resource: 'Product' },
-  { key: 'orderCount', label: 'Orders', icon: 'Receipt', resource: 'Order' },
-  { key: 'pageCount', label: 'Pages', icon: 'Document', resource: 'Page' },
+  { key: 'orderCount', label: 'Orders', icon: 'ShoppingBag', resource: 'Order' },
+  { key: 'pageCount', label: 'Pages', icon: 'FileText', resource: 'Page' },
   { key: 'reviewCount', label: 'Reviews', icon: 'Star', resource: 'Review' },
 ]
 

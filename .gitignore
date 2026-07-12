@@ -17,6 +17,8 @@ server/.env
 server/node_modules
 server/uploads/*
 !server/uploads/.gitkeep
+*.sql
+tokri.sql
 
 # Editor directories and files
 .vscode/*

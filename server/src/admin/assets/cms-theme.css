@@ -31,11 +31,16 @@ body {
   color: #f0f0f1 !important;
 }
 
-/* Navigation icons (SVG) inside the dark sidebar */
 [data-css="sidebar"] svg {
   color: #f0f0f1 !important;
-  fill: currentColor !important;
   stroke: currentColor !important;
+  fill: none !important;
+}
+
+.tokri-stat-card svg,
+[data-css="app-content"] .adminjs_Icon svg {
+  stroke: currentColor;
+  fill: none !important;
 }
 
 [data-css="sidebar"] a:hover,
@@ -123,6 +128,58 @@ section[data-css="logged-in"] {
   text-align: left;
   padding: 10px 8px;
   border-bottom: 1px solid #e2e4e7;
+}
+
+.tokri-order-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .tokri-order-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tokri-order-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tokri-order-items-table th,
+.tokri-order-items-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e2e4e7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tokri-order-items-table th:last-child,
+.tokri-order-items-table td:last-child,
+.tokri-order-items-table tfoot td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tokri-order-items-table tfoot td {
+  padding-top: 10px;
+  color: #475569;
+}
+
+.tokri-order-items-table tfoot tr.is-total td {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 2px solid #cbd5e1;
+}
+
+.tokri-order-item-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .tokri-settings-tabs {

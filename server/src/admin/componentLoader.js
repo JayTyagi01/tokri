@@ -9,9 +9,11 @@ export const Components = {
   CmsList: componentLoader.add('CmsList', './components/cms-list.jsx'),
   ReviewEdit: componentLoader.add('ReviewEdit', './components/review-edit.jsx'),
   SettingsEdit: componentLoader.add('SettingsEdit', './components/settings-edit.jsx'),
+  OrderDetail: componentLoader.add('OrderDetail', './components/order-detail.jsx'),
 }
 
 componentLoader.override('Login', './components/login.jsx')
+componentLoader.override('ActionHeader', './components/action-header.jsx')
 componentLoader.override('DefaultRichtextEditProperty', './components/richtext-edit.jsx')
 
 export default componentLoader

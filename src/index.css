@@ -168,7 +168,9 @@ code {
 }
 
 .product-detail h1,
-.product-detail h2 {
+.product-detail h2,
+.account-detail h1,
+.account-detail h2 {
   margin: 0;
   font-size: unset;
   letter-spacing: normal;
@@ -239,4 +241,71 @@ code {
   100% {
     transform: translateY(-36rem);
   }
+}
+
+.login-marquee {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding-top: 3.25rem;
+  padding-bottom: 2rem;
+  position: relative;
+}
+
+.login-marquee::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4rem;
+  background: linear-gradient(to bottom, transparent, #fff);
+  pointer-events: none;
+}
+
+.login-marquee-row {
+  overflow: hidden;
+}
+
+.login-marquee-track {
+  display: flex;
+  gap: 0.5rem;
+  width: max-content;
+  animation: login-marquee-left 28s linear infinite;
+}
+
+.login-marquee-track.is-reverse {
+  animation-name: login-marquee-right;
+}
+
+@keyframes login-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes login-marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.login-marquee-cell {
+  width: 5.25rem;
+  height: 5.25rem;
+  flex-shrink: 0;
+  border-radius: 1rem;
+  background: #eef6ff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem;
 }

@@ -16,10 +16,14 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser)
 
-  const login = useCallback((mobile) => {
-    const nextUser = { mobile: String(mobile) }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
-    setUser(nextUser)
+  const login = useCallback((nextUser) => {
+    const userData = {
+      id: nextUser.id,
+      phone: String(nextUser.phone),
+      name: nextUser.name || null,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData))
+    setUser(userData)
   }, [])
 
   const logout = useCallback(() => {
@@ -30,7 +34,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       user,
-      isLoggedIn: Boolean(user?.mobile),
+      isLoggedIn: Boolean(user?.phone),
       login,
       logout,
     }),

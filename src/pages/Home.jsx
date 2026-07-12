@@ -8,7 +8,7 @@ import Reviews from '../components/Reviews'
 
 export default function Home() {
   return (
-    <main className="pb-16">
+    <main>
       <Banner />
       <Categories />
       <BestSellers />

@@ -2,6 +2,9 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
 import { formatPublicSettings } from '../utils/settings.js'
 import { formatCategory, formatProduct, formatPage } from '../utils/formatters.js'
+import authRouter from './auth.js'
+import accountRouter from './account.js'
+import checkoutRouter from './checkout.js'
 
 const router = Router()
 
@@ -13,6 +16,10 @@ router.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   })
 })
+
+router.use('/auth', authRouter)
+router.use('/account', accountRouter)
+router.use('/checkout', checkoutRouter)
 
 router.get('/settings/public', async (_req, res, next) => {
   try {

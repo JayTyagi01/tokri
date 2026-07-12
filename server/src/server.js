@@ -19,6 +19,7 @@ app.use(
   cors({
     origin: env.clientUrl,
     credentials: true,
+    allowedHeaders: ['Content-Type', 'X-User-Phone'],
   }),
 )
 

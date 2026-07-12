@@ -1,38 +1,31 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
-const sections = {
-  orders: {
-    title: 'My Orders',
-    description: 'View your past orders and track upcoming fruit deliveries.',
-  },
-  addresses: {
-    title: 'Saved Addresses',
-    description: 'Manage delivery addresses for your morning fruit orders.',
-  },
-}
+import AccountSidebar from '../components/account/AccountSidebar'
+import SavedAddresses from '../components/account/SavedAddresses'
+import MyOrders from '../components/account/MyOrders'
 
 export default function MyAccount() {
-  const { user, isLoggedIn } = useAuth()
+  const { isLoggedIn } = useAuth()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const section = searchParams.get('section')
-  const activeSection = sections[section]
+  const section = searchParams.get('section') || 'orders'
 
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen bg-slate-50 py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm">
-            <h1 className="text-4xl font-bold text-slate-900">My Account</h1>
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-              Sign in to see your orders, saved addresses, and delivery details.
-            </p>
-            <Link
-              to="/"
-              className="mt-8 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+      <main className="account-detail min-h-screen bg-slate-100 py-10">
+        <div className="mx-auto max-w-lg px-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <h1 className="text-2xl font-bold text-slate-900">My Account</h1>
+            <div className="mt-4 text-sm text-slate-600">
+              Sign in to manage your orders and saved delivery addresses.
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="mt-6 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
             >
               Back to Home
-            </Link>
+            </button>
           </div>
         </div>
       </main>
@@ -40,51 +33,18 @@ export default function MyAccount() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-16">
-      <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-wider text-emerald-600">My Account</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
-            {activeSection?.title || 'Account Overview'}
-          </h1>
-          <p className="mt-2 text-slate-500">{user.mobile}</p>
+    <main className="account-detail min-h-screen bg-slate-100 py-8 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col lg:flex-row">
+            <AccountSidebar activeSection={section} />
 
-          <p className="mt-6 leading-7 text-slate-600">
-            {activeSection?.description ||
-              'Manage your Tokri account, orders, and saved delivery addresses.'}
-          </p>
-
-          {!activeSection && (
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/account?section=orders"
-                className="inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
-              >
-                My Orders
-              </Link>
-              <Link
-                to="/account?section=addresses"
-                className="inline-flex rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-              >
-                Saved Addresses
-              </Link>
+            <div className="min-w-0 flex-1 p-5 sm:p-8">
+              {section === 'orders' && <MyOrders />}
+              {section === 'addresses' && <SavedAddresses />}
+              {!['orders', 'addresses'].includes(section) && <MyOrders />}
             </div>
-          )}
-
-          {activeSection && (
-            <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-              {section === 'orders'
-                ? 'No orders yet. Your order history will appear here after your first purchase.'
-                : 'No saved addresses yet. Add a delivery address during checkout.'}
-            </div>
-          )}
-
-          <Link
-            to="/"
-            className="mt-8 inline-flex text-sm font-semibold text-emerald-800 hover:underline"
-          >
-            Continue shopping
-          </Link>
+          </div>
         </div>
       </div>
     </main>

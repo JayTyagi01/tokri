@@ -1,20 +1,18 @@
 import { prisma } from '../lib/prisma.js'
 
-const DEFAULT_SLUG = 'category'
-
 export function slugify(value) {
-  const slug = String(value || '')
+  return String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-  return slug || DEFAULT_SLUG
 }
 
 export async function uniqueCategorySlug(value, currentId) {
   const base = slugify(value)
+  if (!base) return ''
+
   let candidate = base
   let suffix = 2
 
@@ -39,8 +37,13 @@ export async function prepareCategoryPayload(request) {
 
   const payload = request.payload || {}
   const currentId = request.params?.recordId
+  const source = String(payload.slug ?? '').trim() || String(payload.label ?? '').trim()
 
-  payload.slug = await uniqueCategorySlug(payload.slug || payload.label, currentId)
+  if (!source) {
+    throw new Error('Category label is required to generate a slug.')
+  }
+
+  payload.slug = await uniqueCategorySlug(source, currentId)
 
   // Keep image paths from custom upload fields (AdminJS may omit hidden props)
   if (payload.image != null) {

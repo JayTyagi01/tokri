@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import LoginPopup from './components/LoginPopup'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import CategoryPage from './pages/CategoryPage'
 import CartPage from './pages/CartPage'
+import CheckoutPage from './pages/CheckoutPage'
 import CmsPage from './pages/CmsPage'
 import MyAccount from './pages/MyAccount'
+import MobileLoginPage from './pages/MobileLoginPage'
+import MobileProfilePage from './pages/MobileProfilePage'
 import CartDrawer from './components/CartDrawer'
-import { CartProvider } from './context/CartContext'
+import StickyCartBar from './components/StickyCartBar'
+import AddressPickerModal from './components/AddressPickerModal'
+import { CartProvider, useCart } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
+import { AddressProvider } from './context/AddressContext'
 import Footer from './components/Footer'
 
 const CMS_PAGE_PATHS = [
@@ -23,6 +29,8 @@ const CMS_PAGE_PATHS = [
   '/support-center',
 ]
 
+const FULLSCREEN_ROUTES = ['/login', '/profile']
+
 function ScrollToTop() {
   const location = useLocation()
 
@@ -33,31 +41,67 @@ function ScrollToTop() {
   return null
 }
 
-function App() {
+function AppShell() {
   const [showLogin, setShowLogin] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { totalCount } = useCart()
+  const hideChrome = FULLSCREEN_ROUTES.includes(location.pathname)
+  const isCartPage = location.pathname === '/cart'
+  const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage
+
+  useEffect(() => {
+    if (location.state?.openLogin) {
+      setShowLogin(true)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location, navigate])
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <div className="min-h-screen">
-          <ScrollToTop />
+    <div className={showStickyCart ? 'pb-24 lg:pb-0' : ''}>
+      <ScrollToTop />
+      {!hideChrome && (
+        <div className={isCartPage ? 'hidden lg:block' : ''}>
           <Header onLoginClick={() => setShowLogin(true)} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/product/:productId" element={<ProductDetail />} />
-            <Route path="/category/:categoryId" element={<CategoryPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/account" element={<MyAccount />} />
-            <Route path="/p/:slug" element={<CmsPage />} />
-            {CMS_PAGE_PATHS.map((path) => (
-              <Route key={path} path={path} element={<CmsPage />} />
-            ))}
-          </Routes>
-          <CartDrawer />
-          <Footer />
-          {showLogin && <LoginPopup onClose={() => setShowLogin(false)} />}
         </div>
-      </CartProvider>
+      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/category/:categoryId" element={<CategoryPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/account" element={<MyAccount />} />
+        <Route path="/login" element={<MobileLoginPage />} />
+        <Route path="/profile" element={<MobileProfilePage />} />
+        <Route path="/p/:slug" element={<CmsPage />} />
+        {CMS_PAGE_PATHS.map((path) => (
+          <Route key={path} path={path} element={<CmsPage />} />
+        ))}
+      </Routes>
+      {!hideChrome && (
+        <div className={isCartPage ? 'hidden lg:block' : ''}>
+          <Footer />
+        </div>
+      )}
+      <CartDrawer />
+      {showStickyCart && <StickyCartBar />}
+      <AddressPickerModal onDesktopLogin={() => setShowLogin(true)} />
+      {showLogin && <LoginPopup onClose={() => setShowLogin(false)} />}
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AddressProvider>
+        <CartProvider>
+          <div className="min-h-screen">
+            <AppShell />
+          </div>
+        </CartProvider>
+      </AddressProvider>
     </AuthProvider>
   )
 }

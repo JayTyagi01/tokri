@@ -1,20 +1,18 @@
 import { prisma } from '../lib/prisma.js'
 
-const DEFAULT_SLUG = 'product'
-
 export function slugify(value) {
-  const slug = String(value || '')
+  return String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-
-  return slug || DEFAULT_SLUG
 }
 
 export async function uniqueProductSlug(value, currentId) {
   const base = slugify(value)
+  if (!base) return ''
+
   let candidate = base
   let suffix = 2
 
@@ -39,8 +37,13 @@ export async function prepareProductPayload(request) {
 
   const payload = request.payload || {}
   const currentId = request.params?.recordId
+  const source = String(payload.slug ?? '').trim() || String(payload.name ?? '').trim()
 
-  payload.slug = await uniqueProductSlug(payload.slug || payload.name, currentId)
+  if (!source) {
+    throw new Error('Product name is required to generate a slug.')
+  }
+
+  payload.slug = await uniqueProductSlug(source, currentId)
 
   if (payload.mediaId && !payload.image) {
     const media = await prisma.media.findUnique({ where: { id: payload.mediaId } })
