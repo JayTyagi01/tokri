@@ -68,25 +68,26 @@ export default function ProductDetail() {
 
     setLoading(true)
     fetchJson(`/products/${productId}`)
-      .then((item) => {
+      .then(async (item) => {
         if (ignore) return
         const normalized = normalizeProduct(item)
         setProduct(normalized)
 
-        const categoryQuery = normalized.categoryId ? `&category=${normalized.categoryId}` : ''
-        return fetchJson(`/products?limit=12${categoryQuery}`)
-      })
-      .then((items) => {
-        if (ignore || !items) return
-        const seen = new Set([productId])
-        const merged = []
-        for (const item of normalizeProducts(items)) {
-          if (seen.has(item.id)) continue
-          seen.add(item.id)
-          merged.push(item)
-          if (merged.length >= 10) break
+        try {
+          const categoryQuery = normalized.categoryId ? `&category=${normalized.categoryId}` : ''
+          const items = await fetchJson(`/products?limit=12${categoryQuery}`)
+          const seen = new Set([productId])
+          const merged = []
+          for (const related of normalizeProducts(items)) {
+            if (seen.has(related.id)) continue
+            seen.add(related.id)
+            merged.push(related)
+            if (merged.length >= 10) break
+          }
+          if (!ignore) setRelatedProducts(merged)
+        } catch {
+          if (!ignore) setRelatedProducts([])
         }
-        setRelatedProducts(merged)
       })
       .catch(() => {
         if (!ignore) setProduct(null)

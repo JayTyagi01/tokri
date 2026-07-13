@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { categoryDetails } from '../data/categories'
 import { fetchJson, normalizeProducts, resolveAssetUrl } from '../lib/api'

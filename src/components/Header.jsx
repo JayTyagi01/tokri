@@ -38,8 +38,14 @@ export default function Header({ onLoginClick }) {
       {/* Mobile header */}
       <div className="border-b border-slate-200 lg:hidden">
         <div className="px-4 pb-3 pt-3">
-          <div className="flex items-start justify-between gap-3">
-            <DeliveryAddressBar className="min-w-0 flex-1" />
+          <div className="flex items-center justify-between gap-3">
+            <Link to="/" className="block shrink-0">
+              <img
+                src={tokriLogo}
+                alt="tokriii - Selling Premium / Exotic Fruits"
+                className="h-9 w-auto object-contain"
+              />
+            </Link>
             <button
               type="button"
               onClick={handleProfileClick}
@@ -48,6 +54,10 @@ export default function Header({ onLoginClick }) {
             >
               <UserRound size={20} />
             </button>
+          </div>
+
+          <div className="mt-3">
+            <DeliveryAddressBar className="min-w-0 w-full" />
           </div>
 
           <div className="mt-3">

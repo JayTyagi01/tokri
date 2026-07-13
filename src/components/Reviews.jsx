@@ -61,10 +61,10 @@ function ReviewCard({ review }) {
   const hasImage = review.image && avatar
 
   return (
-    <div className="flex h-full flex-col items-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+    <div className="flex h-full flex-col items-center rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-8">
       <Quote className="mb-3 h-8 w-8 text-emerald-500/30" />
       <Stars rating={review.rating} />
-      <h3 className="mt-4 text-lg font-semibold text-slate-900">{review.title}</h3>
+      <h3 className="mt-4 text-base font-semibold text-slate-900 sm:text-lg">{review.title}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{review.content}</p>
       <div className="mt-6 flex items-center gap-3">
         {hasImage ? (
@@ -107,54 +107,56 @@ export default function Reviews() {
     }
   }, [])
 
-  const isSlider = reviews.length > 3
+  // Desktop: slide only when more than 3 reviews. Mobile: always single-card slide.
+  const desktopSlider = reviews.length > 3
 
   const scrollByCard = (direction) => {
     const track = trackRef.current
     if (!track) return
-    const amount = track.clientWidth * 0.9
+    const firstCard = track.querySelector('[data-review-card]')
+    const amount = firstCard ? firstCard.getBoundingClientRect().width + 16 : track.clientWidth * 0.9
     track.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
 
   return (
-    <section className="rounded-3xl bg-gradient-to-b from-emerald-50/60 to-white p-8 sm:p-12">
+    <section className="rounded-3xl bg-gradient-to-b from-emerald-50/60 to-white px-4 py-8 sm:p-12">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-10 text-center">
+        <div className="mb-8 text-center sm:mb-10">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600">
             What customers say
           </p>
-          <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
             Verified, <span className="text-emerald-600">Honest Reviews</span>
           </h2>
         </div>
 
         <div className="relative">
-          {isSlider && (
-            <button
-              type="button"
-              onClick={() => scrollByCard(-1)}
-              aria-label="Previous reviews"
-              className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:flex"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => scrollByCard(-1)}
+            aria-label="Previous reviews"
+            className={`absolute -left-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:-left-3 sm:p-2.5 ${
+              desktopSlider ? 'flex' : 'flex lg:hidden'
+            }`}
+          >
+            <ChevronLeft size={20} />
+          </button>
 
+          {/* Mobile / tablet: always horizontal single-card slider */}
           <div
             ref={trackRef}
-            className={
-              isSlider
-                ? 'flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-2 scrollbar-hide'
-                : 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3'
-            }
+            className={`flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-hide ${
+              desktopSlider ? '' : 'lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:snap-none'
+            }`}
           >
             {reviews.map((review) => (
               <div
                 key={review.id}
+                data-review-card
                 className={
-                  isSlider
-                    ? 'w-[85%] shrink-0 snap-center sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]'
-                    : ''
+                  desktopSlider
+                    ? 'w-[88%] shrink-0 snap-center sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
+                    : 'w-[88%] shrink-0 snap-center lg:w-auto lg:shrink'
                 }
               >
                 <ReviewCard review={review} />
@@ -162,16 +164,16 @@ export default function Reviews() {
             ))}
           </div>
 
-          {isSlider && (
-            <button
-              type="button"
-              onClick={() => scrollByCard(1)}
-              aria-label="Next reviews"
-              className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:flex"
-            >
-              <ChevronRight size={20} />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => scrollByCard(1)}
+            aria-label="Next reviews"
+            className={`absolute -right-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:-right-3 sm:p-2.5 ${
+              desktopSlider ? 'flex' : 'flex lg:hidden'
+            }`}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
     </section>

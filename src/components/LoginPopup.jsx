@@ -1,4 +1,4 @@
-﻿import { useLoginFlow } from '../hooks/useLoginFlow'
+import { useLoginFlow } from '../hooks/useLoginFlow'
 import tokriLogo from '../assets/tokri-logo.png'
 
 export default function LoginPopup({ onClose }) {

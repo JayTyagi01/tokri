@@ -11,6 +11,7 @@ import CmsPage from './pages/CmsPage'
 import MyAccount from './pages/MyAccount'
 import MobileLoginPage from './pages/MobileLoginPage'
 import MobileProfilePage from './pages/MobileProfilePage'
+import ShopAllPage from './pages/ShopAllPage'
 import CartDrawer from './components/CartDrawer'
 import StickyCartBar from './components/StickyCartBar'
 import AddressPickerModal from './components/AddressPickerModal'
@@ -69,6 +70,7 @@ function AppShell() {
         <Route path="/" element={<Home />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
         <Route path="/category/:categoryId" element={<CategoryPage />} />
+        <Route path="/shop" element={<ShopAllPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/account" element={<MyAccount />} />

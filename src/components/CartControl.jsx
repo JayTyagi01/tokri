@@ -71,6 +71,42 @@ export default function CartControl({
     )
   }
 
+  if (variant === 'shop') {
+    if (quantity <= 0) {
+      return (
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="min-w-[52px] rounded-md border-2 border-emerald-600 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-50"
+        >
+          {addLabel}
+        </button>
+      )
+    }
+
+    return (
+      <div className="inline-flex min-w-[52px] items-center rounded-md border-2 border-emerald-600 bg-white text-emerald-700">
+        <button
+          type="button"
+          onClick={handleDecrease}
+          className="flex h-7 w-7 items-center justify-center transition hover:bg-emerald-50"
+          aria-label="Decrease quantity"
+        >
+          <Minus size={12} />
+        </button>
+        <span className="min-w-[1rem] text-center text-[11px] font-bold">{quantity}</span>
+        <button
+          type="button"
+          onClick={handleIncrease}
+          className="flex h-7 w-7 items-center justify-center transition hover:bg-emerald-50"
+          aria-label="Increase quantity"
+        >
+          <Plus size={12} />
+        </button>
+      </div>
+    )
+  }
+
   if (quantity <= 0) {
     return (
       <button

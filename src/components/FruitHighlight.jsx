@@ -1,5 +1,5 @@
-import React from "react";
-import kiwi from "../assets/flying-kiwis.png";
+import { Link } from 'react-router-dom'
+import kiwi from '../assets/flying-kiwis.png'
 
 export default function FruitHighlight() {
   return (
@@ -8,12 +8,12 @@ export default function FruitHighlight() {
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Left Content */}
           <div className="">
-            <h1 className="my-0 text-4xl md:text-5xl text-black leading-tight" style={{margin: 0}}>
+            <p className="m-0 text-2xl leading-tight text-black sm:text-3xl md:text-5xl">
               The Small Fruit <br />
               with a <span className="font-bold">Big Punch</span>
-            </h1>
+            </p>
 
-            <p className="text-lg text-black leading-relaxed">
+            <p className="mt-3 text-sm leading-relaxed text-black sm:text-base md:text-lg">
               Kiwi is a nutrient-rich fruit known for its vibrant green flesh,
               refreshing sweet-tangy flavor, and high vitamin C content. It's a
               great addition to a healthy, balanced diet.
@@ -34,9 +34,12 @@ export default function FruitHighlight() {
               </li>
             </ul>
 
-            <button className="inline-flex items-center justify-center rounded-full bg-white cursor-pointer text-black px-8 py-3 font-semibold shadow-lg hover:bg-black hover:text-white transition">
+            <Link
+              to="/shop"
+              className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-black shadow-lg transition hover:bg-black hover:text-white"
+            >
               Shop Now
-            </button>
+            </Link>
           </div>
 
           {/* Right Image */}

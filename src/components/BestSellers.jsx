@@ -31,14 +31,14 @@ export default function BestSellers() {
 
   return (
     <section>
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-3xl sm:text-4xl font-bold text-black">
+          <h2 className="m-0 text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
             <span className="font-light">Shop Our </span>Bestsellers
           </h2>
         </div>
 
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
           {products.slice(0, 12).map((product) => {
             const off = discountPercent(product)
             const target = `/product/${product.slug || product.id}`
