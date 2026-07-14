@@ -69,8 +69,9 @@ router.get('/categories/:slug', async (req, res, next) => {
 
 router.get('/products', async (req, res, next) => {
   try {
-    const { flag, category, limit } = req.query
-    const take = limit ? Math.min(Number(limit) || 20, 100) : undefined
+    const { flag, category, limit, page: pageQuery } = req.query
+    const pageSize = limit ? Math.min(Number(limit) || 20, 100) : undefined
+    const page = pageQuery ? Math.max(1, Number(pageQuery) || 1) : null
 
     const where = { isActive: true }
 
@@ -81,11 +82,44 @@ router.get('/products', async (req, res, next) => {
     if (category) {
       const cat = await prisma.category.findUnique({ where: { slug: String(category) } })
       if (cat) where.categoryId = cat.id
+      else if (page) {
+        return res.json({
+          products: [],
+          total: 0,
+          page: 1,
+          pageSize: pageSize || 24,
+          hasMore: false,
+        })
+      }
+    }
+
+    // Paginated response when ?page= is provided (category browse / infinite scroll)
+    if (page) {
+      const take = pageSize || 24
+      const skip = (page - 1) * take
+      const [rows, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          take,
+          skip,
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+          include: { category: true },
+        }),
+        prisma.product.count({ where }),
+      ])
+
+      return res.json({
+        products: rows.map(formatProduct),
+        total,
+        page,
+        pageSize: take,
+        hasMore: skip + rows.length < total,
+      })
     }
 
     const products = await prisma.product.findMany({
       where,
-      take,
+      take: pageSize,
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: { category: true },
     })

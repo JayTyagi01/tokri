@@ -77,7 +77,7 @@ function ProductCard({ product, onNavigate }) {
   )
 }
 
-export default function ImportedFruits() {
+export default function SeasonalFruits() {
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -90,7 +90,7 @@ export default function ImportedFruits() {
     let ignore = false
     setLoading(true)
 
-    fetchJson('/products?flag=imported&limit=100')
+    fetchJson('/products?flag=featured&limit=100')
       .then((items) => {
         if (!ignore) setProducts(normalizeProducts(items))
       })
@@ -122,7 +122,7 @@ export default function ImportedFruits() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="m-0 text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
-            <span className="font-light">Imported </span>Fruits
+            <span className="font-light">Seasonal </span>Fruits
           </h2>
         </div>
 

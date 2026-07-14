@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories as fallbackCategories } from '../data/categories'
 import { fetchJson, resolveAssetUrl } from '../lib/api'
@@ -35,42 +35,31 @@ export default function Categories() {
           <span className="font-light">Shop By </span>Categories
         </h2>
 
-        <div className="mt-5 grid grid-cols-4 gap-3 sm:gap-4 lg:hidden">
-          {categories.map((category) => (
-            <Link key={category.id} to={`/category/${category.id}`} className="min-w-0">
-              <article className="text-center">
-                <div className="mx-auto flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-sky-50 p-2">
-                  <img
-                    src={category.image}
-                    alt={category.label}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-                <h3 className="mt-2 line-clamp-2 text-[11px] font-semibold leading-tight text-slate-900 sm:text-xs">
-                  {category.label}
-                </h3>
-              </article>
-            </Link>
-          ))}
-        </div>
-
-        <div className="group relative mt-6 hidden overflow-hidden lg:block">
-          <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-4 scrollbar-hide sm:-mx-6 sm:px-6">
+        <div className="group relative mt-5 overflow-hidden">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 scrollbar-hide sm:-mx-6 sm:gap-4 sm:px-6">
             {categories.map((category) => (
-              <Link key={category.id} to={`/category/${category.id}`} className="min-w-[120px] snap-center">
-                <article className="rounded-[2rem] bg-white text-center transition duration-300">
-                  <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-emerald-100 shadow-inner">
-                    <img src={category.image} alt={category.label} className="h-full w-full object-cover" />
+              <Link
+                key={category.id}
+                to={`/category/${category.id}`}
+                className="w-[22%] min-w-[78px] shrink-0 snap-start sm:w-[100px] sm:min-w-[100px] lg:min-w-[120px]"
+              >
+                <article className="text-center">
+                  <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-transparent">
+                    <img
+                      src={category.image}
+                      alt={category.label}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                  <h3 className="mt-3 px-1 text-sm font-semibold leading-tight text-slate-900 break-words">
+                  <h3 className="mt-2 line-clamp-2 px-0.5 text-[11px] font-semibold leading-tight text-slate-900 sm:text-xs lg:mt-3 lg:text-sm">
                     {category.label}
                   </h3>
                 </article>
               </Link>
             ))}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent opacity-90" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent opacity-90" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r from-white to-transparent opacity-90 lg:block" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-16 bg-gradient-to-l from-white to-transparent opacity-90 lg:block" />
         </div>
       </div>
     </section>
