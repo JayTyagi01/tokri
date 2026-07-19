@@ -42,37 +42,37 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="flex w-full items-center justify-between rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900"
+          className="flex w-full items-center justify-between rounded-full border border-line bg-panel-2 px-5 py-3 text-sm font-semibold text-white"
         >
           <span>Account</span>
           <ChevronDown size={16} className={`transition ${open ? 'rotate-180' : ''}`} />
         </button>
 
         {open && (
-          <div className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-4 py-3">
-              <p className="text-sm font-bold text-slate-900">My Account</p>
-              <p className="text-sm text-slate-500">{formattedMobile}</p>
+          <div className="mt-2 overflow-hidden rounded-2xl border border-line bg-panel shadow-sm shadow-black/20">
+            <div className="border-b border-line px-4 py-3">
+              <p className="text-sm font-bold text-white">My Account</p>
+              <p className="text-sm text-muted">{formattedMobile}</p>
             </div>
             <nav className="py-1">
               <Link
                 to="/account?section=orders"
                 onClick={closeMenu}
-                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
               >
                 My Orders
               </Link>
               <Link
                 to="/account?section=addresses"
                 onClick={closeMenu}
-                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
               >
                 Saved Addresses
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                className="block w-full px-4 py-2.5 text-left text-sm text-mint transition hover:bg-panel-2"
               >
                 Log Out
               </button>
@@ -88,37 +88,37 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+        className="inline-flex h-12 items-center gap-2 rounded-full border border-line bg-panel-2 px-5 text-sm font-semibold text-white transition hover:bg-canvas"
       >
         Account
         <ChevronDown size={16} className={`transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="text-sm font-bold text-slate-900">My Account</p>
-            <p className="text-sm text-slate-500">{formattedMobile}</p>
+        <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-panel shadow-xl shadow-black/30">
+          <div className="border-b border-line px-4 py-3">
+            <p className="text-sm font-bold text-white">My Account</p>
+            <p className="text-sm text-muted">{formattedMobile}</p>
           </div>
           <nav className="py-1">
             <Link
               to="/account?section=orders"
               onClick={closeMenu}
-              className="block px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
             >
               My Orders
             </Link>
             <Link
               to="/account?section=addresses"
               onClick={closeMenu}
-              className="block px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
             >
               Saved Addresses
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+              className="block w-full px-4 py-2.5 text-left text-sm text-mint transition hover:bg-panel-2"
             >
               Log Out
             </button>

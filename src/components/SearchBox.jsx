@@ -197,7 +197,7 @@ export default function SearchBox({ variant = 'desktop' }) {
         Search products
       </label>
       <div className="relative w-full">
-        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
           <Search size={18} />
         </span>
         <input
@@ -213,13 +213,13 @@ export default function SearchBox({ variant = 'desktop' }) {
           placeholder={showAnimatedPlaceholder ? '' : isMobile ? 'Search fruits...' : 'Search fruits, categories...'}
           className={
             isMobile
-              ? 'h-12 w-full rounded-full border border-slate-200 bg-slate-50 px-12 text-sm text-slate-900 outline-none'
-              : 'h-12 w-full rounded-full border border-slate-200 px-12 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100'
+              ? 'h-12 w-full rounded-full border border-line bg-panel-2 px-12 text-sm text-white outline-none placeholder:text-muted'
+              : 'h-12 w-full rounded-full border border-line bg-panel-2 px-12 text-sm text-white outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/20'
           }
         />
         {showAnimatedPlaceholder && (
           <div
-            className="pointer-events-none absolute inset-y-0 left-12 right-4 overflow-hidden text-sm text-slate-400"
+            className="pointer-events-none absolute inset-y-0 left-12 right-4 overflow-hidden text-sm text-muted"
             aria-hidden="true"
           >
             <div className="search-placeholder-track">
@@ -235,7 +235,7 @@ export default function SearchBox({ variant = 'desktop' }) {
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+            className="absolute inset-y-0 right-4 flex items-center text-muted hover:text-mint"
             aria-label="Clear search"
           >
             <X size={18} />
@@ -245,9 +245,9 @@ export default function SearchBox({ variant = 'desktop' }) {
 
       {open && (
         <div className={panelClass}>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+          <div className="overflow-hidden rounded-2xl border border-line bg-panel shadow-xl shadow-black/30">
             {loading && products.length === 0 ? (
-              <div className="p-6 text-center text-sm text-slate-500">Searching…</div>
+              <div className="p-6 text-center text-sm text-muted">Searching…</div>
             ) : (
               <div
                 ref={scrollRef}
@@ -255,13 +255,13 @@ export default function SearchBox({ variant = 'desktop' }) {
                 className="max-h-[70vh] overflow-y-auto"
               >
                 {suggestions.length > 0 && (
-                  <ul className="divide-y divide-slate-100 border-b border-slate-100">
+                  <ul className="divide-y divide-line border-b border-line">
                     {suggestions.map((item) => (
                       <li key={`s-${item.id}`}>
                         <Link
                           to={`/product/${item.slug || item.id}`}
                           onClick={() => setOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-slate-50"
+                          className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-panel-2"
                         >
                           <img
                             src={item.image}
@@ -269,7 +269,7 @@ export default function SearchBox({ variant = 'desktop' }) {
                             className="h-7 w-7 rounded object-cover"
                             loading="lazy"
                           />
-                          <span className="text-sm text-slate-700">{item.name}</span>
+                          <span className="text-sm text-mint">{item.name}</span>
                         </Link>
                       </li>
                     ))}
@@ -277,7 +277,7 @@ export default function SearchBox({ variant = 'desktop' }) {
                 )}
 
                 <div className="p-4">
-                  <p className="mb-3 text-sm font-semibold text-slate-900">
+                  <p className="mb-3 text-sm font-semibold text-white">
                     {total > 0
                       ? `Showing results for "${resultQuery}"`
                       : `No products found for "${resultQuery}"`}
@@ -296,10 +296,10 @@ export default function SearchBox({ variant = 'desktop' }) {
                   )}
 
                   {loadingMore && (
-                    <div className="py-4 text-center text-sm text-slate-500">Loading more…</div>
+                    <div className="py-4 text-center text-sm text-muted">Loading more…</div>
                   )}
                   {!hasMore && products.length > 0 && (
-                    <div className="py-3 text-center text-xs text-slate-400">
+                    <div className="py-3 text-center text-xs text-muted">
                       You&apos;ve reached the end of the results.
                     </div>
                   )}

@@ -41,7 +41,7 @@ export default function CartControl({
         <button
           type="button"
           onClick={handleAdd}
-          className="w-full rounded-3xl bg-emerald-950 px-6 py-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+          className="w-full rounded-3xl bg-brand px-6 py-4 text-sm font-semibold text-black transition hover:bg-brand-hover"
         >
           Add to cart
         </button>
@@ -49,11 +49,11 @@ export default function CartControl({
     }
 
     return (
-      <div className="flex w-full items-center justify-between rounded-3xl bg-emerald-950 px-3 py-2 text-white">
+      <div className="flex w-full items-center justify-between rounded-3xl bg-brand px-3 py-2 text-black">
         <button
           type="button"
           onClick={handleDecrease}
-          className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-emerald-800"
+          className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-brand-hover"
           aria-label="Decrease quantity"
         >
           <Minus size={18} />
@@ -62,7 +62,7 @@ export default function CartControl({
         <button
           type="button"
           onClick={handleIncrease}
-          className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-emerald-800"
+          className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-brand-hover"
           aria-label="Increase quantity"
         >
           <Plus size={18} />
@@ -77,7 +77,7 @@ export default function CartControl({
         <button
           type="button"
           onClick={handleAdd}
-          className="min-w-[52px] rounded-md border-2 border-emerald-600 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-50"
+          className="min-w-[52px] rounded-md border-2 border-brand bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand transition hover:bg-emerald-50"
         >
           {addLabel}
         </button>
@@ -85,7 +85,7 @@ export default function CartControl({
     }
 
     return (
-      <div className="inline-flex min-w-[52px] items-center rounded-md border-2 border-emerald-600 bg-white text-emerald-700">
+      <div className="inline-flex min-w-[52px] items-center rounded-md border-2 border-brand bg-white text-brand">
         <button
           type="button"
           onClick={handleDecrease}
@@ -112,7 +112,7 @@ export default function CartControl({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-md border border-emerald-600 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
+        className="rounded-md border border-brand px-3 py-1.5 text-xs font-bold text-brand transition hover:bg-brand hover:text-black"
       >
         {addLabel}
       </button>
@@ -120,11 +120,11 @@ export default function CartControl({
   }
 
   return (
-    <div className="inline-flex items-center rounded-md bg-emerald-600 text-white">
+    <div className="inline-flex items-center rounded-md bg-brand text-black">
       <button
         type="button"
         onClick={handleDecrease}
-        className="flex h-8 w-8 items-center justify-center rounded-l-md transition hover:bg-emerald-700"
+        className="flex h-8 w-8 items-center justify-center rounded-l-md transition hover:bg-brand-hover"
         aria-label="Decrease quantity"
       >
         <Minus size={14} />
@@ -133,7 +133,7 @@ export default function CartControl({
       <button
         type="button"
         onClick={handleIncrease}
-        className="flex h-8 w-8 items-center justify-center rounded-r-md transition hover:bg-emerald-700"
+        className="flex h-8 w-8 items-center justify-center rounded-r-md transition hover:bg-brand-hover"
         aria-label="Increase quantity"
       >
         <Plus size={14} />

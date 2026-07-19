@@ -30,10 +30,10 @@ export default function BestSellers() {
   }, [])
 
   return (
-    <section>
+    <section className="bg-canvas py-8 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="m-0 text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
+          <h2 className="m-0 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
             <span className="font-light">Shop Our </span>Bestsellers
           </h2>
         </div>

@@ -12,17 +12,17 @@ export default function MyAccount() {
 
   if (!isLoggedIn) {
     return (
-      <main className="account-detail min-h-screen bg-slate-100 py-10">
+      <main className="account-detail min-h-screen bg-canvas py-10">
         <div className="mx-auto max-w-lg px-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <h1 className="text-2xl font-bold text-slate-900">My Account</h1>
-            <div className="mt-4 text-sm text-slate-600">
+          <div className="rounded-2xl border border-line bg-panel p-8 text-center">
+            <h1 className="text-2xl font-bold text-white">My Account</h1>
+            <div className="mt-4 text-sm text-muted">
               Sign in to manage your orders and saved delivery addresses.
             </div>
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="mt-6 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
             >
               Back to Home
             </button>
@@ -33,9 +33,9 @@ export default function MyAccount() {
   }
 
   return (
-    <main className="account-detail min-h-screen bg-slate-100 py-8 sm:py-10">
+    <main className="account-detail min-h-screen bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-line bg-panel">
           <div className="flex flex-col lg:flex-row">
             <AccountSidebar activeSection={section} />
 

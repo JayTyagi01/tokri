@@ -9,7 +9,7 @@ const formatPrice = (value) =>
 
 function CartQtyStepper({ quantity, onDecrease, onIncrease }) {
   return (
-    <div className="inline-flex items-center rounded-lg border-2 border-emerald-600 bg-emerald-600 text-white">
+    <div className="inline-flex items-center rounded-lg border-2 border-brand bg-brand text-black">
       <button
         type="button"
         onClick={onDecrease}
@@ -60,8 +60,8 @@ function MobileCartItem({ item, onDecrease, onIncrease }) {
 function BillRow({ label, value }) {
   return (
     <div className="flex items-center justify-between py-2.5 text-sm">
-      <span className="text-slate-600">{label}</span>
-      <span className="font-medium text-slate-900">{value}</span>
+      <span className="text-muted">{label}</span>
+      <span className="font-medium text-white">{value}</span>
     </div>
   )
 }
@@ -82,28 +82,28 @@ function MobileCartView({
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-28 lg:hidden">
-      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-canvas pb-28 lg:hidden">
+      <div className="sticky top-0 z-20 border-b border-line bg-panel">
         <div className="relative flex items-center justify-center px-4 py-3.5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="absolute left-3 inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-800"
+            className="absolute left-3 inline-flex h-10 w-10 items-center justify-center rounded-full text-white"
             aria-label="Go back"
           >
             <ArrowLeft size={22} />
           </button>
-          <p className="m-0 text-sm font-semibold text-slate-900">My Cart</p>
+          <p className="m-0 text-sm font-semibold text-white">My Cart</p>
         </div>
       </div>
 
       {cartItems.length === 0 ? (
-        <div className="mx-4 mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-          <p className="text-lg font-semibold text-slate-900">Your cart is empty</p>
-          <p className="mt-2 text-sm text-slate-500">Add fresh fruits from the home page.</p>
+        <div className="mx-4 mt-6 rounded-2xl border border-dashed border-line bg-panel px-6 py-14 text-center">
+          <p className="text-lg font-semibold text-white">Your cart is empty</p>
+          <p className="mt-2 text-sm text-muted">Add fresh fruits from the home page.</p>
           <Link
             to="/"
-            className="mt-6 inline-flex rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             Start shopping
           </Link>
@@ -124,10 +124,10 @@ function MobileCartView({
             ))}
           </section>
 
-          <section className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="text-base font-bold text-slate-900">Bill details</h2>
+          <section className="overflow-hidden rounded-2xl border border-line bg-panel p-4">
+            <h2 className="text-base font-bold text-white">Bill details</h2>
 
-            <div className="mt-1 divide-y divide-slate-100">
+            <div className="mt-1 divide-y divide-line">
               <BillRow label="Items total" value={formatPrice(itemsTotal)} />
               <BillRow label="Delivery charge" value={formatPrice(deliveryCharge)} />
               <BillRow label="Handling charge" value={formatPrice(handlingCharge)} />
@@ -136,15 +136,15 @@ function MobileCartView({
               )}
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-dashed border-slate-200 pt-3">
-              <span className="text-base font-bold text-slate-900">Grand total</span>
-              <span className="text-base font-bold text-slate-900">{formatPrice(grandTotal)}</span>
+            <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
+              <span className="text-base font-bold text-white">Grand total</span>
+              <span className="text-base font-bold text-white">{formatPrice(grandTotal)}</span>
             </div>
           </section>
 
-          <section className="rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="text-base font-bold text-slate-900">Cancellation Policy</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
+          <section className="rounded-2xl border border-line bg-panel p-4">
+            <h2 className="text-base font-bold text-white">Cancellation Policy</h2>
+            <p className="mt-3 text-sm leading-6 text-muted">
               Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a
               refund will be provided where applicable.
             </p>
@@ -153,16 +153,16 @@ function MobileCartView({
       )}
 
       {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-line bg-panel p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.35)]">
           {hasDeliveryAddress ? (
             <button
               type="button"
               onClick={onProceed}
-              className="flex w-full items-center justify-between rounded-xl bg-emerald-600 px-5 py-3.5 text-white transition active:bg-emerald-700"
+              className="flex w-full items-center justify-between rounded-xl bg-brand px-5 py-3.5 text-black transition active:bg-brand-hover"
             >
               <span>
                 <span className="block text-lg font-bold leading-none">{formatPrice(grandTotal)}</span>
-                <span className="mt-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-100">
+                <span className="mt-1 block text-[11px] font-semibold uppercase tracking-wide text-black/70">
                   TOTAL
                 </span>
               </span>
@@ -175,7 +175,7 @@ function MobileCartView({
             <button
               type="button"
               onClick={onAddAddress}
-              className="w-full rounded-xl bg-emerald-600 px-5 py-3.5 text-base font-semibold text-white transition active:bg-emerald-700"
+              className="w-full rounded-xl bg-brand px-5 py-3.5 text-base font-semibold text-black transition active:bg-brand-hover"
             >
               Add address to proceed
             </button>
@@ -200,21 +200,21 @@ function DesktopCartView({
   onAddAddress,
 }) {
   return (
-    <section className="container mx-auto hidden px-4 py-10 lg:block">
+    <section className="container mx-auto hidden bg-canvas px-4 py-10 lg:block">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Cart</p>
-            <h1 className="text-3xl font-bold">Your Shopping Bag</h1>
+            <p className="text-sm text-muted">Cart</p>
+            <h1 className="text-3xl font-bold text-white">Your Shopping Bag</h1>
           </div>
-          <Link to="/" className="text-sm text-slate-600 hover:text-slate-900">
+          <Link to="/" className="text-sm text-mint hover:text-white">
             Continue shopping
           </Link>
         </div>
 
         {cartItems.length === 0 ? (
-          <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-12 text-center text-slate-600">
-            <p className="text-xl font-semibold">Your cart is empty</p>
+          <div className="rounded-[2rem] border border-line bg-panel p-12 text-center text-muted">
+            <p className="text-xl font-semibold text-white">Your cart is empty</p>
             <p className="mt-3">Add fresh fruits from the home page to place your order.</p>
           </div>
         ) : (
@@ -223,7 +223,7 @@ function DesktopCartView({
               {cartItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-4 rounded-[2rem] border border-slate-200 p-5 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-4 rounded-[2rem] border border-line bg-panel p-5 sm:flex-row sm:items-center"
                 >
                   <img
                     src={resolveAssetUrl(item.image)}
@@ -233,10 +233,10 @@ function DesktopCartView({
                   <div className="flex-1">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <h2 className="text-lg font-semibold">{item.name}</h2>
-                        <p className="text-sm text-slate-500">{item.weight}</p>
+                        <h2 className="text-lg font-semibold text-white">{item.name}</h2>
+                        <p className="text-sm text-muted">{item.weight}</p>
                       </div>
-                      <p className="text-lg font-semibold">
+                      <p className="text-lg font-semibold text-white">
                         {formatPrice(item.priceValue * item.quantity)}
                       </p>
                     </div>
@@ -244,22 +244,22 @@ function DesktopCartView({
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="h-9 w-9 rounded-full border border-slate-200 text-slate-800"
+                        className="h-9 w-9 rounded-full border border-line text-white"
                       >
                         –
                       </button>
-                      <span className="font-semibold">{item.quantity}</span>
+                      <span className="font-semibold text-white">{item.quantity}</span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="h-9 w-9 rounded-full border border-slate-200 text-slate-800"
+                        className="h-9 w-9 rounded-full border border-line text-white"
                       >
                         +
                       </button>
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="ml-auto text-sm text-slate-500 hover:text-slate-900"
+                        className="ml-auto text-sm text-muted hover:text-white"
                       >
                         Remove
                       </button>
@@ -269,29 +269,29 @@ function DesktopCartView({
               ))}
             </div>
 
-            <div className="space-y-6 rounded-[2rem] border border-slate-200 bg-slate-50 p-6">
-              <h2 className="text-xl font-semibold">Order summary</h2>
+            <div className="space-y-6 rounded-[2rem] border border-line bg-panel p-6">
+              <h2 className="text-xl font-semibold text-white">Order summary</h2>
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm text-slate-600">
+                <div className="flex items-center justify-between text-sm text-muted">
                   <span>Item total</span>
                   <span>{formatPrice(itemsTotal)}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm text-slate-600">
+                <div className="flex items-center justify-between text-sm text-muted">
                   <span>Delivery charges</span>
                   <span>{formatPrice(deliveryCharge)}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm text-slate-600">
+                <div className="flex items-center justify-between text-sm text-muted">
                   <span>Handling charge</span>
                   <span>{formatPrice(handlingCharge)}</span>
                 </div>
                 {smallCartCharge > 0 && (
-                  <div className="flex items-center justify-between text-sm text-slate-600">
+                  <div className="flex items-center justify-between text-sm text-muted">
                     <span>Small cart charge</span>
                     <span>{formatPrice(smallCartCharge)}</span>
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-lg font-semibold">
+              <div className="flex items-center justify-between border-t border-line pt-4 text-lg font-semibold text-white">
                 <span>Total</span>
                 <span>{formatPrice(grandTotal)}</span>
               </div>
@@ -299,7 +299,7 @@ function DesktopCartView({
                 <button
                   type="button"
                   onClick={onProceed}
-                  className="w-full rounded-full bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="w-full rounded-full bg-brand py-4 text-sm font-semibold text-black transition hover:bg-brand-hover"
                 >
                   Proceed to checkout
                 </button>
@@ -307,7 +307,7 @@ function DesktopCartView({
                 <button
                   type="button"
                   onClick={onAddAddress}
-                  className="w-full rounded-full bg-emerald-600 py-4 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  className="w-full rounded-full bg-brand py-4 text-sm font-semibold text-black transition hover:bg-brand-hover"
                 >
                   Add address to proceed
                 </button>

@@ -34,54 +34,54 @@ function OrderCard({ order, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <article className="overflow-hidden rounded-xl border border-line bg-panel-2">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-start gap-4 p-4 text-left transition hover:bg-slate-50 sm:p-5"
+        className="flex w-full items-start gap-4 p-4 text-left transition hover:bg-panel sm:p-5"
       >
-        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-emerald-400">
           <Package size={20} />
         </span>
 
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-slate-900">Order #{order.orderNo}</span>
+            <span className="font-semibold text-white">Order #{order.orderNo}</span>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(order.status)}`}>
               {statusLabel(order.status)}
             </span>
           </span>
-          <span className="mt-1 block text-sm text-slate-500">{formatDate(order.createdAt)}</span>
-          <span className="mt-1 block text-sm text-slate-600">
+          <span className="mt-1 block text-sm text-muted">{formatDate(order.createdAt)}</span>
+          <span className="mt-1 block text-sm text-muted">
             {order.itemCount} item{order.itemCount !== 1 ? 's' : ''} · {order.paymentMethod}
           </span>
         </span>
 
         <span className="flex shrink-0 items-center gap-3">
-          <span className="text-base font-bold text-slate-900">{formatPrice(order.grandTotal)}</span>
+          <span className="text-base font-bold text-white">{formatPrice(order.grandTotal)}</span>
           <ChevronDown
             size={18}
-            className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`}
+            className={`text-muted transition ${open ? 'rotate-180' : ''}`}
           />
         </span>
       </button>
 
       {open && (
-        <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
+        <div className="border-t border-line px-4 pb-5 pt-4 sm:px-5">
           {order.address?.formatted && (
-            <div className="mb-5 rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="mb-5 rounded-xl bg-panel p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                 Delivery address
               </p>
-              <p className="mt-2 text-sm font-medium text-slate-900">{order.address.label}</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{order.address.formatted}</p>
+              <p className="mt-2 text-sm font-medium text-white">{order.address.label}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">{order.address.formatted}</p>
             </div>
           )}
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-slate-500">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="pb-3 pr-4 font-medium">Item</th>
                   <th className="pb-3 pr-4 font-medium">Price</th>
                   <th className="pb-3 pr-4 font-medium">Qty</th>
@@ -90,25 +90,25 @@ function OrderCard({ order, defaultOpen = false }) {
               </thead>
               <tbody>
                 {order.items.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-100">
+                  <tr key={item.id} className="border-b border-line/60">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">
                         <img
                           src={resolveAssetUrl(item.image)}
                           alt={item.name}
-                          className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                          className="h-12 w-12 rounded-lg border border-line object-cover"
                         />
                         <div>
-                          <p className="font-medium text-slate-900">{item.name}</p>
+                          <p className="font-medium text-white">{item.name}</p>
                           {item.weight && (
-                            <p className="text-xs text-slate-500">{item.weight}</p>
+                            <p className="text-xs text-muted">{item.weight}</p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 whitespace-nowrap">{formatPrice(item.priceValue)}</td>
-                    <td className="py-3 pr-4">{item.quantity}</td>
-                    <td className="py-3 text-right whitespace-nowrap font-medium">
+                    <td className="py-3 pr-4 whitespace-nowrap text-muted">{formatPrice(item.priceValue)}</td>
+                    <td className="py-3 pr-4 text-muted">{item.quantity}</td>
+                    <td className="py-3 text-right whitespace-nowrap font-medium text-white">
                       {formatPrice(item.lineTotal)}
                     </td>
                   </tr>
@@ -117,7 +117,7 @@ function OrderCard({ order, defaultOpen = false }) {
             </table>
           </div>
 
-          <div className="mt-5 ml-auto max-w-xs space-y-2 text-sm text-slate-600">
+          <div className="mt-5 ml-auto max-w-xs space-y-2 text-sm text-muted">
             <div className="flex justify-between">
               <span>Items subtotal</span>
               <span>{formatPrice(order.itemsTotal)}</span>
@@ -140,13 +140,13 @@ function OrderCard({ order, defaultOpen = false }) {
                 <span>-{formatPrice(order.discount)}</span>
               </div>
             )}
-            <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold text-slate-900">
+            <div className="flex justify-between border-t border-line pt-2 text-base font-bold text-white">
               <span>Order total</span>
               <span>{formatPrice(order.grandTotal)}</span>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+          <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
             <span>Payment: {statusLabel(order.paymentStatus)}</span>
             <span>·</span>
             <span>{order.paymentMethod}</span>
@@ -179,8 +179,8 @@ function OrdersPagination({ pagination, onPageChange }) {
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-slate-500">
+    <div className="mt-6 flex flex-col gap-4 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted">
         Showing {start}–{end} of {totalCount} orders
       </p>
 
@@ -189,7 +189,7 @@ function OrdersPagination({ pagination, onPageChange }) {
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={!hasPrevPage}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm font-medium text-white transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft size={16} />
           Prev
@@ -197,7 +197,7 @@ function OrdersPagination({ pagination, onPageChange }) {
 
         {pages.map((item, index) =>
           item === '…' ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-sm text-slate-400">
+            <span key={`ellipsis-${index}`} className="px-2 text-sm text-muted">
               …
             </span>
           ) : (
@@ -207,8 +207,8 @@ function OrdersPagination({ pagination, onPageChange }) {
               onClick={() => onPageChange(item)}
               className={`min-w-10 rounded-lg px-3 py-2 text-sm font-medium transition ${
                 item === page
-                  ? 'bg-emerald-950 text-white'
-                  : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  ? 'bg-brand text-black'
+                  : 'border border-line text-white hover:bg-panel'
               }`}
             >
               {item}
@@ -220,7 +220,7 @@ function OrdersPagination({ pagination, onPageChange }) {
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={!hasNextPage}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm font-medium text-white transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
           <ChevronRight size={16} />
@@ -281,27 +281,27 @@ export default function MyOrders() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">My orders</h1>
-      <p className="mt-1 text-sm text-slate-500">Track your fruit orders and delivery details.</p>
+      <h1 className="text-2xl font-bold text-white">My orders</h1>
+      <p className="mt-1 text-sm text-muted">Track your fruit orders and delivery details.</p>
 
       {loading && (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+        <div className="mt-8 rounded-xl border border-line bg-panel-2 px-4 py-8 text-center text-sm text-muted">
           Loading your orders...
         </div>
       )}
 
       {!loading && error && (
-        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 px-4 py-6 text-sm text-red-700">
+        <div className="mt-8 rounded-xl border border-red-800/50 bg-red-950/40 px-4 py-6 text-sm text-red-300">
           {error}
         </div>
       )}
 
       {!loading && !error && orders.length === 0 && (
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-          <p className="text-base font-semibold text-slate-900">
+        <div className="mt-8 rounded-xl border border-dashed border-line bg-panel-2 px-6 py-10 text-center">
+          <p className="text-base font-semibold text-white">
             {pagination?.totalCount ? 'No orders on this page' : 'No orders yet'}
           </p>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted">
             {pagination?.totalCount
               ? 'Try going back to the previous page.'
               : 'Your order history will appear here after your first purchase.'}
@@ -310,14 +310,14 @@ export default function MyOrders() {
             <button
               type="button"
               onClick={() => changePage(page - 1)}
-              className="mt-5 inline-flex rounded-full bg-emerald-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-5 inline-flex rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-hover"
             >
               Go to previous page
             </button>
           ) : (
             <Link
               to="/"
-              className="mt-5 inline-flex rounded-full bg-emerald-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-5 inline-flex rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-hover"
             >
               Start shopping
             </Link>

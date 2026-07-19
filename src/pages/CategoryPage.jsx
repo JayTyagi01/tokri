@@ -45,9 +45,9 @@ export default function CategoryPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 py-20">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-10 shadow-xl">
-          <h1 className="text-3xl font-bold text-slate-900">Loading category...</h1>
+      <main className="min-h-screen bg-canvas py-20">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-line bg-panel p-10">
+          <h1 className="text-3xl font-bold text-white">Loading category...</h1>
         </div>
       </main>
     )
@@ -55,13 +55,13 @@ export default function CategoryPage() {
 
   if (!category) {
     return (
-      <main className="min-h-screen bg-slate-50 py-20">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-10 shadow-xl">
-          <h1 className="text-3xl font-bold text-slate-900">Category not found</h1>
-          <p className="mt-4 text-slate-600">The category you are looking for does not exist.</p>
+      <main className="min-h-screen bg-canvas py-20">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-line bg-panel p-10">
+          <h1 className="text-3xl font-bold text-white">Category not found</h1>
+          <p className="mt-4 text-muted">The category you are looking for does not exist.</p>
           <Link
             to="/"
-            className="mt-8 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+            className="mt-8 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             Back to home
           </Link>
@@ -71,14 +71,14 @@ export default function CategoryPage() {
   }
 
   return (
-    <main className="bg-slate-50 pb-16 pt-10">
+    <main className="bg-canvas pb-16 pt-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <nav className="mb-6 text-sm text-slate-500">
-          <Link to="/" className="font-medium text-emerald-900 hover:underline">
+        <nav className="mb-6 text-sm text-muted">
+          <Link to="/" className="font-medium text-mint hover:underline">
             Home
           </Link>
           <span className="mx-2">/</span>
-          <span className="font-medium text-slate-900">{category.title}</span>
+          <span className="font-medium text-white">{category.title}</span>
         </nav>
 
         {category.bannerImage ? (
@@ -90,10 +90,10 @@ export default function CategoryPage() {
             />
           </div>
         ) : (
-          <div className="mb-10 overflow-hidden rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-8 shadow-sm sm:p-10">
+          <div className="mb-10 overflow-hidden rounded-[2rem] border border-line bg-panel p-8 sm:p-10">
             <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-center">
               <div className="shrink-0">
-                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-emerald-100 shadow-inner sm:h-40 sm:w-40">
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-panel-2 shadow-inner sm:h-40 sm:w-40">
                   <img
                     src={resolveAssetUrl(category.image)}
                     alt={category.title || category.label}
@@ -102,18 +102,18 @@ export default function CategoryPage() {
                 </div>
               </div>
               <div className="text-center sm:text-left">
-                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-600">
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-400">
                   Category
                 </p>
-                <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                   {category.title}
                 </h1>
                 {category.subtitle && (
-                  <p className="mt-3 max-w-xl text-base leading-7 text-slate-600">
+                  <p className="mt-3 max-w-xl text-base leading-7 text-muted">
                     {category.subtitle}
                   </p>
                 )}
-                <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600/10 px-4 py-1.5 text-sm font-medium text-emerald-800">
+                <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand/15 px-4 py-1.5 text-sm font-medium text-mint">
                   <span className="font-bold">{category.products.length}</span> products available
                 </p>
               </div>
@@ -122,14 +122,14 @@ export default function CategoryPage() {
         )}
 
         {category.products.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center">
-            <p className="text-lg font-semibold text-slate-900">No products yet</p>
-            <p className="mt-2 text-sm text-slate-500">
+          <div className="rounded-[2rem] border border-dashed border-line bg-panel p-12 text-center">
+            <p className="text-lg font-semibold text-white">No products yet</p>
+            <p className="mt-2 text-sm text-muted">
               We&apos;re adding fresh picks to this category soon. Check back shortly.
             </p>
             <Link
               to="/"
-              className="mt-6 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+              className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black transition hover:bg-brand-hover"
             >
               Continue shopping
             </Link>

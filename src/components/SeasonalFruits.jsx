@@ -118,16 +118,16 @@ export default function SeasonalFruits() {
   }
 
   return (
-    <section className="my-8 lg:my-14">
+    <section className="my-8 bg-canvas lg:my-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="m-0 text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
+          <h2 className="m-0 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
             <span className="font-light">Seasonal </span>Fruits
           </h2>
         </div>
 
         {loading ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+          <div className="rounded-xl border border-line bg-panel p-10 text-center text-muted">
             Loading products...
           </div>
         ) : (
@@ -137,7 +137,7 @@ export default function SeasonalFruits() {
                 type="button"
                 onClick={() => scrollByCard(-1)}
                 aria-label="Previous products"
-                className="absolute -left-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white"
+                className="absolute -left-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
               >
                 <ChevronLeft size={20} />
               </button>
@@ -162,7 +162,7 @@ export default function SeasonalFruits() {
                 type="button"
                 onClick={() => scrollByCard(1)}
                 aria-label="Next products"
-                className="absolute -right-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2.5 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white"
+                className="absolute -right-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
               >
                 <ChevronRight size={20} />
               </button>

@@ -99,7 +99,7 @@ function App() {
     <AuthProvider>
       <AddressProvider>
         <CartProvider>
-          <div className="min-h-screen">
+          <div className="min-h-screen bg-canvas">
             <AppShell />
           </div>
         </CartProvider>

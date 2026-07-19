@@ -159,13 +159,13 @@ export default function CheckoutPage() {
 
   if (!cartItems.length) {
     return (
-      <main className="min-h-screen bg-slate-50 py-16">
+      <main className="min-h-screen bg-canvas py-16">
         <div className="mx-auto max-w-lg px-4 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Nothing to checkout</h1>
-          <p className="mt-3 text-slate-600">Your cart is empty.</p>
+          <h1 className="text-2xl font-bold text-white">Nothing to checkout</h1>
+          <p className="mt-3 text-muted">Your cart is empty.</p>
           <Link
             to="/"
-            className="mt-6 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+            className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             Continue shopping
           </Link>
@@ -175,46 +175,46 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="account-detail min-h-screen bg-slate-100 py-8 sm:py-10">
+    <main className="account-detail min-h-screen bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="mb-6">
-          <Link to="/cart" className="text-sm font-medium text-emerald-800 hover:underline">
+          <Link to="/cart" className="text-sm font-medium text-mint hover:underline">
             ← Back to cart
           </Link>
-          <h1 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">Checkout</h1>
+          <h1 className="mt-3 text-2xl font-bold text-white sm:text-3xl">Checkout</h1>
         </div>
 
         {!isLoggedIn && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
             Please log in to complete your order.
           </div>
         )}
 
         {!loading && !razorpayEnabled && (
-          <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          <div className="mb-6 rounded-xl border border-sky-700/40 bg-sky-950/40 px-4 py-3 text-sm text-sky-200">
             Online payment (Razorpay) is not enabled yet. You can still place your order with{' '}
             <strong>cash on delivery</strong>. Enable Razorpay in admin settings to accept online payments.
           </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <section className="rounded-2xl border border-line bg-panel p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-900">Delivery address</h2>
+              <h2 className="text-lg font-bold text-white">Delivery address</h2>
               <Link
                 to="/account?section=addresses"
-                className="text-sm font-semibold text-emerald-700 hover:underline"
+                className="text-sm font-semibold text-mint hover:underline"
               >
                 Manage addresses
               </Link>
             </div>
 
             {loading ? (
-              <p className="mt-4 text-sm text-slate-500">Loading addresses...</p>
+              <p className="mt-4 text-sm text-muted">Loading addresses...</p>
             ) : addresses.length === 0 ? (
-              <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+              <div className="mt-4 rounded-xl border border-dashed border-line bg-panel-2 p-5 text-sm text-muted">
                 No saved address found.{' '}
-                <Link to="/account?section=addresses" className="font-semibold text-emerald-700 underline">
+                <Link to="/account?section=addresses" className="font-semibold text-mint underline">
                   Add a delivery address
                 </Link>{' '}
                 to continue.
@@ -229,8 +229,8 @@ export default function CheckoutPage() {
                       <label
                         className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
                           selected
-                            ? 'border-emerald-600 bg-emerald-50/50'
-                            : 'border-slate-200 hover:border-slate-300'
+                            ? 'border-brand bg-brand/10'
+                            : 'border-line hover:border-line/80'
                         }`}
                       >
                         <input
@@ -240,12 +240,12 @@ export default function CheckoutPage() {
                           onChange={() => setSelectedAddressId(address.id)}
                           className="mt-1"
                         />
-                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-emerald-400">
                           <Icon size={18} />
                         </span>
                         <span>
-                          <span className="block font-semibold text-slate-900">{address.label}</span>
-                          <span className="mt-1 block text-sm leading-6 text-slate-600">
+                          <span className="block font-semibold text-white">{address.label}</span>
+                          <span className="mt-1 block text-sm leading-6 text-muted">
                             {address.formatted}
                           </span>
                         </span>
@@ -257,22 +257,22 @@ export default function CheckoutPage() {
             )}
           </section>
 
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900">Order summary</h2>
-            <ul className="mt-4 space-y-3 border-b border-slate-100 pb-4">
+          <aside className="h-fit rounded-2xl border border-line bg-panel p-5 sm:p-6">
+            <h2 className="text-lg font-bold text-white">Order summary</h2>
+            <ul className="mt-4 space-y-3 border-b border-line pb-4">
               {cartItems.map((item) => (
                 <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
-                  <span className="text-slate-700">
+                  <span className="text-muted">
                     {item.name} × {item.quantity}
                   </span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-white">
                     {formatPrice(item.priceValue * item.quantity)}
                   </span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-4 space-y-2 text-sm text-slate-600">
+            <div className="mt-4 space-y-2 text-sm text-muted">
               <div className="flex justify-between">
                 <span>Item total</span>
                 <span>{formatPrice(itemsTotal)}</span>
@@ -291,7 +291,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-lg font-bold text-slate-900">
+            <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-lg font-bold text-white">
               <span>Total</span>
               <span>{formatPrice(grandTotal)}</span>
             </div>
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
               type="button"
               onClick={handleCheckout}
               disabled={paying || loading || !isLoggedIn || !addresses.length}
-              className="mt-5 w-full rounded-full bg-emerald-950 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {paying
                 ? 'Processing...'

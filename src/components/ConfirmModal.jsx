@@ -11,14 +11,14 @@ export default function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border border-line bg-panel p-6 shadow-2xl shadow-black/40"
         onClick={(event) => event.stopPropagation()}
       >
-        <p className="text-center text-base font-semibold leading-relaxed text-slate-900">
+        <p className="text-center text-base font-semibold leading-relaxed text-white">
           {message}
         </p>
 
@@ -35,7 +35,7 @@ export default function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="rounded-xl border border-slate-200 bg-slate-100 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+            className="rounded-xl border border-line bg-panel-2 py-3 text-sm font-semibold text-mint transition hover:bg-canvas disabled:opacity-60"
           >
             {cancelLabel}
           </button>

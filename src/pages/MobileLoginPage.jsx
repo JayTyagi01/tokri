@@ -47,12 +47,12 @@ export default function MobileLoginPage() {
   if (isLoggedIn) return null
 
   return (
-    <main className="min-h-screen bg-white lg:hidden">
+    <main className="min-h-screen bg-canvas lg:hidden">
       <div className="relative">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-800 shadow-sm"
+          className="absolute left-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-panel text-white shadow-sm"
           aria-label="Go back"
         >
           <ArrowLeft size={18} />
@@ -64,13 +64,13 @@ export default function MobileLoginPage() {
       <div className="px-5 pb-8">
         <div className="flex flex-col items-center text-center">
           <img src={tokriLogo} alt="Tokriii" className="h-14 w-auto object-contain" />
-          <p className="mt-4 text-base font-semibold text-slate-900">Log in or Sign up</p>
+          <p className="mt-4 text-base font-semibold text-white">Log in or Sign up</p>
         </div>
 
         {step === 1 ? (
           <div className="mt-8">
-            <div className="flex items-center rounded-xl border border-slate-300 bg-white px-4 py-3.5">
-              <span className="text-sm font-medium text-slate-500">+91</span>
+            <div className="flex items-center rounded-xl border border-line bg-panel px-4 py-3.5">
+              <span className="text-sm font-medium text-muted">+91</span>
               <input
                 type="tel"
                 inputMode="numeric"
@@ -79,7 +79,7 @@ export default function MobileLoginPage() {
                 onChange={(event) =>
                   setMobileNumber(event.target.value.replace(/\D/g, '').slice(0, 10))
                 }
-                className="ml-3 w-full bg-transparent text-base text-slate-900 outline-none"
+                className="ml-3 w-full bg-transparent text-base text-white outline-none placeholder:text-muted"
               />
             </div>
 
@@ -87,24 +87,24 @@ export default function MobileLoginPage() {
               type="button"
               onClick={handleContinue}
               disabled={!canContinue}
-              className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="mt-5 w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-black transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-panel-2 disabled:text-muted"
             >
               {loading ? 'Sending...' : 'Continue'}
             </button>
           </div>
         ) : (
           <div className="mt-8">
-            <p className="text-center text-sm text-slate-600">
+            <p className="text-center text-sm text-muted">
               Enter the 4-digit OTP sent to +91 {mobileNumber}
             </p>
-            <div className="mt-4 rounded-xl border border-slate-300 bg-white px-4 py-3.5">
+            <div className="mt-4 rounded-xl border border-line bg-panel px-4 py-3.5">
               <input
                 type="tel"
                 inputMode="numeric"
                 placeholder="Enter OTP"
                 value={otp}
                 onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-slate-900 outline-none"
+                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-white outline-none placeholder:text-muted"
               />
             </div>
 
@@ -112,7 +112,7 @@ export default function MobileLoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading}
-              className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              className="mt-5 w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
             >
               {loading ? 'Verifying...' : 'Continue'}
             </button>
@@ -121,20 +121,20 @@ export default function MobileLoginPage() {
               type="button"
               onClick={() => setStep(1)}
               disabled={loading}
-              className="mt-3 w-full rounded-xl border border-slate-300 bg-white py-3.5 text-base font-semibold text-slate-700"
+              className="mt-3 w-full rounded-xl border border-line bg-panel py-3.5 text-base font-semibold text-white"
             >
               Change number
             </button>
           </div>
         )}
 
-        <p className="mt-8 text-center text-xs leading-relaxed text-slate-500">
+        <p className="mt-8 text-center text-xs leading-relaxed text-muted">
           By continuing, you agree to our{' '}
-          <Link to="/terms-and-conditions" className="font-medium text-slate-800 underline">
+          <Link to="/terms-and-conditions" className="font-medium text-mint underline">
             Terms of service
           </Link>{' '}
           &{' '}
-          <Link to="/privacy-policy" className="font-medium text-slate-800 underline">
+          <Link to="/privacy-policy" className="font-medium text-mint underline">
             Privacy policy
           </Link>
         </p>

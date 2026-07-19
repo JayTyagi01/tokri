@@ -201,20 +201,20 @@ export default function ShopAllPage() {
 
   if (loadingCategories && !categories.length) {
     return (
-      <main className="flex min-h-[50vh] items-center justify-center bg-[#f8f8f8]">
-        <p className="text-slate-500">Loading shop...</p>
+      <main className="flex min-h-[50vh] items-center justify-center bg-canvas">
+        <p className="text-muted">Loading shop...</p>
       </main>
     )
   }
 
   if (!activeCategory) {
     return (
-      <main className="flex min-h-[50vh] items-center justify-center bg-[#f8f8f8]">
+      <main className="flex min-h-[50vh] items-center justify-center bg-canvas">
         <div className="px-4 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">No categories found</h1>
+          <h1 className="text-2xl font-bold text-white">No categories found</h1>
           <Link
             to="/"
-            className="mt-6 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             Back to home
           </Link>
@@ -224,14 +224,14 @@ export default function ShopAllPage() {
   }
 
   return (
-    <main className="bg-[#f8f8f8]">
+    <main className="bg-canvas">
       <div className="mx-auto max-w-7xl px-2 pt-5 sm:px-3 sm:pt-6 lg:px-4 lg:pt-8">
-        <p className="mx-2.5 mb-5 text-xl capitalize text-slate-900">Shop all</p>
+        <p className="mx-2.5 mb-5 text-xl capitalize text-white">Shop all</p>
 
-        <div className="my-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="my-5 overflow-hidden rounded-lg border border-line bg-panel">
           <div className="flex min-h-[calc(100dvh-14rem)] lg:min-h-[calc(100dvh-12rem)]">
             {/* Category rail — aligned with product cards inside the box */}
-            <aside className="flex w-[76px] shrink-0 flex-col border-r border-slate-200 bg-[#f3f4f6] sm:w-[92px] lg:w-[108px]">
+            <aside className="flex w-[76px] shrink-0 flex-col border-r border-line bg-panel sm:w-[92px] lg:w-[108px]">
               <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
                 {categories.map((category) => {
                   const isActive = category.slug === activeCategory.slug
@@ -241,15 +241,15 @@ export default function ShopAllPage() {
                       type="button"
                       onClick={() => selectCategory(category.slug)}
                       className={`relative flex w-full flex-col items-center gap-0.5 px-1 py-2 text-center transition sm:px-1.5 sm:py-2.5 ${
-                        isActive ? 'bg-white' : 'hover:bg-white/70'
+                        isActive ? 'bg-panel-2' : 'hover:bg-panel-2/60'
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute inset-y-2 right-0 w-[3px] rounded-l-full bg-emerald-600" />
+                        <span className="absolute inset-y-2 right-0 w-[3px] rounded-l-full bg-brand" />
                       )}
                       <span
                         className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border bg-white sm:h-11 sm:w-11 ${
-                          isActive ? 'border-emerald-300' : 'border-slate-200'
+                          isActive ? 'border-emerald-400' : 'border-line'
                         }`}
                       >
                         <img
@@ -261,7 +261,7 @@ export default function ShopAllPage() {
                       </span>
                       <span
                         className={`line-clamp-2 px-0.5 text-[9px] leading-tight sm:text-[10px] ${
-                          isActive ? 'font-bold text-emerald-700' : 'font-medium text-slate-600'
+                          isActive ? 'font-bold text-mint' : 'font-medium text-muted'
                         }`}
                       >
                         {category.label}
@@ -275,7 +275,7 @@ export default function ShopAllPage() {
             {/* Products — only this panel scrolls */}
             <section
               ref={productsScrollRef}
-              className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-[#f8f8f8]"
+              className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-canvas"
             >
               <div className="px-1.5 pb-3 pt-1 sm:px-2 sm:pb-4">
             {loadingProducts ? (
@@ -288,9 +288,9 @@ export default function ShopAllPage() {
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
-                <p className="text-base font-semibold text-slate-900">No products yet</p>
-                <p className="mt-2 text-sm text-slate-500">
+              <div className="rounded-lg border border-dashed border-line bg-panel-2 p-10 text-center">
+                <p className="text-base font-semibold text-white">No products yet</p>
+                <p className="mt-2 text-sm text-muted">
                   We&apos;re adding fresh picks to this category soon.
                 </p>
               </div>
@@ -308,7 +308,7 @@ export default function ShopAllPage() {
 
                 <div ref={loadMoreRef} className="flex h-8 items-center justify-center py-3">
                   {loadingMore && (
-                    <span className="text-sm font-medium text-slate-500">Loading more…</span>
+                    <span className="text-sm font-medium text-muted">Loading more…</span>
                   )}
                 </div>
               </>

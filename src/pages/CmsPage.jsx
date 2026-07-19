@@ -47,10 +47,10 @@ export default function CmsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 py-16">
+      <main className="min-h-screen bg-canvas py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm">
-            <h1 className="text-3xl font-bold text-slate-900">Loading page...</h1>
+          <div className="rounded-[2rem] border border-line bg-panel p-10">
+            <h1 className="text-3xl font-bold text-white">Loading page...</h1>
           </div>
         </div>
       </main>
@@ -59,14 +59,14 @@ export default function CmsPage() {
 
   if (notFound || !page) {
     return (
-      <main className="min-h-screen bg-slate-50 py-16">
+      <main className="min-h-screen bg-canvas py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm">
-            <h1 className="text-4xl font-bold text-slate-900">Page not found</h1>
-            <p className="mt-4 text-slate-600">This page does not exist or is not published yet.</p>
+          <div className="rounded-[2rem] border border-line bg-panel p-10">
+            <h1 className="text-4xl font-bold text-white">Page not found</h1>
+            <p className="mt-4 text-muted">This page does not exist or is not published yet.</p>
             <Link
               to="/"
-              className="mt-8 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-8 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
             >
               Back to Home
             </Link>
@@ -77,22 +77,22 @@ export default function CmsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-16">
+    <main className="min-h-screen bg-canvas py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm">
-          <h1 className="text-4xl font-bold text-slate-900">{page.title}</h1>
+        <div className="rounded-[2rem] border border-line bg-panel p-10">
+          <h1 className="text-4xl font-bold text-white">{page.title}</h1>
 
           {page.body ? (
-            <div className="cms-page-content mt-8 text-slate-700" dangerouslySetInnerHTML={{ __html: page.body }} />
+            <div className="cms-page-content mt-8" dangerouslySetInnerHTML={{ __html: page.body }} />
           ) : (
-            <p className="mt-6 text-lg leading-8 text-slate-600">
+            <p className="mt-6 text-lg leading-8 text-muted">
               Content for this page has not been added yet. Edit it in the admin under Content → Pages.
             </p>
           )}
 
           <Link
             to="/"
-            className="mt-10 inline-flex rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+            className="mt-10 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             Back to Home
           </Link>

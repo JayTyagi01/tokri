@@ -29,45 +29,45 @@ export default function CartDrawer() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={closeDrawer}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={closeDrawer}>
       <div
-        className="w-full max-w-md overflow-y-auto bg-white p-6"
+        className="w-full max-w-md overflow-y-auto border-l border-line bg-panel p-6 text-white"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-slate-500">My Cart</p>
-            <h2 className="text-2xl font-bold">{totalCount} item{totalCount !== 1 ? 's' : ''}</h2>
+            <p className="text-sm text-muted">My Cart</p>
+            <h2 className="text-2xl font-bold text-white">{totalCount} item{totalCount !== 1 ? 's' : ''}</h2>
           </div>
-          <button className="text-slate-500 hover:text-slate-800" onClick={closeDrawer} type="button">
+          <button className="text-muted transition hover:text-white" onClick={closeDrawer} type="button">
             Close
           </button>
         </div>
 
         {cartItems.length === 0 ? (
-          <div className="py-20 text-center text-slate-600">
-            <p className="text-lg font-medium">Your cart is empty</p>
-            <p className="mt-2">Add fresh fruits and vegetables to get started.</p>
+          <div className="py-20 text-center text-mint">
+            <p className="text-lg font-medium text-white">Your cart is empty</p>
+            <p className="mt-2 text-muted">Add fresh fruits and vegetables to get started.</p>
           </div>
         ) : (
           <>
             <div className="mb-6 space-y-4">
               {cartItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 rounded-3xl border border-slate-200 p-4">
+                <div key={item.id} className="flex items-center gap-4 rounded-3xl border border-line bg-panel-2 p-4">
                   <img src={item.image} alt={item.name} className="h-20 w-20 rounded-3xl object-cover" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <h3 className="font-semibold">{item.name}</h3>
-                        <p className="text-sm text-slate-500">{item.weight}</p>
+                        <h3 className="font-semibold text-white">{item.name}</h3>
+                        <p className="text-sm text-muted">{item.weight}</p>
                       </div>
-                      <p className="font-semibold">{formatPrice(item.priceValue)}</p>
+                      <p className="font-semibold text-mint">{formatPrice(item.priceValue)}</p>
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="h-9 w-9 rounded-full border border-slate-200 text-slate-800"
+                        className="h-9 w-9 rounded-full border border-line text-white transition hover:bg-panel"
                       >
                         –
                       </button>
@@ -75,14 +75,14 @@ export default function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="h-9 w-9 rounded-full border border-slate-200 text-slate-800"
+                        className="h-9 w-9 rounded-full border border-line text-white transition hover:bg-panel"
                       >
                         +
                       </button>
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="ml-auto text-sm text-slate-500 hover:text-slate-900"
+                        className="ml-auto text-sm text-muted transition hover:text-white"
                       >
                         Remove
                       </button>
@@ -92,24 +92,24 @@ export default function CartDrawer() {
               ))}
             </div>
 
-            <div className="space-y-4 rounded-[2rem] border border-slate-200 bg-slate-50 p-5">
-              <div className="flex items-center justify-between text-sm text-slate-600">
+            <div className="space-y-4 rounded-[2rem] border border-line bg-canvas p-5">
+              <div className="flex items-center justify-between text-sm text-muted">
                 <span>Item total</span>
                 <span>{formatPrice(itemsTotal)}</span>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600">
+              <div className="flex items-center justify-between text-sm text-muted">
                 <span>Delivery charges</span>
                 <span>{formatPrice(deliveryCharge)}</span>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600">
+              <div className="flex items-center justify-between text-sm text-muted">
                 <span>Cart handling</span>
                 <span>{formatPrice(handlingCharge)}</span>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600">
+              <div className="flex items-center justify-between text-sm text-muted">
                 <span>Small cart charge</span>
                 <span>{formatPrice(smallCartCharge)}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold">
+              <div className="flex items-center justify-between border-t border-line pt-4 text-base font-semibold text-white">
                 <span>Total</span>
                 <span>{formatPrice(grandTotal)}</span>
               </div>
@@ -119,7 +119,7 @@ export default function CartDrawer() {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="mt-4 block w-full rounded-full bg-slate-900 py-4 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="mt-4 block w-full rounded-full bg-brand py-4 text-center text-sm font-semibold text-black transition hover:bg-brand-hover"
               >
                 Proceed to checkout
               </button>
@@ -130,7 +130,7 @@ export default function CartDrawer() {
                   closeDrawer()
                   openPicker()
                 }}
-                className="mt-4 block w-full rounded-full bg-emerald-600 py-4 text-center text-sm font-semibold text-white transition hover:bg-emerald-700"
+                className="mt-4 block w-full rounded-full bg-brand py-4 text-center text-sm font-semibold text-black transition hover:bg-brand-hover"
               >
                 Add address to proceed
               </button>

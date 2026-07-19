@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Truck, ShieldCheck, Clock, Leaf, Mail, Phone, MapPin } from 'lucide-react'
 import tokriLogo from '../assets/tokri-logo.png'
@@ -17,8 +18,16 @@ const socialLinks = [
     label: 'Instagram',
     href: 'https://instagram.com',
     icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-        <path d="M12 2.163c5.486 0 5.986.024 8.012.072 2.063.048 3.125.25 4.138.896.98.64 1.713 1.374 1.927 2.386.646 1.013.848 2.075.896 4.138.046 2.026.07 2.526.07 8.012s-.024 5.986-.072 8.012c-.048 2.063-.25 3.125-.896 4.138a5.48 5.48 0 0 1-1.927 2.386c-.98.64-1.975.848-4.138.896-2.026.046-2.526.07-8.012.07s-5.986-.024-8.012-.072c-2.063-.048-3.125-.25-4.138-.896a5.48 5.48 0 0 1-2.386-1.927c-.64-.98-.848-1.975-.896-4.138C2.187 17.986 2.163 17.486 2.163 12s.024-5.986.072-8.012c.048-2.063.25-3.125.896-4.138a5.48 5.48 0 0 1 1.927-2.386c.98-.64 1.975-.848 4.138-.896C6.014 2.187 6.514 2.163 12 2.163zm0 3.675a5.487 5.487 0 1 0 0 10.974 5.487 5.487 0 0 0 0-10.974zm0 9.008a3.505 3.505 0 1 1 0-7.01 3.505 3.505 0 0 1 0 7.01zm5.878-9.87a1.28 1.28 0 1 0 0 2.56 1.28 1.28 0 0 0 0-2.56z" />
+      <svg
+        viewBox="0 0 24 24"
+        className="h-5 w-5"
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        aria-hidden="true"
+        data-icon="instagram"
+      >
+        <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6" />
       </svg>
     ),
   },
@@ -54,43 +63,67 @@ const appStoreLinks = {
 }
 
 const Footer = () => {
+  // #region agent log
+  useEffect(() => {
+    const ig = document.querySelector('footer svg[data-icon="instagram"]')
+    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'e35128' },
+      body: JSON.stringify({
+        sessionId: 'e35128',
+        runId: 'instagram-fix',
+        hypothesisId: 'A',
+        location: 'Footer.jsx:mount',
+        message: 'Instagram footer icon rendered',
+        data: {
+          found: Boolean(ig),
+          fillRule: ig?.getAttribute('fill-rule') || ig?.getAttribute('fillRule') || null,
+          pathLength: ig?.querySelector('path')?.getAttribute('d')?.length || 0,
+          labels: socialLinks.map((s) => s.label),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {})
+  }, [])
+  // #endregion
+
   return (
-    <footer className="bg-gradient-to-b from-slate-950 via-[#0c1612] to-slate-950 text-white">
+    <footer className="bg-gradient-to-b from-canvas via-panel to-canvas text-white">
       {/* Early order highlight */}
-      <div className="border-b border-white/10 bg-amber-400/10">
+      <div className="border-b border-line bg-brand/10">
         <div className="container mx-auto px-6 py-3 text-center">
-          <p className="text-sm font-semibold tracking-wide text-amber-200 sm:text-base">
+          <p className="text-sm font-semibold tracking-wide text-mint sm:text-base">
             Get your Tokriii before 7:00 AM
           </p>
         </div>
       </div>
 
       {/* Features bar */}
-      <div className="border-b border-white/10">
+      <div className="border-b border-line">
         <div className="container mx-auto grid grid-cols-2 gap-4 px-6 py-6 md:grid-cols-4 md:gap-6">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
               <Leaf size={20} />
             </span>
-            <p className="text-sm font-medium text-slate-200">Premium Quality Fruits</p>
+            <p className="text-sm font-medium text-mint">Premium Quality Fruits</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
               <Truck size={20} />
             </span>
-            <p className="text-sm font-medium text-slate-200">37+ Premium Varieties</p>
+            <p className="text-sm font-medium text-mint">37+ Premium Varieties</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
               <Clock size={20} />
             </span>
-            <p className="text-sm font-medium text-slate-200">Early Morning Delivery</p>
+            <p className="text-sm font-medium text-mint">Early Morning Delivery</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
               <ShieldCheck size={20} />
             </span>
-            <p className="text-sm font-medium text-slate-200">100% Secure Payment</p>
+            <p className="text-sm font-medium text-mint">100% Secure Payment</p>
           </div>
         </div>
       </div>
@@ -108,29 +141,29 @@ const Footer = () => {
               />
             </Link>
             <h3 className="text-lg font-bold text-white">TOKRIII</h3>
-            <p className="mt-1 text-sm font-medium text-amber-300">Premium Fruits for Discerning Tastes</p>
-            <p className="mt-4 text-sm leading-relaxed text-slate-400">
+            <p className="mt-1 text-sm font-medium text-brand">Premium Fruits for Discerning Tastes</p>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
               Tokriii selling premium and exotic fruits — handpicked for quality, freshness, and flavour.
               From garden classics to rare tropical treasures, we bring the finest produce to your table.
             </p>
 
-            <ul className="mt-5 space-y-3 text-sm text-slate-300">
+            <ul className="mt-5 space-y-3 text-sm text-mint">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="mt-0.5 shrink-0 text-emerald-400" />
+                <MapPin size={16} className="mt-0.5 shrink-0 text-brand" />
                 <span>C 617 Azadpur Fruit Market, New Delhi 110033</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={16} className="shrink-0 text-emerald-400" />
+                <Mail size={16} className="shrink-0 text-brand" />
                 <a href="mailto:support@tokriii.com" className="hover:text-white transition">
                   support@tokriii.com
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <Phone size={16} className="shrink-0 text-emerald-400" />
+                <Phone size={16} className="shrink-0 text-brand" />
                 <a href="tel:9580280280" className="hover:text-white transition">
                   9580280280
                 </a>
-                <span className="text-slate-500">/</span>
+                <span className="text-muted">/</span>
                 <a href="tel:9958697427" className="hover:text-white transition">
                   9958697427
                 </a>
@@ -145,7 +178,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white shadow-sm transition hover:bg-amber-400 hover:text-slate-900 hover:shadow-amber-400/20"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-panel-2 text-white shadow-sm transition hover:bg-brand hover:text-black hover:shadow-brand/20"
                 >
                   {social.icon}
                 </a>
@@ -156,21 +189,21 @@ const Footer = () => {
           {/* Our Range */}
           <div>
             <h4 className="mb-4 text-base font-semibold text-white">Our Range</h4>
-            <ul className="space-y-2.5 text-sm text-slate-400">
+            <ul className="space-y-2.5 text-sm text-muted">
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 Garden & Tropical Fruits
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 Berries, Grapes & Exotic Fruits
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 Citrus, Dates & Juicy Fruits
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 37+ Premium Varieties Available
               </li>
             </ul>
@@ -179,7 +212,7 @@ const Footer = () => {
           {/* Quick Links */}
           <div>
             <h4 className="mb-4 text-base font-semibold text-white">Quick Links</h4>
-            <ul className="space-y-2.5 text-sm text-slate-400">
+            <ul className="space-y-2.5 text-sm text-muted">
               <li><Link to="/about" className="transition hover:text-white">About us</Link></li>
               <li><Link to="/help-faqs" className="transition hover:text-white">Help & FAQs</Link></li>
               <li><Link to="/returns-policy" className="transition hover:text-white">Returns Policy</Link></li>
@@ -216,8 +249,8 @@ const Footer = () => {
       </div>
 
       {/* Copyright */}
-      <div className="border-t border-white/10">
-        <div className="container mx-auto px-6 py-5 text-center text-sm text-slate-500">
+      <div className="border-t border-line">
+        <div className="container mx-auto px-6 py-5 text-center text-sm text-muted">
           © 2026 Tokriii. All rights reserved.
         </div>
       </div>

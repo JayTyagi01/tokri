@@ -9,20 +9,20 @@ export default function Banner() {
         style={{ backgroundImage: `url(${heroImg})`, backgroundSize: 'cover' }}
       >
         <div className="px-6 py-4">
-          <span className="inline-flex rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium uppercase text-emerald-100">
+          <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-sm font-medium uppercase text-mint">
             Get 10% OFF your first order
           </span>
           <h1 className="m-0 mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Fresh Fruits,
             <br /> Delivered Daily
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-tight text-emerald-100 sm:text-lg">
+          <p className="mt-3 max-w-xl text-base leading-tight text-mint sm:text-lg">
             Enjoy a wide range of fresh, juicy, and nutrient-rich fruits sourced with care and
             delivered with freshness guaranteed.
           </p>
           <Link
             to="/shop"
-            className="mt-3 inline-flex rounded-full bg-white px-7 py-2.5 text-sm font-semibold text-emerald-950 shadow-xl transition hover:bg-slate-100"
+            className="mt-3 inline-flex rounded-full bg-brand px-7 py-2.5 text-sm font-semibold text-black shadow-xl transition hover:bg-brand-hover"
           >
             Shop all
           </Link>

@@ -28,9 +28,9 @@ export default function AccountSidebar({ activeSection }) {
   }
 
   return (
-    <aside className="w-full shrink-0 border-b border-slate-200 bg-slate-50 lg:w-64 lg:border-b-0 lg:border-r lg:bg-white">
-      <div className="border-b border-slate-200 px-5 py-4">
-        <p className="text-sm font-semibold text-slate-900">{formattedMobile}</p>
+    <aside className="w-full shrink-0 border-b border-line bg-panel-2 lg:w-64 lg:border-b-0 lg:border-r">
+      <div className="border-b border-line px-5 py-4">
+        <p className="text-sm font-semibold text-white">{formattedMobile}</p>
       </div>
 
       <nav className="py-2">
@@ -42,11 +42,11 @@ export default function AccountSidebar({ activeSection }) {
               to={href}
               className={`flex items-center gap-3 px-5 py-3 text-sm transition ${
                 active
-                  ? 'border-l-4 border-emerald-700 bg-slate-100 font-semibold text-slate-900'
-                  : 'border-l-4 border-transparent text-slate-600 hover:bg-slate-50'
+                  ? 'border-l-4 border-brand bg-panel font-semibold text-white'
+                  : 'border-l-4 border-transparent text-muted hover:bg-panel hover:text-white'
               }`}
             >
-              <Icon size={18} className={active ? 'text-emerald-700' : 'text-slate-500'} />
+              <Icon size={18} className={active ? 'text-brand' : 'text-muted'} />
               {label}
             </Link>
           )
@@ -55,9 +55,9 @@ export default function AccountSidebar({ activeSection }) {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 border-l-4 border-transparent px-5 py-3 text-left text-sm text-slate-600 transition hover:bg-slate-50"
+          className="flex w-full items-center gap-3 border-l-4 border-transparent px-5 py-3 text-left text-sm text-muted transition hover:bg-panel hover:text-white"
         >
-          <LogOut size={18} className="text-slate-500" />
+          <LogOut size={18} className="text-muted" />
           Log Out
         </button>
       </nav>

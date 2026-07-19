@@ -94,39 +94,39 @@ export default function SavedAddresses() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">My addresses</h1>
+      <h1 className="text-2xl font-bold text-white">My addresses</h1>
 
       <button
         type="button"
         onClick={openCreate}
-        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 transition hover:text-emerald-900"
+        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint transition hover:text-white"
       >
         <Plus size={16} />
         Add new address
       </button>
 
       {loading && (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+        <div className="mt-8 rounded-xl border border-line bg-panel-2 px-4 py-8 text-center text-sm text-muted">
           Loading your saved addresses...
         </div>
       )}
 
       {!loading && error && (
-        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 px-4 py-6 text-sm text-red-700">
+        <div className="mt-8 rounded-xl border border-red-800/50 bg-red-950/40 px-4 py-6 text-sm text-red-300">
           {error}
         </div>
       )}
 
       {!loading && !error && addresses.length === 0 && (
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-          <p className="text-base font-semibold text-slate-900">No saved addresses yet</p>
-          <p className="mt-2 text-sm text-slate-500">
+        <div className="mt-8 rounded-xl border border-dashed border-line bg-panel-2 px-6 py-10 text-center">
+          <p className="text-base font-semibold text-white">No saved addresses yet</p>
+          <p className="mt-2 text-sm text-muted">
             Add a delivery address for early morning fruit orders.
           </p>
           <button
             type="button"
             onClick={openCreate}
-            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-black hover:bg-brand-hover"
           >
             <Plus size={16} />
             Add new address
@@ -135,19 +135,19 @@ export default function SavedAddresses() {
       )}
 
       {!loading && !error && addresses.length > 0 && (
-        <ul className="mt-6 divide-y divide-slate-200 overflow-visible rounded-xl border border-slate-200 bg-white">
+        <ul className="mt-6 divide-y divide-line overflow-visible rounded-xl border border-line bg-panel-2">
           {addresses.map((address, index) => {
             const Icon = addressLabelIcon(address.label)
             const isLast = index === addresses.length - 1
             return (
               <li key={address.id} className="relative flex items-start gap-4 px-4 py-5 sm:px-5">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-panel text-emerald-400">
                   <Icon size={20} />
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-900">{address.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{address.formatted}</p>
+                  <p className="font-semibold text-white">{address.label}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted">{address.formatted}</p>
                 </div>
 
                 <div className="relative shrink-0">
@@ -157,7 +157,7 @@ export default function SavedAddresses() {
                       event.stopPropagation()
                       setMenuOpenId((current) => (current === address.id ? null : address.id))
                     }}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-panel hover:text-white"
                     aria-label="Address options"
                   >
                     <MoreVertical size={18} />
@@ -165,21 +165,21 @@ export default function SavedAddresses() {
 
                   {menuOpenId === address.id && (
                     <div
-                      className={`absolute right-0 z-50 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg ${
+                      className={`absolute right-0 z-50 w-36 overflow-hidden rounded-xl border border-line bg-panel shadow-lg ${
                         isLast ? 'bottom-full mb-1' : 'top-full mt-1'
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => openEdit(address)}
-                        className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        className="block w-full px-4 py-2.5 text-left text-sm text-white hover:bg-panel-2"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => requestDelete(address.id)}
-                        className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                        className="block w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-950/40"
                       >
                         Delete
                       </button>

@@ -61,26 +61,26 @@ function ReviewCard({ review }) {
   const hasImage = review.image && avatar
 
   return (
-    <div className="flex h-full flex-col items-center rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-8">
-      <Quote className="mb-3 h-8 w-8 text-emerald-500/30" />
+    <div className="flex h-full flex-col items-center rounded-3xl border border-line bg-panel p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-8">
+      <Quote className="mb-3 h-8 w-8 text-brand/30" />
       <Stars rating={review.rating} />
-      <h3 className="mt-4 text-base font-semibold text-slate-900 sm:text-lg">{review.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{review.content}</p>
+      <h3 className="mt-4 text-base font-semibold text-white sm:text-lg">{review.title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{review.content}</p>
       <div className="mt-6 flex items-center gap-3">
         {hasImage ? (
           <img
             src={avatar}
             alt={review.name}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-emerald-100"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-brand/30"
           />
         ) : (
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/20 text-sm font-semibold text-mint">
             {initials(review.name)}
           </span>
         )}
         <div className="text-left">
-          <p className="text-sm font-semibold text-slate-900">{review.name}</p>
-          <p className="text-xs text-emerald-600">Verified buyer</p>
+          <p className="text-sm font-semibold text-white">{review.name}</p>
+          <p className="text-xs text-brand">Verified buyer</p>
         </div>
       </div>
     </div>
@@ -119,14 +119,14 @@ export default function Reviews() {
   }
 
   return (
-    <section className="rounded-3xl bg-gradient-to-b from-emerald-50/60 to-white px-4 py-8 sm:p-12">
+    <section className="rounded-3xl bg-canvas px-4 py-8 sm:p-12">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 text-center sm:mb-10">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-mint">
             What customers say
           </p>
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
-            Verified, <span className="text-emerald-600">Honest Reviews</span>
+          <h2 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+            Verified, <span className="text-brand">Honest Reviews</span>
           </h2>
         </div>
 
@@ -135,7 +135,7 @@ export default function Reviews() {
             type="button"
             onClick={() => scrollByCard(-1)}
             aria-label="Previous reviews"
-            className={`absolute -left-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:-left-3 sm:p-2.5 ${
+            className={`absolute -left-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-line bg-panel p-2 text-white shadow-md transition hover:bg-brand hover:text-black sm:-left-3 sm:p-2.5 ${
               desktopSlider ? 'flex' : 'flex lg:hidden'
             }`}
           >
@@ -168,7 +168,7 @@ export default function Reviews() {
             type="button"
             onClick={() => scrollByCard(1)}
             aria-label="Next reviews"
-            className={`absolute -right-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-md transition hover:bg-emerald-600 hover:text-white sm:-right-3 sm:p-2.5 ${
+            className={`absolute -right-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-line bg-panel p-2 text-white shadow-md transition hover:bg-brand hover:text-black sm:-right-3 sm:p-2.5 ${
               desktopSlider ? 'flex' : 'flex lg:hidden'
             }`}
           >
