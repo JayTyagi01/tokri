@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js'
+import { toPublicAssetUrl } from '../utils/formatters.js'
 
 function parseAddress(address) {
   if (!address || typeof address !== 'object') return null
@@ -48,7 +49,7 @@ export function formatCustomerOrder(order) {
       priceValue: Number(item.priceValue),
       quantity: item.quantity,
       weight: item.weight || '',
-      image: item.image || '',
+      image: toPublicAssetUrl(item.image) || '',
       lineTotal: Number(item.priceValue) * item.quantity,
     })),
   }

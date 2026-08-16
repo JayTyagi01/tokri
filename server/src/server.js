@@ -23,7 +23,7 @@ app.use(
   cors({
     origin: env.corsOrigins,
     credentials: true,
-    allowedHeaders: ['Content-Type', 'X-User-Phone'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Phone'],
   }),
 )
 

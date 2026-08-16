@@ -28,6 +28,8 @@ export const env = {
   adminEmail: process.env.ADMIN_EMAIL || 'admin@tokriii.com',
   adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
   sessionSecret: process.env.SESSION_SECRET || 'dev-session-secret',
+  jwtSecret: process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-session-secret',
+  jwtExpiresInSeconds: Number(process.env.JWT_EXPIRES_IN_SECONDS) || 60 * 60 * 24 * 30,
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,

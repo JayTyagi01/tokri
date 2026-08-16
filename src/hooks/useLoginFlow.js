@@ -68,7 +68,10 @@ export function useLoginFlow({ onSuccess }) {
     setLoading(true)
     try {
       const result = await postJson('/auth/verify-otp', { phone: mobileNumber, otp })
-      login(result.user || { phone: mobileNumber })
+      login({
+        ...(result.user || { phone: mobileNumber }),
+        token: result.token || result.user?.token,
+      })
       Swal.fire({
         icon: 'success',
         title: 'Login Successful',

@@ -72,6 +72,7 @@ export async function postJson(path, body) {
 
 function authHeaders(user) {
   const headers = { 'Content-Type': 'application/json' }
+  if (user?.token) headers.Authorization = `Bearer ${user.token}`
   if (user?.phone) headers['X-User-Phone'] = user.phone
   return headers
 }
@@ -99,6 +100,17 @@ export async function authPost(path, user, body) {
 export async function authPut(path, user, body) {
   const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
     method: 'PUT',
+    headers: authHeaders(user),
+    body: JSON.stringify(body),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`)
+  return data
+}
+
+export async function authPatch(path, user, body) {
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
+    method: 'PATCH',
     headers: authHeaders(user),
     body: JSON.stringify(body),
   })

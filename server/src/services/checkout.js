@@ -1,10 +1,9 @@
 import { prisma } from '../lib/prisma.js'
 import { createRazorpayOrder, verifyRazorpayPayment, getPublicPaymentConfig } from './razorpay.js'
 import { listAddresses } from './addresses.js'
-
-const DELIVERY_CHARGE = 25
-const HANDLING_CHARGE = 2
-const SMALL_CART_CHARGE = 20
+import { calcCartTotals } from '../config/charges.js'
+import { clearCart, getCartCheckoutItems } from './cart.js'
+import { notifyOrderStatus } from './push.js'
 
 function parseAddresses(raw) {
   if (!raw) return []
@@ -19,13 +18,7 @@ function buildOrderNo() {
 }
 
 function calcTotals(items) {
-  const itemsTotal = items.reduce((sum, item) => sum + item.priceValue * item.quantity, 0)
-  const deliveryCharge = items.length ? DELIVERY_CHARGE : 0
-  const handlingCharge = items.length ? HANDLING_CHARGE : 0
-  const smallCartCharge = items.length ? SMALL_CART_CHARGE : 0
-  const grandTotal = itemsTotal + deliveryCharge + handlingCharge + smallCartCharge
-
-  return { itemsTotal, deliveryCharge, handlingCharge, smallCartCharge, grandTotal }
+  return calcCartTotals(items)
 }
 
 function normalizeCartItem(raw) {
@@ -78,7 +71,11 @@ export async function getCheckoutConfig() {
 }
 
 export async function createCheckoutOrder(user, { items: rawItems, addressId, paymentMode = 'online' }) {
-  const cartItems = await resolveCartItems(rawItems)
+  const sourceItems =
+    Array.isArray(rawItems) && rawItems.length > 0
+      ? rawItems
+      : await getCartCheckoutItems(user.id)
+  const cartItems = await resolveCartItems(sourceItems)
   const address = await resolveAddress(user, addressId)
   const totals = calcTotals(cartItems)
   const paymentConfig = await getPublicPaymentConfig()
@@ -177,6 +174,9 @@ export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, r
     },
   })
 
+  await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
+  notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
+
   return { orderNo: updated.orderNo, paymentStatus: updated.paymentStatus }
 }
 
@@ -186,6 +186,11 @@ export async function confirmCodOrder(user, { orderNo }) {
   })
 
   if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
+
+  await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
+  notifyOrderStatus(order, order.status || 'pending').catch((error) =>
+    console.error('Failed to send push:', error),
+  )
 
   return { orderNo: order.orderNo, paymentStatus: order.paymentStatus, status: order.status }
 }

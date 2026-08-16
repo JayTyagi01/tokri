@@ -1,6 +1,8 @@
 import crypto from 'crypto'
 import { prisma } from '../lib/prisma.js'
+import { env } from '../config/env.js'
 import { sendOtpMessage } from './twilio.js'
+import { formatAuthUser, signCustomerToken } from './jwt.js'
 
 const OTP_TTL_MS = 10 * 60 * 1000
 const MAX_ATTEMPTS = 5
@@ -49,11 +51,18 @@ export async function requestOtp(rawPhone) {
 
   const delivery = await sendOtpMessage(phone, code)
 
-  return {
+  const result = {
     phone,
     expiresInSeconds: OTP_TTL_MS / 1000,
     channel: delivery.channel,
   }
+
+  // Local dev only: show OTP in API response when Twilio is off (no SMS sent).
+  if (env.nodeEnv !== 'production' && delivery.channel === 'dev') {
+    result.devOtp = code
+  }
+
+  return result
 }
 
 export async function verifyOtp(rawPhone, rawCode) {
@@ -109,11 +118,12 @@ export async function verifyOtp(rawPhone, rawCode) {
     throw Object.assign(new Error('This account is inactive. Please contact support.'), { status: 403 })
   }
 
+  await prisma.otpRequest.delete({ where: { id: record.id } })
+
   return {
-    user: {
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-    },
+    token: signCustomerToken(user),
+    tokenType: 'Bearer',
+    expiresIn: env.jwtExpiresInSeconds,
+    user: formatAuthUser(user),
   }
 }

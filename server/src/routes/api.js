@@ -5,6 +5,7 @@ import { formatCategory, formatProduct, formatPage } from '../utils/formatters.j
 import authRouter from './auth.js'
 import accountRouter from './account.js'
 import checkoutRouter from './checkout.js'
+import appRouter from './app.js'
 
 const router = Router()
 
@@ -20,6 +21,7 @@ router.get('/health', (_req, res) => {
 router.use('/auth', authRouter)
 router.use('/account', accountRouter)
 router.use('/checkout', checkoutRouter)
+router.use('/app', appRouter)
 
 router.get('/settings/public', async (_req, res, next) => {
   try {

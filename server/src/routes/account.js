@@ -7,10 +7,46 @@ import {
   updateAddress,
 } from '../services/addresses.js'
 import { getCustomerOrder, listCustomerOrders } from '../services/customerOrders.js'
+import { formatAuthUser } from '../services/jwt.js'
+import { prisma } from '../lib/prisma.js'
+import {
+  addCartItem,
+  clearCart,
+  getCart,
+  removeCartItem,
+  replaceCart,
+  updateCartItem,
+} from '../services/cart.js'
+import { registerDevice, unregisterDevice } from '../services/devices.js'
 
 const router = Router()
 
 router.use(requireCustomer)
+
+router.get('/me', (req, res) => {
+  res.json({ user: formatAuthUser(req.customer) })
+})
+
+router.patch('/profile', async (req, res, next) => {
+  try {
+    const name = String(req.body?.name || '').trim()
+    if (!name) {
+      throw Object.assign(new Error('Name is required.'), { status: 400 })
+    }
+    if (name.length > 80) {
+      throw Object.assign(new Error('Name is too long.'), { status: 400 })
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.customer.id },
+      data: { name },
+    })
+
+    res.json({ user: formatAuthUser(user) })
+  } catch (error) {
+    next(error)
+  }
+})
 
 router.get('/addresses', async (req, res, next) => {
   try {
@@ -63,6 +99,78 @@ router.get('/orders/:orderNo', async (req, res, next) => {
   try {
     const order = await getCustomerOrder(req.customer.id, req.params.orderNo)
     res.json({ order })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get('/cart', async (req, res, next) => {
+  try {
+    const cart = await getCart(req.customer.id)
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.put('/cart', async (req, res, next) => {
+  try {
+    const cart = await replaceCart(req.customer.id, req.body?.items || [])
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.delete('/cart', async (req, res, next) => {
+  try {
+    const cart = await clearCart(req.customer.id)
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.post('/cart/items', async (req, res, next) => {
+  try {
+    const cart = await addCartItem(req.customer.id, req.body)
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.patch('/cart/items/:slug', async (req, res, next) => {
+  try {
+    const cart = await updateCartItem(req.customer.id, req.params.slug, req.body?.quantity)
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.delete('/cart/items/:slug', async (req, res, next) => {
+  try {
+    const cart = await removeCartItem(req.customer.id, req.params.slug)
+    res.json({ cart })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.post('/devices', async (req, res, next) => {
+  try {
+    const device = await registerDevice(req.customer.id, req.body || {})
+    res.status(201).json({ device })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.delete('/devices', async (req, res, next) => {
+  try {
+    await unregisterDevice(req.customer.id, req.body?.token || req.query.token)
+    res.json({ ok: true })
   } catch (error) {
     next(error)
   }

@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
       id: nextUser.id,
       phone: String(nextUser.phone),
       name: nextUser.name || null,
+      token: nextUser.token || null,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData))
     setUser(userData)

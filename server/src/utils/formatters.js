@@ -1,3 +1,12 @@
+import { env } from '../config/env.js'
+
+export function toPublicAssetUrl(value) {
+  if (!value) return null
+  if (/^(https?:|data:|blob:)/i.test(value)) return value
+  if (String(value).startsWith('/')) return `${env.apiUrl}${value}`
+  return value
+}
+
 export function formatProduct(product) {
   const priceValue = Number(product.priceValue)
   const oldPriceValue = product.oldPriceValue ? Number(product.oldPriceValue) : null
@@ -13,7 +22,7 @@ export function formatProduct(product) {
     oldPriceValue,
     currency: product.currency,
     weight: product.weight,
-    image: product.image,
+    image: toPublicAssetUrl(product.image),
     badge: product.badge,
     categoryId: product.category?.slug ?? null,
     category: product.category
@@ -38,8 +47,8 @@ export function formatCategory(category, { includeProducts = false } = {}) {
     title: category.title || category.label,
     subtitle: category.subtitle,
     description: category.description,
-    image: category.image,
-    bannerImage: category.bannerImage,
+    image: toPublicAssetUrl(category.image),
+    bannerImage: toPublicAssetUrl(category.bannerImage),
     sortOrder: category.sortOrder,
     productCount: category._count?.products ?? category.products?.length ?? 0,
   }

@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js'
 import { canManage } from './permissions.js'
+import { notifyOrderStatus } from '../services/push.js'
 
 function parseAddress(address) {
   if (!address || typeof address !== 'object') return null
@@ -155,6 +156,10 @@ export const orderEditHandler = {
       }
     }
 
+    const previous = await prisma.order.findUnique({
+      where: { id: request.params.recordId },
+    })
+
     const { status, paymentStatus } = request.payload || {}
     await prisma.order.update({
       where: { id: request.params.recordId },
@@ -165,6 +170,9 @@ export const orderEditHandler = {
     })
 
     const order = await loadOrder(request.params.recordId)
+    if (status && previous?.status !== status) {
+      notifyOrderStatus(order, status).catch((error) => console.error('Failed to send push:', error))
+    }
     return {
       record: context.resource.build(flattenOrder(order)).toJSON(context.currentAdmin),
       notice: { message: 'Order updated successfully.', type: 'success' },
