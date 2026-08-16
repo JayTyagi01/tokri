@@ -19,6 +19,63 @@ async function columnExists(table, column) {
   return Boolean(rows[0])
 }
 
+async function columnMeta(table, column) {
+  const rows = await prisma.$queryRaw`
+    SELECT
+      COLUMN_TYPE AS columnType,
+      CHARACTER_SET_NAME AS charsetName,
+      COLLATION_NAME AS collationName
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ${table} AND COLUMN_NAME = ${column}
+    LIMIT 1
+  `
+  return rows[0] || null
+}
+
+async function fkExists(table, name) {
+  const rows = await prisma.$queryRaw`
+    SELECT 1 AS ok FROM information_schema.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = ${table}
+      AND CONSTRAINT_NAME = ${name}
+      AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    LIMIT 1
+  `
+  return Boolean(rows[0])
+}
+
+function columnSql(meta, nullable) {
+  let sql = meta.columnType
+  if (meta.charsetName) sql += ` CHARACTER SET ${meta.charsetName}`
+  if (meta.collationName) sql += ` COLLATE ${meta.collationName}`
+  sql += nullable ? ' NULL' : ' NOT NULL'
+  return sql
+}
+
+async function idMeta() {
+  for (const [table, column] of [
+    ['Product', 'id'],
+    ['User', 'id'],
+    ['Customer', 'id'],
+  ]) {
+    if ((await tableExists(table)) && (await columnExists(table, column))) {
+      const meta = await columnMeta(table, column)
+      if (meta?.columnType) return meta
+    }
+  }
+  return {
+    columnType: 'VARCHAR(191)',
+    charsetName: 'utf8mb4',
+    collationName: 'utf8mb4_unicode_ci',
+  }
+}
+
+async function alignColumn(table, column, meta, nullable) {
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE \`${table}\` MODIFY \`${column}\` ${columnSql(meta, nullable)}`,
+  )
+}
+
 async function dropForeignKeys(table, column) {
   const rows = await prisma.$queryRaw`
     SELECT CONSTRAINT_NAME AS name FROM information_schema.KEY_COLUMN_USAGE
@@ -42,15 +99,65 @@ async function dropIndexIfExists(table, indexName) {
   }
 }
 
+async function addCustomerFk(table, column, { unique = false, nullable = false, onDelete = 'CASCADE' } = {}) {
+  const ids = await idMeta()
+  await alignColumn('Customer', 'id', ids, false)
+  await alignColumn(table, column, ids, nullable)
+
+  if (nullable) {
+    await prisma.$executeRawUnsafe(`
+      UPDATE \`${table}\` t
+      LEFT JOIN \`Customer\` c ON c.id = t.\`${column}\`
+      SET t.\`${column}\` = NULL
+      WHERE t.\`${column}\` IS NOT NULL AND c.id IS NULL
+    `)
+  } else {
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM \`${table}\` WHERE \`${column}\` NOT IN (SELECT \`id\` FROM \`Customer\`)`,
+    )
+  }
+
+  const fkName = `${table}_${column}_fkey`
+  if (await fkExists(table, fkName)) return
+
+  const indexName = unique ? `${table}_${column}_key` : `${table}_${column}_idx`
+  const hasIndex = await prisma.$queryRaw`
+    SELECT 1 AS ok FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ${table} AND INDEX_NAME = ${indexName} LIMIT 1
+  `
+  if (!hasIndex[0]) {
+    if (unique) {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE \`${table}\` ADD UNIQUE KEY \`${indexName}\` (\`${column}\`)`,
+      )
+    } else {
+      await prisma.$executeRawUnsafe(
+        `CREATE INDEX \`${indexName}\` ON \`${table}\`(\`${column}\`)`,
+      )
+    }
+  }
+
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE \`${table}\`
+    ADD CONSTRAINT \`${fkName}\`
+    FOREIGN KEY (\`${column}\`) REFERENCES \`Customer\`(\`id\`) ON DELETE ${onDelete} ON UPDATE CASCADE
+  `)
+}
+
 async function main() {
   console.log('Applying customer / cart schema...')
+  const ids = await idMeta()
+  const idSql = columnSql(ids, false)
+  const idSqlNull = columnSql(ids, true)
+  const phoneSql = columnSql({ ...ids, columnType: 'VARCHAR(191)' }, false)
+  const nameSql = columnSql({ ...ids, columnType: 'VARCHAR(191)' }, true)
 
   if (!(await tableExists('Customer'))) {
     await prisma.$executeRawUnsafe(`
       CREATE TABLE \`Customer\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`name\` VARCHAR(191) NULL,
-        \`phone\` VARCHAR(191) NOT NULL,
+        \`id\` ${idSql},
+        \`name\` ${nameSql},
+        \`phone\` ${phoneSql},
         \`dateOfBirth\` DATE NULL,
         \`addresses\` JSON NULL,
         \`isActive\` BOOLEAN NOT NULL DEFAULT true,
@@ -61,9 +168,12 @@ async function main() {
       )
     `)
     console.log('Created Customer table')
-  } else if (!(await columnExists('Customer', 'dateOfBirth'))) {
-    await prisma.$executeRawUnsafe(`ALTER TABLE \`Customer\` ADD COLUMN \`dateOfBirth\` DATE NULL`)
-    console.log('Added Customer.dateOfBirth')
+  } else {
+    await alignColumn('Customer', 'id', ids, false)
+    if (!(await columnExists('Customer', 'dateOfBirth'))) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE \`Customer\` ADD COLUMN \`dateOfBirth\` DATE NULL`)
+      console.log('Added Customer.dateOfBirth')
+    }
   }
 
   if (await tableExists('User') && (await columnExists('User', 'phone'))) {
@@ -78,32 +188,20 @@ async function main() {
 
   if (await tableExists('Order')) {
     if (!(await columnExists('Order', 'customerId'))) {
-      await prisma.$executeRawUnsafe(`ALTER TABLE \`Order\` ADD COLUMN \`customerId\` VARCHAR(191) NULL`)
+      await prisma.$executeRawUnsafe(`ALTER TABLE \`Order\` ADD COLUMN \`customerId\` ${idSqlNull}`)
     }
     if (await columnExists('Order', 'userId')) {
-      await prisma.$executeRawUnsafe(`UPDATE \`Order\` SET \`customerId\` = \`userId\` WHERE \`customerId\` IS NULL AND \`userId\` IS NOT NULL`)
+      await prisma.$executeRawUnsafe(
+        `UPDATE \`Order\` SET \`customerId\` = \`userId\` WHERE \`customerId\` IS NULL AND \`userId\` IS NOT NULL`,
+      )
       await dropForeignKeys('Order', 'userId')
       await dropIndexIfExists('Order', 'Order_userId_idx')
       await prisma.$executeRawUnsafe(`ALTER TABLE \`Order\` DROP COLUMN \`userId\``)
       console.log('Moved Order.userId to Order.customerId')
     }
-    try {
-      await dropForeignKeys('Order', 'customerId')
-      await prisma.$executeRawUnsafe(`
-        ALTER TABLE \`Order\`
-        ADD CONSTRAINT \`Order_customerId_fkey\`
-        FOREIGN KEY (\`customerId\`) REFERENCES \`Customer\`(\`id\`) ON DELETE SET NULL ON UPDATE CASCADE
-      `)
-    } catch (error) {
-      if (!String(error.message || '').includes('Duplicate')) throw error
-    }
-    const hasIndex = await prisma.$queryRaw`
-      SELECT 1 AS ok FROM information_schema.STATISTICS
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND INDEX_NAME = 'Order_customerId_idx' LIMIT 1
-    `
-    if (!hasIndex[0]) {
-      await prisma.$executeRawUnsafe(`CREATE INDEX \`Order_customerId_idx\` ON \`Order\`(\`customerId\`)`)
-    }
+    await dropForeignKeys('Order', 'customerId')
+    await addCustomerFk('Order', 'customerId', { unique: false, nullable: true, onDelete: 'SET NULL' })
+    console.log('Linked Order.customerId to Customer')
   }
 
   if (await tableExists('User')) {
@@ -124,7 +222,10 @@ async function main() {
 
   async function renameUserIdToCustomerId(table, unique = false) {
     if (!(await tableExists(table))) return
-    if (await columnExists(table, 'customerId')) return
+    if (await columnExists(table, 'customerId')) {
+      await addCustomerFk(table, 'customerId', { unique, nullable: false, onDelete: 'CASCADE' })
+      return
+    }
     if (!(await columnExists(table, 'userId'))) return
 
     await dropForeignKeys(table, 'userId')
@@ -133,21 +234,10 @@ async function main() {
     await prisma.$executeRawUnsafe(
       `DELETE FROM \`${table}\` WHERE \`userId\` NOT IN (SELECT \`id\` FROM \`Customer\`)`,
     )
-    await prisma.$executeRawUnsafe(`ALTER TABLE \`${table}\` CHANGE \`userId\` \`customerId\` VARCHAR(191) NOT NULL`)
-    if (unique) {
-      await prisma.$executeRawUnsafe(`ALTER TABLE \`${table}\` ADD UNIQUE KEY \`${table}_customerId_key\` (\`customerId\`)`)
-    } else {
-      await prisma.$executeRawUnsafe(`CREATE INDEX \`${table}_customerId_idx\` ON \`${table}\`(\`customerId\`)`)
-    }
-    try {
-      await prisma.$executeRawUnsafe(`
-        ALTER TABLE \`${table}\`
-        ADD CONSTRAINT \`${table}_customerId_fkey\`
-        FOREIGN KEY (\`customerId\`) REFERENCES \`Customer\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE
-      `)
-    } catch (error) {
-      if (!String(error.message || '').includes('Duplicate')) throw error
-    }
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE \`${table}\` CHANGE \`userId\` \`customerId\` ${columnSql(ids, false)}`,
+    )
+    await addCustomerFk(table, 'customerId', { unique, nullable: false, onDelete: 'CASCADE' })
     console.log(`Renamed ${table}.userId to customerId`)
   }
 
@@ -157,8 +247,8 @@ async function main() {
   if (!(await tableExists('Cart'))) {
     await prisma.$executeRawUnsafe(`
       CREATE TABLE \`Cart\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`customerId\` VARCHAR(191) NOT NULL,
+        \`id\` ${idSql},
+        \`customerId\` ${idSql},
         \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         \`updatedAt\` DATETIME(3) NOT NULL,
         PRIMARY KEY (\`id\`),
@@ -170,11 +260,12 @@ async function main() {
   }
 
   if (!(await tableExists('CartItem'))) {
+    const productId = (await columnMeta('Product', 'id')) || ids
     await prisma.$executeRawUnsafe(`
       CREATE TABLE \`CartItem\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`cartId\` VARCHAR(191) NOT NULL,
-        \`productId\` VARCHAR(191) NOT NULL,
+        \`id\` ${idSql},
+        \`cartId\` ${idSql},
+        \`productId\` ${columnSql(productId, false)},
         \`quantity\` INT NOT NULL DEFAULT 1,
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`CartItem_cartId_productId_key\` (\`cartId\`, \`productId\`),
@@ -188,8 +279,8 @@ async function main() {
   if (!(await tableExists('DeviceToken'))) {
     await prisma.$executeRawUnsafe(`
       CREATE TABLE \`DeviceToken\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`customerId\` VARCHAR(191) NOT NULL,
+        \`id\` ${idSql},
+        \`customerId\` ${idSql},
         \`token\` VARCHAR(191) NOT NULL,
         \`platform\` VARCHAR(191) NOT NULL,
         \`provider\` VARCHAR(191) NOT NULL DEFAULT 'expo',
