@@ -1,4 +1,4 @@
-import AdminJS from 'adminjs'
+import AdminJS, { ValidationError } from 'adminjs'
 import AdminJSExpress from '@adminjs/express'
 import * as AdminJSPrisma from '@adminjs/prisma'
 import bcrypt from 'bcryptjs'
@@ -25,13 +25,26 @@ AdminJS.registerAdapter({
   Resource: AdminJSPrisma.Resource,
 })
 
-const hashPassword = async (request) => {
-  const password = request.payload?.password?.trim()
-  if (password) {
-    request.payload.password = await bcrypt.hash(password, 10)
-  } else {
-    delete request.payload?.password
+const hashNewPassword = async (request) => {
+  if (request.method !== 'post') return request
+
+  const password = String(request.payload?.password || '').trim()
+  const confirmPassword = String(request.payload?.confirmPassword || '').trim()
+
+  if (!password) {
+    throw new ValidationError({ password: { message: 'Password is required.' } })
   }
+  if (password.length < 6) {
+    throw new ValidationError({ password: { message: 'Password must be at least 6 characters.' } })
+  }
+  if (password !== confirmPassword) {
+    throw new ValidationError({
+      confirmPassword: { message: 'New password and confirm password must be the same.' },
+    })
+  }
+
+  request.payload.password = await bcrypt.hash(password, 10)
+  delete request.payload.confirmPassword
   return request
 }
 
@@ -404,8 +417,8 @@ export async function buildAdminRouter() {
             addressLabel: { isVisible: false },
             itemsJson: { isVisible: false },
             paymentMethod: { isVisible: false },
-            userId: { isVisible: false },
-            user: { isVisible: false },
+            customerId: { isVisible: false },
+            customer: { isVisible: false },
             address: { isVisible: false },
             items: { isVisible: false },
             razorpayOrderId: { isVisible: false },
@@ -460,6 +473,30 @@ export async function buildAdminRouter() {
         },
       },
       {
+        resource: { model: AdminJSPrisma.getModelByName('Customer'), client: prisma },
+        options: {
+          name: 'Customers',
+          navigation: { name: null, icon: 'User' },
+          listProperties: ['name', 'phone', 'dateOfBirth', 'isActive', 'createdAt'],
+          editProperties: ['name', 'phone', 'dateOfBirth', 'isActive'],
+          properties: {
+            name: { isTitle: true },
+            phone: { isDisabled: true },
+            dateOfBirth: { type: 'date', label: 'Date of birth' },
+            addresses: { isVisible: false },
+            orders: { isVisible: false },
+            cart: { isVisible: false },
+            devices: { isVisible: false },
+          },
+          actions: {
+            ...resourceActions('manageUsers'),
+            list: cmsListView('manageUsers'),
+            new: () => false,
+            delete: () => false,
+          },
+        },
+      },
+      {
         resource: { model: AdminJSPrisma.getModelByName('User'), client: prisma },
         options: {
           name: 'Team',
@@ -471,13 +508,13 @@ export async function buildAdminRouter() {
             'email',
             'role',
             'isActive',
-            'password',
             ...Object.keys(PERMISSION_KEYS).map((key) => `permissions.${key}`),
           ],
+          newProperties: ['name', 'username', 'email', 'role', 'isActive', 'password', 'confirmPassword'],
           sections: [
             {
               label: 'Account',
-              properties: ['name', 'username', 'email', 'role', 'isActive', 'password'],
+              properties: ['name', 'username', 'email', 'role', 'isActive'],
             },
             {
               label: 'Permissions',
@@ -488,8 +525,12 @@ export async function buildAdminRouter() {
             name: { isTitle: true },
             password: {
               type: 'password',
-              isVisible: { list: false, show: false, edit: true, filter: false },
-              description: 'Leave blank when editing to keep current password',
+              isVisible: { list: false, show: false, edit: false, filter: false },
+            },
+            confirmPassword: {
+              type: 'password',
+              label: 'Confirm password',
+              isVisible: { list: false, show: false, edit: false, filter: false },
             },
             username: { description: 'Sign in with username or email' },
             role: {
@@ -499,9 +540,6 @@ export async function buildAdminRouter() {
                 { value: 'super_admin', label: 'Super Admin (full access)' },
               ],
             },
-            phone: { isVisible: false },
-            addresses: { isVisible: false },
-            orders: { isVisible: false },
             passwordResetTokens: { isVisible: false },
             permissions: { isVisible: false },
             ...permissionFields,
@@ -514,7 +552,7 @@ export async function buildAdminRouter() {
             },
             new: {
               isAccessible: canManage('manageUsers'),
-              before: [hashPassword],
+              before: [hashNewPassword],
               after: async (response) => {
                 const userId = response.record?.params?.id
                 const role = response.record?.params?.role
@@ -532,8 +570,8 @@ export async function buildAdminRouter() {
             edit: {
               isAccessible: canManage('manageUsers'),
               before: [
-                hashPassword,
                 async (request) => {
+                  if (request.payload) delete request.payload.password
                   const userId = request.params?.recordId
                   const role = request.payload?.role
                   if (userId && role === 'staff') {
@@ -547,6 +585,46 @@ export async function buildAdminRouter() {
                   return request
                 },
               ],
+            },
+            changePassword: {
+              actionType: 'record',
+              icon: 'Key',
+              label: 'Change password',
+              component: Components.ChangePassword,
+              isAccessible: canManage('manageUsers'),
+              isVisible: true,
+              handler: async (request, _response, context) => {
+                const recordJson = context.record.toJSON(context.currentAdmin)
+                if (request.method !== 'post') {
+                  return { record: recordJson }
+                }
+
+                const password = String(request.payload?.password || '').trim()
+                const confirmPassword = String(request.payload?.confirmPassword || '').trim()
+                if (password.length < 6) {
+                  return {
+                    record: recordJson,
+                    notice: { message: 'Password must be at least 6 characters.', type: 'error' },
+                  }
+                }
+                if (password !== confirmPassword) {
+                  return {
+                    record: recordJson,
+                    notice: { message: 'New password and confirm password must be the same.', type: 'error' },
+                  }
+                }
+
+                await prisma.user.update({
+                  where: { id: context.record.params.id },
+                  data: { password: await bcrypt.hash(password, 10) },
+                })
+
+                return {
+                  record: recordJson,
+                  notice: { message: 'Password updated.', type: 'success' },
+                  redirectUrl: context.h.resourceUrl({ resourceId: context.resource.id() }),
+                }
+              },
             },
             delete: {
               isAccessible: ({ currentAdmin, record }) =>

@@ -1,0 +1,213 @@
+import { useCallback, useEffect, useState } from 'react'
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import { Image } from 'expo-image'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Icon from '../components/Icon'
+import LoadingView from '../components/LoadingView'
+import { COLORS } from '../config'
+import { authGet, formatPrice } from '../lib/api'
+import { formatOrderWhen, paymentLabel } from '../lib/orders'
+import { useAuth } from '../context/AuthContext'
+
+function invoiceText(order) {
+  const lines = [
+    'Tokriii invoice',
+    `Order ${order.orderNo}`,
+    formatOrderWhen(order.createdAt),
+    paymentLabel(order),
+    '',
+    ...(order.items || []).map(
+      (item) => `${item.name} x ${item.quantity}  ${formatPrice(item.lineTotal || item.priceValue * item.quantity)}`,
+    ),
+    '',
+    `Total  ${formatPrice(order.grandTotal)}`,
+  ]
+  return lines.join('\n')
+}
+
+function shareInvoice(order) {
+  Share.share({
+    title: `Invoice ${order.orderNo}`,
+    message: invoiceText(order),
+  }).catch(() => {})
+}
+
+function rateOrder() {
+  Alert.alert('Rate order', 'How was your Tokriii order?', [
+    { text: 'Not now', style: 'cancel' },
+    { text: '★★★★★ Great', onPress: () => Alert.alert('Thanks', 'Thanks for rating your order.') },
+    { text: '★★★ Okay', onPress: () => Alert.alert('Thanks', 'Thanks for your feedback.') },
+  ])
+}
+
+export default function OrdersScreen({ navigation }) {
+  const insets = useSafeAreaInsets()
+  const { token, isLoggedIn } = useAuth()
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const load = useCallback(async () => {
+    if (!isLoggedIn) {
+      setOrders([])
+      return
+    }
+    const data = await authGet('/account/orders?perPage=20', token)
+    setOrders(data.orders || [])
+  }, [isLoggedIn, token])
+
+  useEffect(() => {
+    load()
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [load])
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    try {
+      await load()
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const goBack = () => {
+    if (navigation.canGoBack()) navigation.goBack()
+    else navigation.navigate('Main', { screen: 'Account' })
+  }
+
+  if (loading) return <LoadingView />
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <Pressable style={styles.back} onPress={goBack} hitSlop={12}>
+          <Icon name="chevron-back" size={22} color={COLORS.text} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Your orders</Text>
+      </View>
+
+      {!isLoggedIn ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyTitle}>Login to view orders</Text>
+          <Pressable style={styles.button} onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.buttonText}>Login</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => item.orderNo}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand} />}
+          contentContainerStyle={orders.length ? styles.list : styles.center}
+          ListEmptyComponent={<Text style={styles.emptyTitle}>No orders yet</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Text style={styles.payment}>{paymentLabel(item)}</Text>
+              <Pressable style={styles.priceRow} onPress={() => navigation.navigate('OrderDetail', { orderNo: item.orderNo })}>
+                <Text style={styles.priceMeta}>
+                  {formatPrice(item.grandTotal)}  •  {formatOrderWhen(item.createdAt)}
+                </Text>
+                <Icon name="chevron-forward" size={18} color={COLORS.muted} />
+              </Pressable>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
+                {(item.items || []).map((product) => (
+                  <View key={product.id || product.slug} style={styles.thumb}>
+                    <Image source={{ uri: product.image }} style={styles.thumbImage} contentFit="cover" />
+                  </View>
+                ))}
+              </ScrollView>
+
+              <View style={styles.actions}>
+                <Pressable style={styles.actionBtn} onPress={() => shareInvoice(item)}>
+                  <Text style={styles.actionText}>Download invoice</Text>
+                </Pressable>
+                <View style={styles.actionSplit} />
+                <Pressable style={styles.actionBtn} onPress={rateOrder}>
+                  <Text style={styles.actionText}>Rate order</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        />
+      )}
+    </View>
+  )
+}
+
+const SCREEN_WIDTH = Dimensions.get('window').width
+const THUMB = Math.floor((SCREEN_WIDTH - 32 - 32 - 32) / 5)
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: COLORS.canvas },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 10, gap: 8 },
+  back: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.panel2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
+  list: { padding: 16, paddingBottom: 28 },
+  center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
+  card: {
+    backgroundColor: COLORS.panel,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+  },
+  payment: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  priceMeta: { color: COLORS.muted, fontSize: 13, flex: 1, paddingRight: 8 },
+  thumbs: { gap: 8, paddingBottom: 4 },
+  thumb: {
+    width: THUMB,
+    height: THUMB,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: COLORS.panel2,
+  },
+  thumbImage: { width: '100%', height: '100%' },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.line,
+  },
+  actionBtn: { flex: 1, alignItems: 'center', paddingVertical: 4 },
+  actionText: { color: COLORS.brand, fontWeight: '800', fontSize: 14 },
+  actionSplit: { width: 1, height: 16, backgroundColor: COLORS.line },
+  button: {
+    marginTop: 16,
+    backgroundColor: COLORS.brand,
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  buttonText: { color: '#04140c', fontWeight: '800' },
+})

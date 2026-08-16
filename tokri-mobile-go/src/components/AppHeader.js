@@ -1,0 +1,122 @@
+import { useState } from 'react'
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { COLORS } from '../config'
+import { useAddress } from '../context/AddressContext'
+import { useAuth } from '../context/AuthContext'
+import Icon from './Icon'
+import SearchPlaceholderSlider from './SearchPlaceholderSlider'
+import { listenForSearch } from '../lib/voiceSearch'
+
+function shortAddress(address) {
+  if (!address) return 'Select address'
+  const line = [address.line1, address.line2, address.city].filter(Boolean).join(', ')
+  return line.length > 36 ? `${line.slice(0, 36)}…` : line
+}
+
+export default function AppHeader({ navigation, onSearch }) {
+  const insets = useSafeAreaInsets()
+  const { isLoggedIn } = useAuth()
+  const { selectedAddress, openPicker } = useAddress()
+  const [query, setQuery] = useState('')
+  const [listening, setListening] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const showHints = !query && !focused && !listening
+
+  const submit = (value = query) => {
+    const term = String(value || '').trim()
+    if (!term) return
+    onSearch ? onSearch(term) : navigation.navigate('Search', { q: term })
+  }
+
+  const onMic = async () => {
+    try {
+      setListening(true)
+      const spoken = await listenForSearch()
+      setQuery(spoken)
+      submit(spoken)
+    } catch (error) {
+      Alert.alert('Voice search', error.message || 'Could not start voice search.')
+    } finally {
+      setListening(false)
+    }
+  }
+
+  const onProfile = () => {
+    navigation.navigate('Main', { screen: 'Account' })
+  }
+
+  return (
+    <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
+      <View style={styles.topRow}>
+        <Pressable style={styles.address} onPress={openPicker}>
+          <Text style={styles.eta}>Delivery in 12 minutes</Text>
+          <View style={styles.addressLine}>
+            <Icon name="location" size={14} color={COLORS.brand} />
+            <Text style={styles.addressText} numberOfLines={1}>
+              {!isLoggedIn ? 'Select address' : shortAddress(selectedAddress)}
+            </Text>
+            <Icon name="chevron-down" size={14} color={COLORS.muted} />
+          </View>
+        </Pressable>
+        <Pressable style={styles.profile} onPress={onProfile}>
+          <Icon name="person-circle-outline" size={32} color={COLORS.text} />
+        </Pressable>
+      </View>
+
+      <View style={styles.search}>
+        <Icon name="search" size={18} color={COLORS.muted} />
+        <TextInput
+          style={styles.input}
+          placeholder=""
+          placeholderTextColor={COLORS.muted}
+          value={query}
+          onChangeText={setQuery}
+          returnKeyType="search"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onSubmitEditing={() => submit()}
+        />
+        <SearchPlaceholderSlider visible={showHints} />
+        <Pressable onPress={onMic} hitSlop={8}>
+          <Icon name={listening ? 'mic' : 'mic-outline'} size={20} color={listening ? COLORS.brand : COLORS.mint} />
+        </Pressable>
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  wrap: {
+    backgroundColor: COLORS.panel,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.line,
+  },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  address: { flex: 1 },
+  eta: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
+  addressLine: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  addressText: { flex: 1, color: COLORS.mint, fontSize: 12 },
+  profile: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  search: {
+    marginTop: 12,
+    height: 46,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+    backgroundColor: COLORS.panel2,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  input: { flex: 1, color: COLORS.text, fontSize: 14, paddingVertical: 0 },
+})

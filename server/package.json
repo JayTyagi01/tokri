@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.js",
     "admin:reset": "node scripts/reset-admin.js",
-    "db:setup": "prisma db push && prisma generate && node prisma/seed.js"
+    "db:setup": "prisma db push && prisma generate && node prisma/seed.js",
+    "db:apply-customers": "node scripts/apply-customer-schema.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

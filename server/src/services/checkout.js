@@ -88,7 +88,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
     const razorpayOrder = await createRazorpayOrder({
       amountInr: totals.grandTotal,
       receipt: orderNo,
-      notes: { orderNo, userId: user.id },
+      notes: { orderNo, customerId: user.id },
     })
     razorpayOrderId = razorpayOrder.id
   } else if (paymentMode === 'online') {
@@ -101,7 +101,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
   const order = await prisma.order.create({
     data: {
       orderNo,
-      userId: user.id,
+      customerId: user.id,
       status: 'pending',
       paymentStatus: useRazorpay ? 'pending' : 'pending',
       itemsTotal: totals.itemsTotal,
@@ -151,7 +151,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
 
 export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
   const order = await prisma.order.findFirst({
-    where: { orderNo, userId: user.id },
+    where: { orderNo, customerId: user.id },
   })
 
   if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
@@ -182,7 +182,7 @@ export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, r
 
 export async function confirmCodOrder(user, { orderNo }) {
   const order = await prisma.order.findFirst({
-    where: { orderNo, userId: user.id },
+    where: { orderNo, customerId: user.id },
   })
 
   if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })

@@ -104,26 +104,25 @@ export async function verifyOtp(rawPhone, rawCode) {
     throw Object.assign(new Error('Incorrect OTP. Please try again.'), { status: 400 })
   }
 
-  let user = await prisma.user.findFirst({ where: { phone } })
+  let customer = await prisma.customer.findFirst({ where: { phone } })
 
-  if (!user) {
-    user = await prisma.user.create({
+  if (!customer) {
+    customer = await prisma.customer.create({
       data: {
         phone,
-        role: 'customer',
         isActive: true,
       },
     })
-  } else if (!user.isActive) {
+  } else if (!customer.isActive) {
     throw Object.assign(new Error('This account is inactive. Please contact support.'), { status: 403 })
   }
 
   await prisma.otpRequest.delete({ where: { id: record.id } })
 
   return {
-    token: signCustomerToken(user),
+    token: signCustomerToken(customer),
     tokenType: 'Bearer',
     expiresIn: env.jwtExpiresInSeconds,
-    user: formatAuthUser(user),
+    user: formatAuthUser(customer),
   }
 }

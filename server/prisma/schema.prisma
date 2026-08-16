@@ -8,7 +8,6 @@ datasource db {
 }
 
 enum UserRole {
-  customer
   staff
   admin
   super_admin
@@ -39,19 +38,28 @@ model User {
   id                  String               @id @default(cuid())
   name                String?
   username            String?              @unique
-  phone               String?              @unique
   email               String?              @unique
   password            String?
-  role                UserRole             @default(customer)
+  role                UserRole             @default(staff)
   isActive            Boolean              @default(true)
-  addresses           Json?
-  orders              Order[]
-  cart                Cart?
-  devices             DeviceToken[]
   permissions         AdminPermission?
   passwordResetTokens PasswordResetToken[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+}
+
+model Customer {
+  id          String        @id @default(cuid())
+  name        String?
+  phone       String        @unique
+  dateOfBirth DateTime?     @db.Date
+  addresses   Json?
+  isActive    Boolean       @default(true)
+  orders      Order[]
+  cart        Cart?
+  devices     DeviceToken[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model AdminPermission {
@@ -85,31 +93,31 @@ model Category {
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  slug          String   @unique
+  id            String      @id @default(cuid())
+  slug          String      @unique
   name          String
-  description   String?  @db.Text
-  priceValue    Decimal  @db.Decimal(10, 2)
-  oldPriceValue Decimal? @db.Decimal(10, 2)
-  currency      String   @default("INR")
+  description   String?     @db.Text
+  priceValue    Decimal     @db.Decimal(10, 2)
+  oldPriceValue Decimal?    @db.Decimal(10, 2)
+  currency      String      @default("INR")
   weight        String?
   image         String?
   mediaId       String?
-  media         Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  media         Media?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   categoryId    String?
-  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   badge         String?
-  isBestSeller  Boolean  @default(false)
-  isImported    Boolean  @default(false)
-  isFeatured    Boolean  @default(false)
-  stock         Int      @default(100)
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
+  isBestSeller  Boolean     @default(false)
+  isImported    Boolean     @default(false)
+  isFeatured    Boolean     @default(false)
+  stock         Int         @default(100)
+  isActive      Boolean     @default(true)
+  sortOrder     Int         @default(0)
   reviews       Review[]
   orderItems    OrderItem[]
   cartItems     CartItem[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([categoryId])
   @@index([isBestSeller])
@@ -130,54 +138,54 @@ model Media {
 }
 
 model Coupon {
-  id           String     @id @default(cuid())
-  code         String     @unique
-  type         CouponType @default(percent)
-  value        Decimal    @db.Decimal(10, 2)
-  minCart      Decimal?   @db.Decimal(10, 2)
-  maxDiscount  Decimal?   @db.Decimal(10, 2)
-  startsAt     DateTime?
-  expiresAt    DateTime?
-  usageLimit   Int?
-  usedCount    Int        @default(0)
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType @default(percent)
+  value       Decimal    @db.Decimal(10, 2)
+  minCart     Decimal?   @db.Decimal(10, 2)
+  maxDiscount Decimal?   @db.Decimal(10, 2)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  usageLimit  Int?
+  usedCount   Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Order {
-  id              String        @id @default(cuid())
-  orderNo         String        @unique
-  userId          String?
-  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  status          OrderStatus   @default(pending)
-  paymentStatus   PaymentStatus @default(pending)
-  itemsTotal      Decimal       @db.Decimal(10, 2)
-  deliveryCharge  Decimal       @db.Decimal(10, 2) @default(25)
-  handlingCharge  Decimal       @db.Decimal(10, 2) @default(2)
-  smallCartCharge Decimal       @db.Decimal(10, 2) @default(0)
-  discount        Decimal       @db.Decimal(10, 2) @default(0)
-  grandTotal      Decimal       @db.Decimal(10, 2)
-  couponCode      String?
-  address         Json?
-  razorpayOrderId String?
+  id                String        @id @default(cuid())
+  orderNo           String        @unique
+  customerId        String?
+  customer          Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  status            OrderStatus   @default(pending)
+  paymentStatus     PaymentStatus @default(pending)
+  itemsTotal        Decimal       @db.Decimal(10, 2)
+  deliveryCharge    Decimal       @db.Decimal(10, 2) @default(25)
+  handlingCharge    Decimal       @db.Decimal(10, 2) @default(2)
+  smallCartCharge   Decimal       @db.Decimal(10, 2) @default(0)
+  discount          Decimal       @db.Decimal(10, 2) @default(0)
+  grandTotal        Decimal       @db.Decimal(10, 2)
+  couponCode        String?
+  address           Json?
+  razorpayOrderId   String?
   razorpayPaymentId String?
-  items           OrderItem[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  items             OrderItem[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  @@index([userId])
+  @@index([customerId])
   @@index([status])
 }
 
 model OrderItem {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   orderId    String
-  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId  String?
   product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   name       String
-  priceValue Decimal @db.Decimal(10, 2)
+  priceValue Decimal  @db.Decimal(10, 2)
   quantity   Int
   image      String?
   weight     String?
@@ -207,54 +215,54 @@ model Page {
 }
 
 model Setting {
-  id                Int      @id @default(1)
-  storeName         String?  @default("Tokriii")
-  storeTagline      String?
-  storeEmail        String?
-  storePhone1       String?
-  storePhone2       String?
-  storeAddress      String?  @db.Text
-  promoBanner       String?  @db.Text
-  earlyDelivery     String?
-  colorPrimary      String?  @default("#022c22")
-  colorPrimaryLight String?  @default("#047857")
-  colorAccent       String?  @default("#fbbf24")
-  colorBackground   String?  @default("#ffffff")
-  colorFooterFrom   String?  @default("#020617")
-  colorFooterVia    String?  @default("#0c1612")
-  fontFamily        String?  @default("Plus Jakarta Sans")
-  homeBannerEnabled         Boolean @default(true)
-  homeCategoriesEnabled     Boolean @default(true)
-  homeBestSellersEnabled    Boolean @default(true)
-  homeBestSellersTitle      String? @default("Shop Our Bestsellers")
-  homeShopOurRangeEnabled   Boolean @default(true)
-  homeFruitHighlightEnabled Boolean @default(true)
-  homeImportedFruitsEnabled Boolean @default(true)
-  homeReviewsEnabled        Boolean @default(true)
-  razorpayEnabled           Boolean @default(false)
+  id                        Int      @id @default(1)
+  storeName                 String?  @default("Tokriii")
+  storeTagline              String?
+  storeEmail                String?
+  storePhone1               String?
+  storePhone2               String?
+  storeAddress              String?  @db.Text
+  promoBanner               String?  @db.Text
+  earlyDelivery             String?
+  colorPrimary              String?  @default("#022c22")
+  colorPrimaryLight         String?  @default("#047857")
+  colorAccent               String?  @default("#fbbf24")
+  colorBackground           String?  @default("#ffffff")
+  colorFooterFrom           String?  @default("#020617")
+  colorFooterVia            String?  @default("#0c1612")
+  fontFamily                String?  @default("Plus Jakarta Sans")
+  homeBannerEnabled         Boolean  @default(true)
+  homeCategoriesEnabled     Boolean  @default(true)
+  homeBestSellersEnabled    Boolean  @default(true)
+  homeBestSellersTitle      String?  @default("Shop Our Bestsellers")
+  homeShopOurRangeEnabled   Boolean  @default(true)
+  homeFruitHighlightEnabled Boolean  @default(true)
+  homeImportedFruitsEnabled Boolean  @default(true)
+  homeReviewsEnabled        Boolean  @default(true)
+  razorpayEnabled           Boolean  @default(false)
   razorpayKeyId             String?
   razorpayKeySecret         String?
-  twilioEnabled             Boolean @default(false)
+  twilioEnabled             Boolean  @default(false)
   twilioAccountSid          String?
   twilioAuthToken           String?
   twilioSmsFrom             String?
   twilioWhatsappFrom        String?
-  store             Json?
-  theme             Json?
-  home              Json?
-  payment           Json?
-  messaging         Json?
-  updatedAt         DateTime @updatedAt
+  store                     Json?
+  theme                     Json?
+  home                      Json?
+  payment                   Json?
+  messaging                 Json?
+  updatedAt                 DateTime @updatedAt
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId])
 }
@@ -271,12 +279,12 @@ model OtpRequest {
 }
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id         String     @id @default(cuid())
+  customerId String     @unique
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 model CartItem {
@@ -291,14 +299,14 @@ model CartItem {
 }
 
 model DeviceToken {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  platform  String
-  provider  String   @default("expo")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String
+  provider   String   @default("expo")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  @@index([userId])
+  @@index([customerId])
 }

@@ -8,6 +8,7 @@ import {
 } from '../services/addresses.js'
 import { getCustomerOrder, listCustomerOrders } from '../services/customerOrders.js'
 import { formatAuthUser } from '../services/jwt.js'
+import { parseDateOfBirth } from '../services/customers.js'
 import { prisma } from '../lib/prisma.js'
 import {
   addCartItem,
@@ -37,12 +38,18 @@ router.patch('/profile', async (req, res, next) => {
       throw Object.assign(new Error('Name is too long.'), { status: 400 })
     }
 
-    const user = await prisma.user.update({
+    const dateOfBirth = parseDateOfBirth(req.body?.dateOfBirth)
+    const customer = await prisma.customer.update({
       where: { id: req.customer.id },
-      data: { name },
+      data: {
+        name,
+        ...(dateOfBirth !== undefined
+          ? { dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T12:00:00.000Z`) : null }
+          : {}),
+      },
     })
 
-    res.json({ user: formatAuthUser(user) })
+    res.json({ user: formatAuthUser(customer) })
   } catch (error) {
     next(error)
   }

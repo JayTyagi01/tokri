@@ -79,11 +79,11 @@ export async function notifyUser(userId, { title, body, data = {} }) {
 }
 
 export async function notifyOrderStatus(order, status = order?.status) {
-  if (!order?.userId) return { sent: 0 }
+  if (!order?.customerId) return { sent: 0 }
   const copy = STATUS_COPY[status]
   if (!copy) return { sent: 0 }
 
-  return notifyUser(order.userId, {
+  return notifyUser(order.customerId, {
     title: copy.title,
     body: copy.body(order.orderNo),
     data: {

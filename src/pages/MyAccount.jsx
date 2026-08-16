@@ -3,12 +3,13 @@ import { useAuth } from '../context/AuthContext'
 import AccountSidebar from '../components/account/AccountSidebar'
 import SavedAddresses from '../components/account/SavedAddresses'
 import MyOrders from '../components/account/MyOrders'
+import ProfileForm from '../components/account/ProfileForm'
 
 export default function MyAccount() {
   const { isLoggedIn } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const section = searchParams.get('section') || 'orders'
+  const section = searchParams.get('section') || 'profile'
 
   if (!isLoggedIn) {
     return (
@@ -40,9 +41,10 @@ export default function MyAccount() {
             <AccountSidebar activeSection={section} />
 
             <div className="min-w-0 flex-1 p-5 sm:p-8">
+              {section === 'profile' && <ProfileForm />}
               {section === 'orders' && <MyOrders />}
               {section === 'addresses' && <SavedAddresses />}
-              {!['orders', 'addresses'].includes(section) && <MyOrders />}
+              {!['profile', 'orders', 'addresses'].includes(section) && <ProfileForm />}
             </div>
           </div>
         </div>

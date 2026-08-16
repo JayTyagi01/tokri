@@ -7,6 +7,14 @@ function httpError(message, status = 400) {
   return Object.assign(new Error(message), { status })
 }
 
+function formatDevice(device) {
+  return {
+    id: device.id,
+    platform: device.platform,
+    provider: device.provider,
+  }
+}
+
 function sanitizeToken(raw) {
   const token = String(raw || '').trim()
   if (token.length < 10 || token.length > 4096) {
@@ -15,7 +23,7 @@ function sanitizeToken(raw) {
   return token
 }
 
-export async function registerDevice(userId, { token, platform, provider = 'expo' }) {
+export async function registerDevice(customerId, { token, platform, provider = 'expo' }) {
   const safeToken = sanitizeToken(token)
   const safePlatform = String(platform || '').toLowerCase()
   const safeProvider = String(provider || 'expo').toLowerCase()
@@ -27,39 +35,43 @@ export async function registerDevice(userId, { token, platform, provider = 'expo
     throw httpError('Provider must be expo, fcm, or apns.')
   }
 
-  const device = await prisma.deviceToken.upsert({
-    where: { token: safeToken },
-    update: {
-      userId,
-      platform: safePlatform,
-      provider: safeProvider,
-    },
-    create: {
-      userId,
+  const device = await prisma.deviceToken.findUnique({ where: { token: safeToken } })
+  if (device) {
+    return formatDevice(
+      await prisma.deviceToken.update({
+        where: { token: safeToken },
+        data: {
+          customerId,
+          platform: safePlatform,
+          provider: safeProvider,
+        },
+      }),
+    )
+  }
+
+  const created = await prisma.deviceToken.create({
+    data: {
+      customerId,
       token: safeToken,
       platform: safePlatform,
       provider: safeProvider,
     },
   })
 
-  return {
-    id: device.id,
-    platform: device.platform,
-    provider: device.provider,
-  }
+  return formatDevice(created)
 }
 
-export async function unregisterDevice(userId, token) {
+export async function unregisterDevice(customerId, token) {
   const safeToken = sanitizeToken(token)
   await prisma.deviceToken.deleteMany({
-    where: { userId, token: safeToken },
+    where: { customerId, token: safeToken },
   })
   return { ok: true }
 }
 
-export async function listUserDeviceTokens(userId) {
+export async function listUserDeviceTokens(customerId) {
   return prisma.deviceToken.findMany({
-    where: { userId },
+    where: { customerId },
     select: { token: true, platform: true, provider: true },
   })
 }

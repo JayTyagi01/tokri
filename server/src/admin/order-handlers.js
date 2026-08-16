@@ -21,8 +21,8 @@ function formatAddress(address) {
 
 function flattenOrder(order) {
   const address = parseAddress(order.address)
-  const customerName = order.user?.name || address?.name || 'Guest'
-  const customerPhone = order.user?.phone || address?.phone || ''
+  const customerName = order.customer?.name || address?.name || 'Guest'
+  const customerPhone = order.customer?.phone || address?.phone || ''
 
   return {
     id: order.id,
@@ -42,7 +42,7 @@ function flattenOrder(order) {
     updatedAt: order.updatedAt,
     customerName,
     customerPhone,
-    customerEmail: order.user?.email || '',
+    customerEmail: '',
     addressLabel: address?.label || 'Delivery',
     addressFormatted: formatAddress(address),
     addressJson: JSON.stringify(address || {}),
@@ -65,7 +65,7 @@ async function loadOrder(recordId) {
   return prisma.order.findUnique({
     where: { id: recordId },
     include: {
-      user: { select: { id: true, name: true, phone: true, email: true } },
+      customer: { select: { id: true, name: true, phone: true } },
       items: { orderBy: { id: 'asc' } },
     },
   })
@@ -83,8 +83,8 @@ export const orderListHandler = {
       ? {
           OR: [
             { orderNo: { contains: searchTerm } },
-            { user: { is: { name: { contains: searchTerm } } } },
-            { user: { is: { phone: { contains: searchTerm } } } },
+            { customer: { is: { name: { contains: searchTerm } } } },
+            { customer: { is: { phone: { contains: searchTerm } } } },
           ],
         }
       : {}
@@ -96,7 +96,7 @@ export const orderListHandler = {
         take: perPage,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { name: true, phone: true } },
+          customer: { select: { name: true, phone: true } },
         },
       }),
       prisma.order.count({ where }),
@@ -111,8 +111,8 @@ export const orderListHandler = {
         paymentStatus: order.paymentStatus,
         grandTotal: String(order.grandTotal),
         createdAt: order.createdAt,
-        customerName: order.user?.name || address?.name || 'Guest',
-        customerPhone: order.user?.phone || address?.phone || '',
+        customerName: order.customer?.name || address?.name || 'Guest',
+        customerPhone: order.customer?.phone || address?.phone || '',
       }).toJSON(context.currentAdmin)
     })
 

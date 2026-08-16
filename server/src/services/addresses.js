@@ -66,19 +66,19 @@ export function formatAddressRecord(address) {
   }
 }
 
-export async function listAddresses(userId) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) throw Object.assign(new Error('User not found.'), { status: 404 })
+export async function listAddresses(customerId) {
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } })
+  if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
-  return parseAddresses(user.addresses).map(formatAddressRecord)
+  return parseAddresses(customer.addresses).map(formatAddressRecord)
 }
 
-export async function createAddress(userId, input) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) throw Object.assign(new Error('User not found.'), { status: 404 })
+export async function createAddress(customerId, input) {
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } })
+  if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
-  const addresses = parseAddresses(user.addresses)
-  const payload = sanitizeAddressInput(input, user.phone)
+  const addresses = parseAddresses(customer.addresses)
+  const payload = sanitizeAddressInput(input, customer.phone)
   const nextAddress = {
     id: crypto.randomUUID(),
     ...payload,
@@ -86,23 +86,23 @@ export async function createAddress(userId, input) {
     updatedAt: new Date().toISOString(),
   }
 
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.customer.update({
+    where: { id: customerId },
     data: { addresses: [...addresses, nextAddress] },
   })
 
   return formatAddressRecord(nextAddress)
 }
 
-export async function updateAddress(userId, addressId, input) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) throw Object.assign(new Error('User not found.'), { status: 404 })
+export async function updateAddress(customerId, addressId, input) {
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } })
+  if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
-  const addresses = parseAddresses(user.addresses)
+  const addresses = parseAddresses(customer.addresses)
   const index = addresses.findIndex((item) => item.id === addressId)
   if (index === -1) throw Object.assign(new Error('Address not found.'), { status: 404 })
 
-  const payload = sanitizeAddressInput(input, user.phone)
+  const payload = sanitizeAddressInput(input, customer.phone)
   const updated = {
     ...addresses[index],
     ...payload,
@@ -110,26 +110,26 @@ export async function updateAddress(userId, addressId, input) {
   }
 
   addresses[index] = updated
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.customer.update({
+    where: { id: customerId },
     data: { addresses },
   })
 
   return formatAddressRecord(updated)
 }
 
-export async function deleteAddress(userId, addressId) {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) throw Object.assign(new Error('User not found.'), { status: 404 })
+export async function deleteAddress(customerId, addressId) {
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } })
+  if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
-  const addresses = parseAddresses(user.addresses)
+  const addresses = parseAddresses(customer.addresses)
   const nextAddresses = addresses.filter((item) => item.id !== addressId)
   if (nextAddresses.length === addresses.length) {
     throw Object.assign(new Error('Address not found.'), { status: 404 })
   }
 
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.customer.update({
+    where: { id: customerId },
     data: { addresses: nextAddresses },
   })
 

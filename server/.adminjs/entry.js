@@ -13,6 +13,8 @@ import SettingsEdit from '../src/admin/components/settings-edit'
 AdminJS.UserComponents.SettingsEdit = SettingsEdit
 import OrderDetail from '../src/admin/components/order-detail'
 AdminJS.UserComponents.OrderDetail = OrderDetail
+import ChangePassword from '../src/admin/components/change-password'
+AdminJS.UserComponents.ChangePassword = ChangePassword
 import Login from '../src/admin/components/login'
 AdminJS.UserComponents.Login = Login
 import ActionHeader from '../src/admin/components/action-header'

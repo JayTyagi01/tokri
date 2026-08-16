@@ -10,6 +10,7 @@ export const Components = {
   ReviewEdit: componentLoader.add('ReviewEdit', './components/review-edit.jsx'),
   SettingsEdit: componentLoader.add('SettingsEdit', './components/settings-edit.jsx'),
   OrderDetail: componentLoader.add('OrderDetail', './components/order-detail.jsx'),
+  ChangePassword: componentLoader.add('ChangePassword', './components/change-password.jsx'),
 }
 
 componentLoader.override('Login', './components/login.jsx')

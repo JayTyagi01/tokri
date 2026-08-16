@@ -45,27 +45,44 @@ export function formatCustomerOrder(order) {
       : null,
     items: (order.items || []).map((item) => ({
       id: item.id,
+      slug: item.product?.slug || null,
       name: item.name,
       priceValue: Number(item.priceValue),
+      oldPriceValue: item.product?.oldPriceValue ? Number(item.product.oldPriceValue) : null,
       quantity: item.quantity,
-      weight: item.weight || '',
-      image: toPublicAssetUrl(item.image) || '',
+      weight: item.weight || item.product?.weight || '',
+      image: toPublicAssetUrl(item.image || item.product?.image) || '',
       lineTotal: Number(item.priceValue) * item.quantity,
     })),
   }
 }
 
 const orderInclude = {
-  items: { orderBy: { id: 'asc' } },
+  items: {
+    orderBy: { id: 'asc' },
+    include: {
+      product: {
+        select: {
+          slug: true,
+          name: true,
+          image: true,
+          priceValue: true,
+          oldPriceValue: true,
+          weight: true,
+          isActive: true,
+        },
+      },
+    },
+  },
 }
 
 const DEFAULT_PER_PAGE = 10
 const MAX_PER_PAGE = 20
 
-export async function listCustomerOrders(userId, { page = 1, perPage = DEFAULT_PER_PAGE } = {}) {
+export async function listCustomerOrders(customerId, { page = 1, perPage = DEFAULT_PER_PAGE } = {}) {
   const requestedPerPage = Number(perPage) || DEFAULT_PER_PAGE
   const safePerPage = Math.min(MAX_PER_PAGE, Math.max(1, requestedPerPage))
-  const where = { userId }
+  const where = { customerId }
 
   const totalCount = await prisma.order.count({ where })
   const totalPages = Math.max(1, Math.ceil(totalCount / safePerPage))
@@ -93,9 +110,9 @@ export async function listCustomerOrders(userId, { page = 1, perPage = DEFAULT_P
   }
 }
 
-export async function getCustomerOrder(userId, orderNo) {
+export async function getCustomerOrder(customerId, orderNo) {
   const order = await prisma.order.findFirst({
-    where: { userId, orderNo },
+    where: { customerId, orderNo },
     include: orderInclude,
   })
 

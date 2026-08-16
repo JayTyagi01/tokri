@@ -15,6 +15,15 @@ router.get('/health', (_req, res) => {
     service: 'tokri-api',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
+    cartStorage: 'sql',
+    models: {
+      customer: Boolean(prisma.customer),
+      cart: Boolean(prisma.cart),
+      cartItem: Boolean(prisma.cartItem),
+      deviceToken: Boolean(prisma.deviceToken),
+      otpRequest: Boolean(prisma.otpRequest),
+      user: Boolean(prisma.user),
+    },
   })
 })
 

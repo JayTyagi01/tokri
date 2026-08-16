@@ -6,10 +6,12 @@ import {
   MapPin,
   MapPinned,
   Package,
+  UserRound,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
+  { key: 'profile', label: 'Profile', icon: UserRound, href: '/account?section=profile' },
   { key: 'orders', label: 'My Orders', icon: Package, href: '/account?section=orders' },
   { key: 'addresses', label: 'Saved Addresses', icon: MapPinned, href: '/account?section=addresses' },
 ]

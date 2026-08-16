@@ -42,7 +42,14 @@ router.get('/bootstrap', optionalCustomer, async (req, res, next) => {
       }),
     ])
 
-    const cart = req.customer ? await getCart(req.customer.id) : null
+    let cart = null
+    if (req.customer) {
+      try {
+        cart = await getCart(req.customer.id)
+      } catch (error) {
+        console.error('bootstrap cart failed:', error)
+      }
+    }
 
     res.json({
       settings: formatPublicSettings(settings),

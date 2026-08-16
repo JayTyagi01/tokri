@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { env } from '../config/env.js'
+import { formatAuthCustomer } from './customers.js'
 
 function toBase64Url(value) {
   const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value)
@@ -10,14 +11,14 @@ function sign(input, secret) {
   return toBase64Url(crypto.createHmac('sha256', secret).update(input).digest())
 }
 
-export function signCustomerToken(user) {
+export function signCustomerToken(customer) {
   const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
   const now = Math.floor(Date.now() / 1000)
   const payload = toBase64Url(
     JSON.stringify({
-      sub: user.id,
-      phone: user.phone,
-      role: user.role || 'customer',
+      sub: customer.id,
+      phone: customer.phone,
+      role: 'customer',
       iat: now,
       exp: now + env.jwtExpiresInSeconds,
     }),
@@ -56,10 +57,6 @@ export function verifyCustomerToken(token) {
   return data
 }
 
-export function formatAuthUser(user) {
-  return {
-    id: user.id,
-    phone: user.phone,
-    name: user.name || null,
-  }
+export function formatAuthUser(customer) {
+  return formatAuthCustomer(customer)
 }

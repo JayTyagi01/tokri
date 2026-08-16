@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Tokriii",
+    "slug": "tokriii",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#022c22"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tokriii.app"
+    },
+    "updates": {
+      "enabled": false
+    },
+    "android": {
+      "package": "com.tokriii.app",
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#022c22"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiBaseUrl": "https://tokriii.com/api/v1"
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

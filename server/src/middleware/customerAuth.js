@@ -14,22 +14,22 @@ export async function resolveCustomer(req) {
   const bearer = readBearerToken(req)
   if (bearer) {
     const payload = verifyCustomerToken(bearer)
-    const user = await prisma.user.findFirst({
+    const customer = await prisma.customer.findFirst({
       where: { id: payload.sub, isActive: true },
     })
-    if (!user) {
+    if (!customer) {
       throw Object.assign(new Error('Please log in to continue.'), { status: 401 })
     }
-    return user
+    return customer
   }
 
   const phone = normalizePhone(req.headers['x-user-phone'])
   if (!phone) return null
 
-  const user = await prisma.user.findFirst({
+  const customer = await prisma.customer.findFirst({
     where: { phone, isActive: true },
   })
-  return user || null
+  return customer || null
 }
 
 export async function requireCustomer(req, res, next) {
