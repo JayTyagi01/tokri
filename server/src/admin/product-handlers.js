@@ -53,12 +53,17 @@ export async function uniqueProductSlug(value, currentId) {
 }
 
 export async function syncProductCategories(productId, categoryIds) {
+  if (!prisma.productCategory) return
   const unique = [...new Set((categoryIds || []).filter(Boolean))]
-  await prisma.productCategory.deleteMany({ where: { productId } })
-  if (!unique.length) return
-  await prisma.productCategory.createMany({
-    data: unique.map((categoryId) => ({ productId, categoryId })),
-  })
+  try {
+    await prisma.productCategory.deleteMany({ where: { productId } })
+    if (!unique.length) return
+    await prisma.productCategory.createMany({
+      data: unique.map((categoryId) => ({ productId, categoryId })),
+    })
+  } catch (error) {
+    console.error('syncProductCategories failed', error)
+  }
 }
 
 export async function prepareProductPayload(request) {
@@ -100,33 +105,37 @@ export async function afterProductForm(response, request) {
   const record = response?.record
   if (!record) return response
 
-  const productId = record.id || record.params?.id
-  const postedIds = request.tokriCategoryIds || parseCategoryIds(record.params?.categoryIds)
+  try {
+    const productId = record.id || record.params?.id
+    const postedIds = request.tokriCategoryIds || parseCategoryIds(record.params?.categoryIds)
 
-  if (request.method === 'post' && productId) {
-    await syncProductCategories(productId, postedIds)
-    if (postedIds[0]) {
-      await prisma.product.update({
-        where: { id: productId },
-        data: { categoryId: postedIds[0] },
-      })
+    if (request.method === 'post' && productId) {
+      await syncProductCategories(productId, postedIds)
+      if (postedIds[0]) {
+        await prisma.product.update({
+          where: { id: productId },
+          data: { categoryId: postedIds[0] },
+        })
+      }
     }
-  }
 
-  if (productId) {
-    const rows = await prisma.productCategory.findMany({
-      where: { productId },
-      include: { category: { select: { slug: true } } },
-    })
-    let slugs = rows.map((row) => row.category?.slug).filter(Boolean)
-    if (!slugs.length && record.params?.category) {
-      const primary = await prisma.category.findUnique({
-        where: { id: String(record.params.category) },
-        select: { slug: true },
+    if (productId && prisma.productCategory) {
+      const rows = await prisma.productCategory.findMany({
+        where: { productId },
+        include: { category: { select: { slug: true } } },
       })
-      if (primary?.slug) slugs = [primary.slug]
+      let slugs = rows.map((row) => row.category?.slug).filter(Boolean)
+      if (!slugs.length && record.params?.category) {
+        const primary = await prisma.category.findUnique({
+          where: { id: String(record.params.category) },
+          select: { slug: true },
+        })
+        if (primary?.slug) slugs = [primary.slug]
+      }
+      record.params.categoryIds = JSON.stringify(slugs)
     }
-    record.params.categoryIds = JSON.stringify(slugs)
+  } catch (error) {
+    console.error('afterProductForm failed', error)
   }
 
   return response
