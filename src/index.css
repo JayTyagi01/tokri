@@ -63,6 +63,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+a,
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="file"],
+input[type="checkbox"],
+input[type="radio"],
+label[for],
+select,
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 #root {
   min-height: 100vh;
   width: 100%;

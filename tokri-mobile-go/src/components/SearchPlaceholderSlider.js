@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 
 export const SEARCH_HINTS = [
   'mango',
@@ -22,6 +22,8 @@ const HOLD_MS = 2200
 const SLIDE_MS = 380
 
 export default function SearchPlaceholderSlider({ visible }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const [index, setIndex] = useState(0)
   const translateY = useRef(new Animated.Value(0)).current
 
@@ -69,7 +71,7 @@ export default function SearchPlaceholderSlider({ visible }) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c) => ({
   clip: {
     position: 'absolute',
     left: 40,
@@ -81,7 +83,7 @@ const styles = StyleSheet.create({
   line: {
     height: LINE_HEIGHT,
     lineHeight: LINE_HEIGHT,
-    color: COLORS.muted,
+    color: c.muted,
     fontSize: 14,
   },
 })

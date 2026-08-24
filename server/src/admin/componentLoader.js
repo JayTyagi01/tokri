@@ -9,6 +9,7 @@ export const Components = {
   CmsList: componentLoader.add('CmsList', './components/cms-list.jsx'),
   ReviewEdit: componentLoader.add('ReviewEdit', './components/review-edit.jsx'),
   SettingsEdit: componentLoader.add('SettingsEdit', './components/settings-edit.jsx'),
+  CouponEdit: componentLoader.add('CouponEdit', './components/coupon-edit.jsx'),
   OrderDetail: componentLoader.add('OrderDetail', './components/order-detail.jsx'),
   ChangePassword: componentLoader.add('ChangePassword', './components/change-password.jsx'),
 }

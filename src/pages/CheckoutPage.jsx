@@ -7,6 +7,7 @@ import { useAddress } from '../context/AddressContext'
 import { authGet, authPost, fetchJson } from '../lib/api'
 import { formatPrice, loadRazorpayScript } from '../lib/checkout'
 import { addressLabelIcon } from '../components/account/AccountSidebar'
+import CouponBox from '../components/CouponBox'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
@@ -17,8 +18,9 @@ export default function CheckoutPage() {
     itemsTotal,
     deliveryCharge,
     handlingCharge,
-    smallCartCharge,
+    discount,
     grandTotal,
+    coupon,
     clearCart,
   } = useCart()
 
@@ -128,6 +130,7 @@ export default function CheckoutPage() {
         items: cartItems.map((item) => ({ id: item.id, quantity: item.quantity })),
         addressId: selectedAddressId,
         paymentMode,
+        couponCode: coupon?.code || undefined,
       })
 
       let orderNo = checkout.order.orderNo
@@ -259,6 +262,9 @@ export default function CheckoutPage() {
 
           <aside className="h-fit rounded-2xl border border-line bg-panel p-5 sm:p-6">
             <h2 className="text-lg font-bold text-white">Order summary</h2>
+            <div className="mt-4">
+              <CouponBox compact />
+            </div>
             <ul className="mt-4 space-y-3 border-b border-line pb-4">
               {cartItems.map((item) => (
                 <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
@@ -278,17 +284,19 @@ export default function CheckoutPage() {
                 <span>{formatPrice(itemsTotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Delivery charges</span>
-                <span>{formatPrice(deliveryCharge)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span>Cart handling</span>
                 <span>{formatPrice(handlingCharge)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Small cart charge</span>
-                <span>{formatPrice(smallCartCharge)}</span>
+                <span>Delivery charges</span>
+                <span>{formatPrice(deliveryCharge)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-mint">
+                  <span>Coupon discount</span>
+                  <span>-{formatPrice(discount)}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-lg font-bold text-white">

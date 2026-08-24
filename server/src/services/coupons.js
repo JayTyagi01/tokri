@@ -1,0 +1,174 @@
+import { prisma } from '../lib/prisma.js'
+import { calcCartTotals, getChargeRates } from '../config/charges.js'
+
+function httpError(message, status = 400) {
+  return Object.assign(new Error(message), { status })
+}
+
+function parseTargetSlugs(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw.map((item) => String(item).trim()).filter(Boolean)
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed) return []
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) return parseTargetSlugs(parsed)
+    } catch {
+      // Treat as comma-separated slugs.
+    }
+    return trimmed
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+function itemSlug(item) {
+  return String(item?.slug || item?.id || '').trim()
+}
+
+function itemCategorySlugs(item) {
+  const values = []
+  if (Array.isArray(item?.categories)) {
+    for (const category of item.categories) {
+      const slug = typeof category === 'string' ? category : category?.slug || category?.id
+      if (slug) values.push(String(slug).trim())
+    }
+  }
+  if (typeof item?.category === 'string') values.push(item.category.trim())
+  const single = String(item?.category?.slug || item?.categorySlug || item?.categoryId || item?.category?.id || '').trim()
+  if (single) values.push(single)
+  return [...new Set(values.filter(Boolean))]
+}
+
+function isItemEligible(item, coupon) {
+  const targetType = coupon.targetType || 'all'
+  const slugs = parseTargetSlugs(coupon.targetSlugs)
+  if (targetType === 'all' || !slugs.length) return true
+  if (targetType === 'products') return slugs.includes(itemSlug(item))
+  if (targetType === 'categories') {
+    return itemCategorySlugs(item).some((slug) => slugs.includes(slug))
+  }
+  return true
+}
+
+function roundMoney(value) {
+  return Math.round(Number(value || 0) * 100) / 100
+}
+
+export function formatCouponPreview(coupon, totals) {
+  const applyOn = coupon.applyOn === 'shipping' ? 'shipping' : 'cart'
+  return {
+    code: coupon.code,
+    type: coupon.type,
+    value: Number(coupon.value),
+    applyOn,
+    targetType: coupon.targetType || 'all',
+    usageType: coupon.usageType || 'unlimited',
+    discount: totals.discount,
+    itemsTotal: totals.itemsTotal,
+    deliveryCharge: totals.deliveryCharge,
+    handlingCharge: totals.handlingCharge,
+    smallCartCharge: totals.smallCartCharge,
+    grandTotal: totals.grandTotal,
+    message:
+      applyOn === 'shipping'
+        ? `₹${totals.discount} off shipping`
+        : `₹${totals.discount} off cart`,
+  }
+}
+
+export async function findActiveCoupon(code) {
+  const normalized = String(code || '').trim().toUpperCase()
+  if (!normalized) throw httpError('Enter a coupon code.')
+
+  const coupon = await prisma.coupon.findUnique({ where: { code: normalized } })
+  if (!coupon || !coupon.isActive) throw httpError('This coupon is not valid.')
+
+  const now = new Date()
+  if (coupon.startsAt && coupon.startsAt > now) throw httpError('This coupon is not active yet.')
+  if (coupon.expiresAt && coupon.expiresAt < now) throw httpError('This coupon has expired.')
+
+  if (coupon.usageLimit != null && coupon.usedCount >= coupon.usageLimit) {
+    throw httpError('This coupon has reached its usage limit.')
+  }
+
+  return coupon
+}
+
+export async function applyCouponToItems(coupon, items, customerId) {
+  if (!items.length) throw httpError('Add items to your cart before applying a coupon.')
+
+  if ((coupon.usageType || 'unlimited') === 'single' && customerId) {
+    const used = await prisma.couponRedemption.findFirst({
+      where: { couponId: coupon.id, customerId },
+      select: { id: true },
+    })
+    if (used) throw httpError('You have already used this coupon.')
+  } else if ((coupon.usageType || 'unlimited') === 'single' && !customerId) {
+    throw httpError('Please log in to use this coupon.')
+  }
+
+  const rates = await getChargeRates()
+  const eligibleItems = items.filter((item) => isItemEligible(item, coupon))
+  const eligibleTotal = eligibleItems.reduce(
+    (sum, item) => sum + Number(item.priceValue) * Number(item.quantity),
+    0,
+  )
+  const itemsTotal = items.reduce((sum, item) => sum + Number(item.priceValue) * Number(item.quantity), 0)
+  const minCart = Number(coupon.minCart || 0)
+
+  if (minCart > 0 && itemsTotal < minCart) {
+    throw httpError(`Add items worth ₹${minCart} or more to use this coupon.`)
+  }
+
+  const applyOn = coupon.applyOn === 'shipping' ? 'shipping' : 'cart'
+  if (applyOn === 'cart' && !eligibleItems.length) {
+    throw httpError(
+      coupon.targetType === 'categories'
+        ? 'This coupon is only valid on selected categories.'
+        : 'This coupon is only valid on selected products.',
+    )
+  }
+
+  const base = applyOn === 'shipping' ? rates.deliveryCharge : eligibleTotal
+  if (base <= 0) {
+    throw httpError(applyOn === 'shipping' ? 'No shipping fee to discount.' : 'No eligible items for this coupon.')
+  }
+
+  let discount =
+    coupon.type === 'percent' ? (base * Number(coupon.value)) / 100 : Number(coupon.value)
+  if (coupon.maxDiscount != null) discount = Math.min(discount, Number(coupon.maxDiscount))
+  discount = Math.min(roundMoney(discount), base)
+  if (discount <= 0) throw httpError('This coupon does not give a discount on your cart.')
+
+  const totals = calcCartTotals(items, rates, discount)
+  return {
+    coupon,
+    totals,
+    preview: formatCouponPreview(coupon, totals),
+  }
+}
+
+export async function previewCoupon({ code, items, customerId }) {
+  const coupon = await findActiveCoupon(code)
+  return applyCouponToItems(coupon, items, customerId)
+}
+
+export async function redeemCoupon({ coupon, customerId, orderId }) {
+  await prisma.$transaction([
+    prisma.coupon.update({
+      where: { id: coupon.id },
+      data: { usedCount: { increment: 1 } },
+    }),
+    prisma.couponRedemption.create({
+      data: {
+        couponId: coupon.id,
+        customerId,
+        orderId: orderId || null,
+      },
+    }),
+  ])
+}

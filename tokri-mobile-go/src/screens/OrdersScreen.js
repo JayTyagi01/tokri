@@ -15,7 +15,7 @@ import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import LoadingView from '../components/LoadingView'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authGet, formatPrice } from '../lib/api'
 import { formatOrderWhen, paymentLabel } from '../lib/orders'
 import { useAuth } from '../context/AuthContext'
@@ -52,6 +52,8 @@ function rateOrder() {
 }
 
 export default function OrdersScreen({ navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { token, isLoggedIn } = useAuth()
   const [orders, setOrders] = useState([])
@@ -93,7 +95,7 @@ export default function OrdersScreen({ navigation }) {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable style={styles.back} onPress={goBack} hitSlop={12}>
-          <Icon name="chevron-back" size={22} color={COLORS.text} />
+          <Icon name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Your orders</Text>
       </View>
@@ -109,7 +111,7 @@ export default function OrdersScreen({ navigation }) {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.orderNo}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
           contentContainerStyle={orders.length ? styles.list : styles.center}
           ListEmptyComponent={<Text style={styles.emptyTitle}>No orders yet</Text>}
           renderItem={({ item }) => (
@@ -119,7 +121,7 @@ export default function OrdersScreen({ navigation }) {
                 <Text style={styles.priceMeta}>
                   {formatPrice(item.grandTotal)}  •  {formatOrderWhen(item.createdAt)}
                 </Text>
-                <Icon name="chevron-forward" size={18} color={COLORS.muted} />
+                <Icon name="chevron-forward" size={18} color={colors.muted} />
               </Pressable>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
@@ -150,30 +152,30 @@ export default function OrdersScreen({ navigation }) {
 const SCREEN_WIDTH = Dimensions.get('window').width
 const THUMB = Math.floor((SCREEN_WIDTH - 32 - 32 - 32) / 5)
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 10, gap: 8 },
   back: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
+  headerTitle: { color: c.text, fontSize: 22, fontWeight: '800' },
   list: { padding: 16, paddingBottom: 28 },
   center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: c.text, textAlign: 'center' },
   card: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderRadius: 16,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
-  payment: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  payment: { color: c.text, fontSize: 18, fontWeight: '800' },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -181,14 +183,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 12,
   },
-  priceMeta: { color: COLORS.muted, fontSize: 13, flex: 1, paddingRight: 8 },
+  priceMeta: { color: c.muted, fontSize: 13, flex: 1, paddingRight: 8 },
   thumbs: { gap: 8, paddingBottom: 4 },
   thumb: {
     width: THUMB,
     height: THUMB,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
   },
   thumbImage: { width: '100%', height: '100%' },
   actions: {
@@ -197,14 +199,14 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.line,
+    borderTopColor: c.line,
   },
   actionBtn: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-  actionText: { color: COLORS.brand, fontWeight: '800', fontSize: 14 },
-  actionSplit: { width: 1, height: 16, backgroundColor: COLORS.line },
+  actionText: { color: c.brand, fontWeight: '800', fontSize: 14 },
+  actionSplit: { width: 1, height: 16, backgroundColor: c.line },
   button: {
     marginTop: 16,
-    backgroundColor: COLORS.brand,
+    backgroundColor: c.brand,
     borderRadius: 999,
     paddingVertical: 14,
     paddingHorizontal: 24,

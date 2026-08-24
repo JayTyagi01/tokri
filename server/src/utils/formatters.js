@@ -1,4 +1,5 @@
 import { env } from '../config/env.js'
+import { formatCategoryRef, productCategoryList } from './catalog.js'
 
 export function toPublicAssetUrl(value) {
   if (!value) return null
@@ -10,6 +11,9 @@ export function toPublicAssetUrl(value) {
 export function formatProduct(product) {
   const priceValue = Number(product.priceValue)
   const oldPriceValue = product.oldPriceValue ? Number(product.oldPriceValue) : null
+
+  const categories = productCategoryList(product).map(formatCategoryRef)
+  const primary = categories[0] || null
 
   return {
     id: product.slug,
@@ -24,14 +28,9 @@ export function formatProduct(product) {
     weight: product.weight,
     image: toPublicAssetUrl(product.image),
     badge: product.badge,
-    categoryId: product.category?.slug ?? null,
-    category: product.category
-      ? {
-          id: product.category.slug,
-          slug: product.category.slug,
-          label: product.category.label,
-        }
-      : null,
+    categoryId: primary?.slug ?? null,
+    category: primary,
+    categories,
     isBestSeller: product.isBestSeller,
     isImported: product.isImported,
     isFeatured: product.isFeatured,
@@ -50,7 +49,11 @@ export function formatCategory(category, { includeProducts = false } = {}) {
     image: toPublicAssetUrl(category.image),
     bannerImage: toPublicAssetUrl(category.bannerImage),
     sortOrder: category.sortOrder,
-    productCount: category._count?.products ?? category.products?.length ?? 0,
+    productCount:
+      category._count?.productLinks ??
+      category._count?.products ??
+      category.products?.length ??
+      0,
   }
 
   if (includeProducts && category.products) {

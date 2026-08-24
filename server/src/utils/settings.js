@@ -1,6 +1,6 @@
 export function formatPublicSettings(settings) {
   if (!settings) {
-    return { store: null, theme: null, home: null, payment: null, messaging: null }
+    return { store: null, home: null, payment: null, messaging: null, charges: null }
   }
 
   const homeSections = [
@@ -27,17 +27,6 @@ export function formatPublicSettings(settings) {
       promoBanner: settings.promoBanner,
       earlyDelivery: settings.earlyDelivery,
     },
-    theme: {
-      colors: {
-        primary: settings.colorPrimary,
-        primaryLight: settings.colorPrimaryLight,
-        accent: settings.colorAccent,
-        background: settings.colorBackground,
-        footerFrom: settings.colorFooterFrom,
-        footerVia: settings.colorFooterVia,
-      },
-      fontFamily: settings.fontFamily,
-    },
     home: {
       sections: homeSections,
     },
@@ -53,6 +42,10 @@ export function formatPublicSettings(settings) {
         smsFrom: settings.twilioSmsFrom || '',
         whatsappFrom: settings.twilioWhatsappFrom || '',
       },
+    },
+    charges: {
+      shippingFee: Number(settings.shippingFee ?? 25),
+      handlingFee: Number(settings.handlingFee ?? 2),
     },
   }
 }

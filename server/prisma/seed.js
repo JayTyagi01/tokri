@@ -138,7 +138,7 @@ async function main() {
       const isImported = slug === 'imported'
       const isBestSeller = bestSellerSlugs.has(product.id)
 
-      await prisma.product.upsert({
+      const saved = await prisma.product.upsert({
         where: { slug: product.id },
         update: {
           name: product.name,
@@ -167,6 +167,13 @@ async function main() {
           stock: 100,
         },
       })
+      if (categoryId) {
+        await prisma.productCategory.upsert({
+          where: { productId_categoryId: { productId: saved.id, categoryId } },
+          create: { productId: saved.id, categoryId },
+          update: {},
+        })
+      }
     }
   }
 
@@ -194,7 +201,7 @@ async function main() {
   const importedCategoryId = categoryIdBySlug.imported
 
   for (const [index, product] of importedProducts.entries()) {
-    await prisma.product.upsert({
+    const saved = await prisma.product.upsert({
       where: { slug: product.slug },
       update: {
         name: product.name,
@@ -215,6 +222,13 @@ async function main() {
         stock: 100,
       },
     })
+    if (importedCategoryId) {
+      await prisma.productCategory.upsert({
+        where: { productId_categoryId: { productId: saved.id, categoryId: importedCategoryId } },
+        create: { productId: saved.id, categoryId: importedCategoryId },
+        update: {},
+      })
+    }
   }
 
   const reviews = [
@@ -250,6 +264,9 @@ async function main() {
       type: 'percent',
       value: 10,
       minCart: 0,
+      applyOn: 'cart',
+      targetType: 'all',
+      usageType: 'unlimited',
       isActive: true,
     },
     create: {
@@ -257,6 +274,9 @@ async function main() {
       type: 'percent',
       value: 10,
       minCart: 0,
+      applyOn: 'cart',
+      targetType: 'all',
+      usageType: 'unlimited',
       isActive: true,
     },
   })
@@ -290,13 +310,8 @@ async function main() {
       storeAddress: 'C 617 Azadpur Fruit Market, New Delhi 110033',
       promoBanner: 'Get 10% OFF Your First Order - Use Code: WELCOME10',
       earlyDelivery: 'Get your Tokriii before 7:00 AM',
-      colorPrimary: '#022c22',
-      colorPrimaryLight: '#047857',
-      colorAccent: '#fbbf24',
-      colorBackground: '#ffffff',
-      colorFooterFrom: '#020617',
-      colorFooterVia: '#0c1612',
-      fontFamily: 'Plus Jakarta Sans',
+      shippingFee: 25,
+      handlingFee: 2,
       homeBannerEnabled: true,
       homeCategoriesEnabled: true,
       homeBestSellersEnabled: true,
@@ -318,13 +333,8 @@ async function main() {
       storeAddress: 'C 617 Azadpur Fruit Market, New Delhi 110033',
       promoBanner: 'Get 10% OFF Your First Order - Use Code: WELCOME10',
       earlyDelivery: 'Get your Tokriii before 7:00 AM',
-      colorPrimary: '#022c22',
-      colorPrimaryLight: '#047857',
-      colorAccent: '#fbbf24',
-      colorBackground: '#ffffff',
-      colorFooterFrom: '#020617',
-      colorFooterVia: '#0c1612',
-      fontFamily: 'Plus Jakarta Sans',
+      shippingFee: 25,
+      handlingFee: 2,
       homeBannerEnabled: true,
       homeCategoriesEnabled: true,
       homeBestSellersEnabled: true,

@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Button, H4, Icon, Label, Text } from '@adminjs/design-system'
+import { Box, Button, H3, Icon, Text } from '@adminjs/design-system'
 import { BasePropertyComponent, useNotice, useRecord } from 'adminjs'
+import { FlagCard } from './form-controls.jsx'
 
-const normalizeSlugInput = (value) => {
-  return String(value || '')
+const normalizeSlugInput = (value) =>
+  String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-}
 
 const withoutTrailingSlash = (value) => String(value || '').replace(/\/+$/, '')
 
@@ -27,8 +27,6 @@ const CategoryEdit = (props) => {
   const [slugEdited, setSlugEdited] = useState(Boolean(initialRecord?.params?.slug))
   const [previewUrl, setPreviewUrl] = useState('')
   const [bannerPreviewUrl, setBannerPreviewUrl] = useState('')
-  const [descriptionMode, setDescriptionMode] = useState('wysiwyg')
-  const [descriptionValue, setDescriptionValue] = useState('')
 
   const params = record?.params || {}
   const custom = resource?.options?.custom || {}
@@ -68,9 +66,7 @@ const CategoryEdit = (props) => {
     }
   }, [bannerPreviewUrl])
 
-  useEffect(() => {
-    setDescriptionValue(String(params.description || ''))
-  }, [params.description])
+  const setField = (key, value) => handleChange(key, value)
 
   const onPropertyChange = (propertyPath, value, ...rest) => {
     if (propertyPath === 'slug') {
@@ -78,340 +74,232 @@ const CategoryEdit = (props) => {
       handleChange(propertyPath, normalizeSlugInput(value), ...rest)
       return
     }
-
     handleChange(propertyPath, value, ...rest)
-
     if (propertyPath === 'label' && !slugEdited) {
       handleChange('slug', normalizeSlugInput(value))
     }
   }
 
-  const uploadImage = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
+  const uploadTo = async (file, field, setLocalPreview, setBusy, successMessage) => {
     const formData = new FormData()
     formData.append('folder', 'categories')
     formData.append('file', file)
-
-    const localPreviewUrl = URL.createObjectURL(file)
-    setPreviewUrl(localPreviewUrl)
-    setUploading(true)
-
+    setLocalPreview(URL.createObjectURL(file))
+    setBusy(true)
     try {
       const response = await fetch(`${apiBaseUrl}/media/upload`, {
         method: 'POST',
         body: formData,
       })
-
       if (!response.ok) {
         const error = await response.json().catch(() => ({}))
         throw new Error(error.message || 'Image upload failed')
       }
-
       const media = await response.json()
-      onPropertyChange('image', media.path)
-      setPreviewUrl(
+      onPropertyChange(field, media.path)
+      setLocalPreview(
         /^(https?:|data:|blob:)/.test(media.path)
           ? media.path
           : `${withoutTrailingSlash(custom.appUrl || window.location.origin)}${media.path}`,
       )
-      addNotice({ message: 'Image uploaded successfully', type: 'success' })
+      addNotice({ message: successMessage, type: 'success' })
     } catch (error) {
       addNotice({ message: error.message || 'Could not upload image', type: 'error' })
     } finally {
-      setUploading(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
-  }
-
-  const uploadBanner = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('folder', 'categories')
-    formData.append('file', file)
-
-    const localPreviewUrl = URL.createObjectURL(file)
-    setBannerPreviewUrl(localPreviewUrl)
-    setBannerUploading(true)
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/media/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}))
-        throw new Error(error.message || 'Image upload failed')
-      }
-
-      const media = await response.json()
-      onPropertyChange('bannerImage', media.path)
-      setBannerPreviewUrl(
-        /^(https?:|data:|blob:)/.test(media.path)
-          ? media.path
-          : `${withoutTrailingSlash(custom.appUrl || window.location.origin)}${media.path}`,
-      )
-      addNotice({ message: 'Banner uploaded successfully', type: 'success' })
-    } catch (error) {
-      addNotice({ message: error.message || 'Could not upload banner', type: 'error' })
-    } finally {
-      setBannerUploading(false)
-      if (bannerFileRef.current) bannerFileRef.current.value = ''
+      setBusy(false)
     }
   }
 
   const submit = (event) => {
     event.preventDefault()
-    handleSubmit().catch(() => {
-      addNotice({ message: 'Could not save category', type: 'error' })
-    })
+    handleSubmit()
+      .then((response) => {
+        const notice = response?.data?.notice
+        if (notice?.type === 'error') {
+          addNotice({ message: notice.message || 'Could not save category', type: 'error' })
+          return
+        }
+        addNotice({ message: 'Category saved', type: 'success' })
+      })
+      .catch(() => {
+        addNotice({ message: 'Could not save category', type: 'error' })
+      })
   }
 
-  const propertyByPath = Object.fromEntries(
-    resource.editProperties.map((property) => [property.propertyPath, property]),
-  )
-  const renderProperty = (propertyPath) => {
-    const property = propertyByPath[propertyPath]
-    if (!property) return null
-
-    return (
-      <BasePropertyComponent
-        key={property.propertyPath}
-        where="edit"
-        onChange={onPropertyChange}
-        property={property}
-        resource={resource}
-        record={record}
-      />
-    )
-  }
-
-  const remainingProperties = resource.editProperties.filter(
-    (property) =>
-      !['label', 'slug', 'description', 'image', 'bannerImage'].includes(property.propertyPath),
+  const descriptionProperty = resource.editProperties.find(
+    (property) => property.propertyPath === 'description',
   )
 
   return (
-    <Box as="form" onSubmit={submit} p="xl">
-      <Box mb="xl">
-        <H4 mb="sm">Category</H4>
-        <Text opacity={0.75}>
-          Upload the category image, edit the slug, and save. Duplicate slugs are automatically
-          renamed like WordPress.
-        </Text>
+    <Box as="form" onSubmit={submit} className="tokri-coupon-form">
+      <Box className="tokri-coupon-hero">
+        <H3 color="white">{params.label || 'New category'}</H3>
+        <Text color="white">Create a shop section with a thumbnail, banner, and page copy.</Text>
       </Box>
 
-      <Box mb="lg">{renderProperty('label')}</Box>
-
-      <Box mb="xl" p="lg" border="1px solid #dbe3ea" borderRadius="12px" bg="#f8fafc">
-        <Label>Slug</Label>
-        <Box display="flex" alignItems="center" flexWrap="wrap" gap="sm">
-          <Text as="span" fontWeight="bold">
-            {`${categoryUrlBase}/`}
-          </Text>
-          <input
-            value={slugInput}
-            placeholder="Leave empty to auto-generate from label"
-            onChange={(event) => onPropertyChange('slug', event.target.value)}
-            style={{
-              minWidth: 260,
-              flex: '1 1 260px',
-              padding: '10px 12px',
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              fontSize: 14,
-            }}
-          />
-        </Box>
-        <Text mt="sm" opacity={0.7}>
-          Preview:{' '}
-          {categoryUrl ? (
-            <a href={categoryUrl} target="_blank" rel="noreferrer">
-              {categoryUrl}
-            </a>
-          ) : (
-            'Generated from category label when saved'
-          )}
-        </Text>
-        <Text mt="sm" opacity={0.7}>
-          Leave empty to auto-generate from the category label. If the slug already exists, a number
-          suffix is added automatically (for example, fruits-2).
-        </Text>
-      </Box>
-
-      <Box mb="xl" p="xl" border="1px solid #dbe3ea" borderRadius="16px" bg="#ffffff">
-        <Label>Description</Label>
-        <Text mb="md" opacity={0.75}>
-          Use the WYSIWYG toolbar, or switch to HTML source and preview mode.
-        </Text>
-
-        <Box display="flex" gap="sm" mb="md">
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('wysiwyg')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'wysiwyg' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'wysiwyg' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            WYSIWYG
-          </button>
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('html')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'html' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'html' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            HTML
-          </button>
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('preview')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'preview' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'preview' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Preview
-          </button>
-        </Box>
-
-        {descriptionMode === 'wysiwyg' ? (
-          <Box style={{ minHeight: 220 }}>{renderProperty('description')}</Box>
-        ) : descriptionMode === 'html' ? (
-          <textarea
-            value={descriptionValue}
-            onChange={(event) => {
-              setDescriptionValue(event.target.value)
-              onPropertyChange('description', event.target.value)
-            }}
-            rows={10}
-            placeholder="<p>Write category description in HTML...</p>"
-            style={{
-              width: '100%',
-              minHeight: 220,
-              border: '1px solid #cbd5e1',
-              borderRadius: 10,
-              padding: 12,
-              fontSize: 14,
-              lineHeight: 1.45,
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-            }}
-          />
-        ) : (
-          <Box
-            p="lg"
-            border="1px solid #e2e8f0"
-            borderRadius="10px"
-            style={{ minHeight: 220, background: '#f8fafc' }}
-          >
-            {descriptionValue ? (
-              <div dangerouslySetInnerHTML={{ __html: descriptionValue }} />
+      <Box className="tokri-coupon-grid">
+        <section className="tokri-coupon-card">
+          <h4>Category details</h4>
+          <label className="tokri-coupon-label">
+            Label
+            <input
+              className="tokri-coupon-input"
+              value={params.label || ''}
+              onChange={(event) => onPropertyChange('label', event.target.value)}
+              placeholder="Fresh Fruits"
+              required
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Page heading
+            <input
+              className="tokri-coupon-input"
+              value={params.title || ''}
+              onChange={(event) => setField('title', event.target.value)}
+              placeholder="Same as label if empty"
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Subtitle
+            <input
+              className="tokri-coupon-input"
+              value={params.subtitle || ''}
+              onChange={(event) => setField('subtitle', event.target.value)}
+              placeholder="Short line under the heading"
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Slug
+            <input
+              className="tokri-coupon-input"
+              value={slugInput}
+              onChange={(event) => onPropertyChange('slug', event.target.value)}
+              placeholder="auto-generated from label"
+            />
+          </label>
+          <Text mt="sm" opacity={0.7}>
+            Preview:{' '}
+            {categoryUrl ? (
+              <a href={categoryUrl} target="_blank" rel="noreferrer">
+                {categoryUrl}
+              </a>
             ) : (
-              <Text opacity={0.7}>Preview will appear here.</Text>
+              'Generated from category label when saved'
             )}
-          </Box>
-        )}
-      </Box>
+          </Text>
+          <div className="tokri-coupon-two">
+            <label className="tokri-coupon-label">
+              Sort order
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                value={params.sortOrder ?? 0}
+                onChange={(event) => setField('sortOrder', event.target.value)}
+              />
+            </label>
+            <label className="tokri-coupon-label">
+              Status
+              <div className="tokri-choice-row" style={{ marginTop: 6 }}>
+                <FlagCard
+                  selected={params.isActive !== false && params.isActive !== 'false'}
+                  title="Active"
+                  hint="Shown on website and app"
+                  onClick={() =>
+                    setField('isActive', !(params.isActive !== false && params.isActive !== 'false'))
+                  }
+                />
+              </div>
+            </label>
+          </div>
+        </section>
 
-      <Box mb="xl" p="xl" border="1px solid #dbe3ea" borderRadius="16px" bg="#ffffff">
-        <H4 mb="md">Category Image</H4>
-
-        {displayedImageUrl ? (
-          <Box mb="lg">
-            <img
-              src={displayedImageUrl}
-              alt={params.label || 'Category preview'}
-              style={{
-                width: 220,
-                height: 220,
-                objectFit: 'cover',
-                borderRadius: 16,
-                border: '1px solid #dbe3ea',
+        <section className="tokri-coupon-card">
+          <h4>Category image</h4>
+          <p>Square thumbnail used in the home category grid.</p>
+          <label className="tokri-upload-drop">
+            {displayedImageUrl ? (
+              <img src={displayedImageUrl} alt={params.label || 'Category preview'} />
+            ) : (
+              <span>Click to upload category image</span>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) {
+                  uploadTo(file, 'image', setPreviewUrl, setUploading, 'Image uploaded successfully')
+                }
+                event.target.value = ''
               }}
             />
-          </Box>
-        ) : (
-          <Text mb="lg" opacity={0.7}>
-            No image selected yet.
-          </Text>
-        )}
-
-        <input ref={fileRef} type="file" accept="image/*" onChange={uploadImage} />
-        <Text mt="sm" opacity={0.7}>
-          JPG, PNG, GIF, or WebP up to 5MB.
-        </Text>
+          </label>
+        </section>
       </Box>
 
-      <Box mb="xl" p="xl" border="1px solid #dbe3ea" borderRadius="16px" bg="#ffffff">
-        <H4 mb="md">Category Banner</H4>
-        <Text mb="md" opacity={0.75}>
-          Wide banner shown at the top of the category page on the website.
-        </Text>
+      <section className="tokri-coupon-card">
+        <h4>Category banner</h4>
+        <p>Wide image shown at the top of the category page.</p>
+        <label className="tokri-upload-drop tokri-upload-drop-wide">
+          {displayedBannerUrl ? (
+            <img src={displayedBannerUrl} alt={params.label || 'Category banner'} />
+          ) : (
+            <span>Click to upload a wide banner (1600×400 recommended)</span>
+          )}
+          <input
+            ref={bannerFileRef}
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                uploadTo(
+                  file,
+                  'bannerImage',
+                  setBannerPreviewUrl,
+                  setBannerUploading,
+                  'Banner uploaded successfully',
+                )
+              }
+              event.target.value = ''
+            }}
+          />
+        </label>
+      </section>
 
-        {displayedBannerUrl ? (
-          <Box mb="lg">
-            <img
-              src={displayedBannerUrl}
-              alt={params.label || 'Category banner'}
-              style={{
-                width: '100%',
-                maxWidth: 640,
-                height: 200,
-                objectFit: 'cover',
-                borderRadius: 16,
-                border: '1px solid #dbe3ea',
-              }}
+      <section className="tokri-coupon-card">
+        <h4>Description</h4>
+        {descriptionProperty ? (
+          <Box style={{ minHeight: 220 }}>
+            <BasePropertyComponent
+              where="edit"
+              onChange={onPropertyChange}
+              property={descriptionProperty}
+              resource={resource}
+              record={record}
             />
           </Box>
-        ) : (
-          <Text mb="lg" opacity={0.7}>
-            No banner selected yet.
-          </Text>
-        )}
-
-        <input ref={bannerFileRef} type="file" accept="image/*" onChange={uploadBanner} />
-        <Text mt="sm" opacity={0.7}>
-          JPG, PNG, GIF, or WebP up to 5MB. Recommended wide image (e.g. 1600×400).
-        </Text>
-      </Box>
-
-      {remainingProperties.map((property) => (
-        <Box key={property.propertyPath}>{renderProperty(property.propertyPath)}</Box>
-      ))}
+        ) : null}
+      </section>
 
       <Box style={{ display: 'none' }} aria-hidden="true">
-        {renderProperty('image')}
-        {renderProperty('bannerImage')}
+        {resource.editProperties
+          .filter((property) => ['image', 'bannerImage'].includes(property.propertyPath))
+          .map((property) => (
+            <BasePropertyComponent
+              key={property.propertyPath}
+              where="edit"
+              onChange={onPropertyChange}
+              property={property}
+              resource={resource}
+              record={record}
+            />
+          ))}
       </Box>
 
-      <Box mt="xl">
-        <Button
-          variant="contained"
-          type="submit"
-          disabled={loading || uploading || bannerUploading}
-        >
+      <Box className="tokri-coupon-actions">
+        <Button variant="contained" type="submit" disabled={loading || uploading || bannerUploading}>
           {loading || uploading || bannerUploading ? <Icon icon="Loader" spin /> : null}
           Save category
         </Button>

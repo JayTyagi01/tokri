@@ -32,7 +32,10 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "https://tokriii.com/api/v1"
+      "apiBaseUrl": "https://tokriii.com/api/v1",
+      "eas": {
+        "projectId": "691345d1-b096-4f13-b978-0750f6e66762"
+      }
     },
     "plugins": [
       "@react-native-community/datetimepicker"

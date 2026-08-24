@@ -1,21 +1,35 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Button, H4, Icon, Label, Text } from '@adminjs/design-system'
-import {
-  BasePropertyComponent,
-  useNotice,
-  useRecord,
-} from 'adminjs'
+import { Box, Button, H3, Icon, Text } from '@adminjs/design-system'
+import { BasePropertyComponent, useNotice, useRecord } from 'adminjs'
+import { FlagCard, SearchableMultiSelect } from './form-controls.jsx'
 
-const normalizeSlugInput = (value) => {
-  return String(value || '')
+const normalizeSlugInput = (value) =>
+  String(value || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-}
 
 const withoutTrailingSlash = (value) => String(value || '').replace(/\/+$/, '')
+
+function parseSlugs(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw.map((item) => String(item).trim()).filter(Boolean)
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parseSlugs(parsed)
+    } catch {
+      // ignore
+    }
+    return raw
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
 
 const ProductEdit = (props) => {
   const { record: initialRecord, resource } = props
@@ -28,8 +42,7 @@ const ProductEdit = (props) => {
   const [uploading, setUploading] = useState(false)
   const [slugEdited, setSlugEdited] = useState(Boolean(initialRecord?.params?.slug))
   const [previewUrl, setPreviewUrl] = useState('')
-  const [descriptionMode, setDescriptionMode] = useState('wysiwyg')
-  const [descriptionValue, setDescriptionValue] = useState('')
+  const [categories, setCategories] = useState([])
 
   const params = record?.params || {}
   const custom = resource?.options?.custom || {}
@@ -40,6 +53,7 @@ const ProductEdit = (props) => {
   const slugInput = params.slug ?? ''
   const previewSlug = normalizeSlugInput(slugInput) || normalizeSlugInput(params.name)
   const productUrl = previewSlug ? `${productUrlBase}/${previewSlug}` : null
+  const selectedCategorySlugs = parseSlugs(params.categoryIds)
 
   const imageUrl = useMemo(() => {
     if (!params.image) return ''
@@ -56,8 +70,21 @@ const ProductEdit = (props) => {
   }, [previewUrl])
 
   useEffect(() => {
-    setDescriptionValue(String(params.description || ''))
-  }, [params.description])
+    let ignore = false
+    fetch(`${apiBaseUrl}/categories`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!ignore) setCategories(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (!ignore) setCategories([])
+      })
+    return () => {
+      ignore = true
+    }
+  }, [apiBaseUrl])
+
+  const setField = (key, value) => handleChange(key, value)
 
   const onPropertyChange = (propertyPath, value, ...rest) => {
     if (propertyPath === 'slug') {
@@ -65,13 +92,13 @@ const ProductEdit = (props) => {
       handleChange(propertyPath, normalizeSlugInput(value), ...rest)
       return
     }
-
     handleChange(propertyPath, value, ...rest)
-
     if (propertyPath === 'name' && !slugEdited) {
       handleChange('slug', normalizeSlugInput(value))
     }
   }
+
+  const setSelectedCategories = (slugs) => setField('categoryIds', JSON.stringify(slugs))
 
   const uploadImage = async (event) => {
     const file = event.target.files?.[0]
@@ -80,7 +107,6 @@ const ProductEdit = (props) => {
     const formData = new FormData()
     formData.append('folder', 'products')
     formData.append('file', file)
-
     const localPreviewUrl = URL.createObjectURL(file)
     setPreviewUrl(localPreviewUrl)
     setUploading(true)
@@ -90,12 +116,10 @@ const ProductEdit = (props) => {
         method: 'POST',
         body: formData,
       })
-
       if (!response.ok) {
         const error = await response.json().catch(() => ({}))
         throw new Error(error.message || 'Image upload failed')
       }
-
       const media = await response.json()
       handleChange('image', media.path)
       handleChange('mediaId', media.id)
@@ -115,209 +139,211 @@ const ProductEdit = (props) => {
 
   const submit = (event) => {
     event.preventDefault()
-    handleSubmit().catch(() => {
-      addNotice({ message: 'Could not save product', type: 'error' })
-    })
+    handleSubmit()
+      .then((response) => {
+        const notice = response?.data?.notice
+        if (notice?.type === 'error') {
+          addNotice({ message: notice.message || 'Could not save product', type: 'error' })
+          return
+        }
+        addNotice({ message: 'Product saved', type: 'success' })
+      })
+      .catch(() => {
+        addNotice({ message: 'Could not save product', type: 'error' })
+      })
   }
 
-  const propertyByPath = Object.fromEntries(
-    resource.editProperties.map((property) => [property.propertyPath, property]),
-  )
-  const renderProperty = (propertyPath) => {
-    const property = propertyByPath[propertyPath]
-    if (!property) return null
-
-    return (
-      <BasePropertyComponent
-        key={property.propertyPath}
-        where="edit"
-        onChange={onPropertyChange}
-        property={property}
-        resource={resource}
-        record={record}
-      />
-    )
-  }
-
-  const remainingProperties = resource.editProperties.filter(
-    (property) =>
-      !['name', 'slug', 'description', 'image', 'mediaId'].includes(property.propertyPath),
+  const descriptionProperty = resource.editProperties.find(
+    (property) => property.propertyPath === 'description',
   )
 
   return (
-    <Box as="form" onSubmit={submit} p="xl">
-      <Box mb="xl">
-        <H4 mb="sm">Product</H4>
-        <Text opacity={0.75}>
-          Upload the product image, edit the slug, and save. Duplicate slugs are automatically
-          renamed like WordPress.
-        </Text>
+    <Box as="form" onSubmit={submit} className="tokri-coupon-form">
+      <Box className="tokri-coupon-hero">
+        <H3 color="white">{params.name || 'New product'}</H3>
+        <Text color="white">Add photos, prices, and one or more categories for the website and app.</Text>
       </Box>
 
-      <Box mb="lg">{renderProperty('name')}</Box>
-
-      <Box mb="xl" p="lg" border="1px solid #dbe3ea" borderRadius="12px" bg="#f8fafc">
-        <Label>Slug</Label>
-        <Box display="flex" alignItems="center" flexWrap="wrap" gap="sm">
-          <Text as="span" fontWeight="bold">
-            {`${productUrlBase}/`}
-          </Text>
-          <input
-            value={slugInput}
-            placeholder="Leave empty to auto-generate from name"
-            onChange={(event) => onPropertyChange('slug', event.target.value)}
-            style={{
-              minWidth: 260,
-              flex: '1 1 260px',
-              padding: '10px 12px',
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              fontSize: 14,
-            }}
-          />
-        </Box>
-        <Text mt="sm" opacity={0.7}>
-          Preview:{' '}
-          {productUrl ? (
-            <a href={productUrl} target="_blank" rel="noreferrer">
-              {productUrl}
-            </a>
-          ) : (
-            'Generated from product name when saved'
-          )}
-        </Text>
-        <Text mt="sm" opacity={0.7}>
-          Leave empty to auto-generate from the product name. If the slug already exists, a number
-          suffix is added automatically (for example, mango-2).
-        </Text>
-      </Box>
-
-      <Box mb="xl" p="xl" border="1px solid #dbe3ea" borderRadius="16px" bg="#ffffff">
-        <Label>Description</Label>
-        <Text mb="md" opacity={0.75}>
-          Use the WYSIWYG toolbar, or switch to HTML source and preview mode.
-        </Text>
-
-        <Box display="flex" gap="sm" mb="md">
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('wysiwyg')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'wysiwyg' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'wysiwyg' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            WYSIWYG
-          </button>
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('html')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'html' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'html' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            HTML
-          </button>
-          <button
-            type="button"
-            onClick={() => setDescriptionMode('preview')}
-            style={{
-              border: '1px solid #cbd5e1',
-              borderRadius: 8,
-              padding: '6px 12px',
-              background: descriptionMode === 'preview' ? '#047857' : '#ffffff',
-              color: descriptionMode === 'preview' ? '#ffffff' : '#0f172a',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Preview
-          </button>
-        </Box>
-
-        {descriptionMode === 'wysiwyg' ? (
-          <Box style={{ minHeight: 220 }}>{renderProperty('description')}</Box>
-        ) : descriptionMode === 'html' ? (
-          <textarea
-            value={descriptionValue}
-            onChange={(event) => {
-              setDescriptionValue(event.target.value)
-              onPropertyChange('description', event.target.value)
-            }}
-            rows={10}
-            placeholder="<p>Write product description in HTML...</p>"
-            style={{
-              width: '100%',
-              minHeight: 220,
-              border: '1px solid #cbd5e1',
-              borderRadius: 10,
-              padding: 12,
-              fontSize: 14,
-              lineHeight: 1.45,
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-            }}
-          />
-        ) : (
-          <Box
-            p="lg"
-            border="1px solid #e2e8f0"
-            borderRadius="10px"
-            style={{ minHeight: 220, background: '#f8fafc' }}
-          >
-            {descriptionValue ? (
-              <div dangerouslySetInnerHTML={{ __html: descriptionValue }} />
+      <Box className="tokri-coupon-grid">
+        <section className="tokri-coupon-card">
+          <h4>Product details</h4>
+          <label className="tokri-coupon-label">
+            Name
+            <input
+              className="tokri-coupon-input"
+              value={params.name || ''}
+              onChange={(event) => onPropertyChange('name', event.target.value)}
+              placeholder="Alphonso Mango"
+              required
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Slug
+            <input
+              className="tokri-coupon-input"
+              value={slugInput}
+              onChange={(event) => onPropertyChange('slug', event.target.value)}
+              placeholder="auto-generated from name"
+            />
+          </label>
+          <Text mt="sm" opacity={0.7}>
+            Preview:{' '}
+            {productUrl ? (
+              <a href={productUrl} target="_blank" rel="noreferrer">
+                {productUrl}
+              </a>
             ) : (
-              <Text opacity={0.7}>Preview will appear here.</Text>
+              'Generated from product name when saved'
             )}
-          </Box>
-        )}
+          </Text>
+          <div className="tokri-coupon-two">
+            <label className="tokri-coupon-label">
+              Price (₹)
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={params.priceValue ?? ''}
+                onChange={(event) => setField('priceValue', event.target.value)}
+                required
+              />
+            </label>
+            <label className="tokri-coupon-label">
+              Old price (₹)
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={params.oldPriceValue ?? ''}
+                onChange={(event) => setField('oldPriceValue', event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+          </div>
+          <div className="tokri-coupon-two">
+            <label className="tokri-coupon-label">
+              Weight
+              <input
+                className="tokri-coupon-input"
+                value={params.weight || ''}
+                onChange={(event) => setField('weight', event.target.value)}
+                placeholder="1 kg"
+              />
+            </label>
+            <label className="tokri-coupon-label">
+              Badge
+              <input
+                className="tokri-coupon-input"
+                value={params.badge || ''}
+                onChange={(event) => setField('badge', event.target.value)}
+                placeholder="Fresh"
+              />
+            </label>
+          </div>
+          <div className="tokri-coupon-two">
+            <label className="tokri-coupon-label">
+              Stock
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                min="0"
+                value={params.stock ?? 100}
+                onChange={(event) => setField('stock', event.target.value)}
+              />
+            </label>
+            <label className="tokri-coupon-label">
+              Sort order
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                value={params.sortOrder ?? 0}
+                onChange={(event) => setField('sortOrder', event.target.value)}
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="tokri-coupon-card">
+          <h4>Product image</h4>
+          <label className="tokri-upload-drop">
+            {displayedImageUrl ? (
+              <img src={displayedImageUrl} alt={params.name || 'Product preview'} />
+            ) : (
+              <span>Click to upload a square product photo</span>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" onChange={uploadImage} />
+          </label>
+          <Text mt="sm" opacity={0.7}>
+            JPG, PNG, GIF, or WebP up to 5MB.
+          </Text>
+        </section>
       </Box>
 
-      <Box mb="xl" p="xl" border="1px solid #dbe3ea" borderRadius="16px" bg="#ffffff">
-        <H4 mb="md">Product Image</H4>
+      <section className="tokri-coupon-card">
+        <h4>Categories</h4>
+        <p>A product can appear in more than one category on the website and app.</p>
+        <label className="tokri-coupon-label">
+          Select categories
+          <SearchableMultiSelect
+            options={categories.map((item) => ({ value: item.slug, label: item.label }))}
+            selected={selectedCategorySlugs}
+            onChange={setSelectedCategories}
+            placeholder="Search and select categories"
+            searchPlaceholder="Search categories"
+          />
+        </label>
+      </section>
 
-        {displayedImageUrl ? (
-          <Box mb="lg">
-            <img
-              src={displayedImageUrl}
-              alt={params.name || 'Product preview'}
-              style={{
-                width: 220,
-                height: 220,
-                objectFit: 'cover',
-                borderRadius: 16,
-                border: '1px solid #dbe3ea',
-              }}
+      <section className="tokri-coupon-card">
+        <h4>Store placement</h4>
+        <div className="tokri-choice-row">
+          <FlagCard
+            selected={params.isBestSeller === true || params.isBestSeller === 'true'}
+            title="Bestseller"
+            hint="Show in bestsellers"
+            onClick={() => setField('isBestSeller', !(params.isBestSeller === true || params.isBestSeller === 'true'))}
+          />
+          <FlagCard
+            selected={params.isImported === true || params.isImported === 'true'}
+            title="Imported"
+            hint="Show in imported fruits"
+            onClick={() => setField('isImported', !(params.isImported === true || params.isImported === 'true'))}
+          />
+          <FlagCard
+            selected={params.isFeatured === true || params.isFeatured === 'true'}
+            title="Featured"
+            hint="Highlight this fruit"
+            onClick={() => setField('isFeatured', !(params.isFeatured === true || params.isFeatured === 'true'))}
+          />
+          <FlagCard
+            selected={params.isActive !== false && params.isActive !== 'false'}
+            title="Active"
+            hint="Visible to customers"
+            onClick={() =>
+              setField('isActive', !(params.isActive !== false && params.isActive !== 'false'))
+            }
+          />
+        </div>
+      </section>
+
+      <section className="tokri-coupon-card">
+        <h4>Description</h4>
+        {descriptionProperty ? (
+          <Box style={{ minHeight: 220 }}>
+            <BasePropertyComponent
+              where="edit"
+              onChange={onPropertyChange}
+              property={descriptionProperty}
+              resource={resource}
+              record={record}
             />
           </Box>
-        ) : (
-          <Text mb="lg" opacity={0.7}>
-            No image selected yet.
-          </Text>
-        )}
+        ) : null}
+      </section>
 
-        <input ref={fileRef} type="file" accept="image/*" onChange={uploadImage} />
-        <Text mt="sm" opacity={0.7}>
-          JPG, PNG, GIF, or WebP up to 5MB.
-        </Text>
-      </Box>
-
-      {remainingProperties.map((property) => (
-        <Box key={property.propertyPath}>{renderProperty(property.propertyPath)}</Box>
-      ))}
-
-      <Box mt="xl">
+      <Box className="tokri-coupon-actions">
         <Button variant="contained" type="submit" disabled={loading || uploading}>
           {loading || uploading ? <Icon icon="Loader" spin /> : null}
           Save product

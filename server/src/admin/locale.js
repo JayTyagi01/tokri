@@ -59,7 +59,14 @@ export const adminLocale = {
         Page: { labels: { Pages: 'Pages' } },
         Review: { labels: { Reviews: 'Reviews' } },
         Order: { labels: { Orders: 'Orders' } },
-        Coupon: { labels: { Coupons: 'Coupons' } },
+        Coupon: {
+          labels: { Coupons: 'Coupons' },
+          properties: {
+            applyOn: 'Applies to',
+            targetType: 'Target',
+            usageType: 'Usage',
+          },
+        },
         Setting: { labels: { General: 'General' } },
         User: { labels: { Team: 'Team' } },
       },

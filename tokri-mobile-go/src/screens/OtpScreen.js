@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { postJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -25,9 +25,12 @@ function maskPhone(phone) {
 }
 
 export default function OtpScreen({ navigation, route }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { login } = useAuth()
   const phone = String(route.params?.phone || '')
+  const next = route.params?.next
   const [otp, setOtp] = useState('')
   const [devOtp, setDevOtp] = useState(String(route.params?.devOtp || ''))
   const [loading, setLoading] = useState(false)
@@ -48,6 +51,7 @@ export default function OtpScreen({ navigation, route }) {
       const result = await postJson('/auth/verify-otp', { phone, otp: code })
       await login({ ...result.user, token: result.token })
       navigation.popToTop()
+      if (next === 'Checkout') navigation.navigate('Checkout')
     } catch (error) {
       submitted.current = false
       setOtp('')
@@ -90,13 +94,13 @@ export default function OtpScreen({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Pressable style={styles.back} onPress={() => navigation.goBack()} hitSlop={12}>
-        <Icon name="chevron-back" size={22} color={COLORS.text} />
+        <Icon name="chevron-back" size={22} color={colors.text} />
       </Pressable>
 
       <View style={styles.content}>
         <View style={styles.hero}>
           <View style={styles.avatar}>
-            <Icon name="phone-portrait-outline" size={42} color={COLORS.white} />
+            <Icon name="phone-portrait-outline" size={42} color={colors.white} />
           </View>
           <Text style={styles.title}>OTP verification</Text>
           <Text style={styles.subtitle}>
@@ -157,15 +161,15 @@ export default function OtpScreen({ navigation, route }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   back: {
     marginLeft: 16,
     marginTop: 8,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -175,13 +179,13 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#3a3a3a',
+    backgroundColor: c.avatar,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
-  title: { color: COLORS.text, fontSize: 26, fontWeight: '800' },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 6, textAlign: 'center', lineHeight: 20 },
+  title: { color: c.text, fontSize: 26, fontWeight: '800' },
+  subtitle: { color: c.muted, fontSize: 14, marginTop: 6, textAlign: 'center', lineHeight: 20 },
   otpWrap: {
     flexDirection: 'row',
     marginBottom: 22,
@@ -192,33 +196,33 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 64,
     borderRadius: 14,
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  otpBoxFilled: { borderColor: COLORS.brand },
-  otpBoxActive: { borderColor: COLORS.brand, borderWidth: 1.5 },
-  otpDigit: { color: COLORS.text, fontSize: 24, fontWeight: '800' },
+  otpBoxFilled: { borderColor: c.brand },
+  otpBoxActive: { borderColor: c.brand, borderWidth: 1.5 },
+  otpDigit: { color: c.text, fontSize: 24, fontWeight: '800' },
   hiddenInput: {
     ...StyleSheet.absoluteFillObject,
     color: 'transparent',
     backgroundColor: 'transparent',
     fontSize: 24,
   },
-  devHint: { color: COLORS.brand, textAlign: 'center', marginBottom: 14, fontWeight: '600' },
+  devHint: { color: c.brand, textAlign: 'center', marginBottom: 14, fontWeight: '600' },
   continueBtn: {
     width: '100%',
     borderWidth: 1.5,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.55 },
-  continueText: { color: COLORS.brand, fontSize: 18, fontWeight: '800' },
+  continueText: { color: c.brand, fontSize: 18, fontWeight: '800' },
   linkBtn: { marginTop: 18, alignItems: 'center' },
-  linkText: { color: COLORS.mint, fontWeight: '600' },
-  linkMuted: { color: COLORS.muted },
+  linkText: { color: c.mint, fontWeight: '600' },
+  linkMuted: { color: c.muted },
 })

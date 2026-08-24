@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import LoadingView from '../components/LoadingView'
-import { COLORS } from '../config'
+import CouponBox from '../components/CouponBox'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authPost, fetchJson, formatPrice } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
 
 export default function CheckoutScreen({ navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const { token } = useAuth()
-  const { grandTotal, items, refreshCart, clearCart } = useCart()
+  const { grandTotal, items, discount, coupon, refreshCart, clearCart } = useCart()
   const { addresses, selectedId, selectAddress, openPicker, refresh } = useAddress()
   const [razorpayEnabled, setRazorpayEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -36,6 +39,7 @@ export default function CheckoutScreen({ navigation }) {
         addressId: selectedId,
         paymentMode,
         items: items.map((item) => ({ slug: item.slug, quantity: item.quantity })),
+        couponCode: coupon?.code || undefined,
       })
 
       if (checkout.razorpay) {
@@ -83,7 +87,11 @@ export default function CheckoutScreen({ navigation }) {
       </Pressable>
 
       <View style={styles.summary}>
+        <CouponBox />
         <Text style={styles.title}>Order total</Text>
+        {Number(discount) > 0 ? (
+          <Text style={styles.note}>Coupon {coupon?.code} saved {formatPrice(discount)}</Text>
+        ) : null}
         <Text style={styles.total}>{formatPrice(grandTotal)}</Text>
         <Text style={styles.note}>
           {razorpayEnabled ? 'Online payment coming soon in app.' : 'Pay cash on delivery.'}
@@ -97,36 +105,36 @@ export default function CheckoutScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.canvas },
-  title: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
+const createStyles = (c) => ({
+  container: { flex: 1, backgroundColor: c.canvas },
+  title: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 12 },
   addressCard: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
-  addressSelected: { borderColor: COLORS.brand, borderWidth: 2 },
-  addressLabel: { fontWeight: '700', color: COLORS.text, marginBottom: 4 },
-  addressText: { color: COLORS.mint, lineHeight: 20 },
-  empty: { color: COLORS.muted, marginBottom: 8 },
+  addressSelected: { borderColor: c.brand, borderWidth: 2 },
+  addressLabel: { fontWeight: '700', color: c.text, marginBottom: 4 },
+  addressText: { color: c.mint, lineHeight: 20 },
+  empty: { color: c.muted, marginBottom: 8 },
   addLink: { marginBottom: 12, paddingVertical: 8 },
-  addLinkText: { color: COLORS.brand, fontWeight: '800' },
+  addLinkText: { color: c.brand, fontWeight: '800' },
   summary: {
     marginTop: 20,
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
-  total: { fontSize: 24, fontWeight: '800', color: COLORS.brand, marginTop: 4 },
-  note: { color: COLORS.muted, marginTop: 8 },
+  total: { fontSize: 24, fontWeight: '800', color: c.brand, marginTop: 4 },
+  note: { color: c.muted, marginTop: 8 },
   button: {
     marginTop: 20,
-    backgroundColor: COLORS.brand,
+    backgroundColor: c.brand,
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',

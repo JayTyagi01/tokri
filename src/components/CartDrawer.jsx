@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
+import CouponBox from './CouponBox'
 
 const formatPrice = (value) => `₹${value.toLocaleString('en-IN')}`
 
@@ -13,7 +14,7 @@ export default function CartDrawer() {
     itemsTotal,
     deliveryCharge,
     handlingCharge,
-    smallCartCharge,
+    discount,
     grandTotal,
     showDrawer,
     closeDrawer,
@@ -93,22 +94,25 @@ export default function CartDrawer() {
             </div>
 
             <div className="space-y-4 rounded-[2rem] border border-line bg-canvas p-5">
+              <CouponBox compact />
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>Item total</span>
                 <span>{formatPrice(itemsTotal)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted">
-                <span>Delivery charges</span>
-                <span>{formatPrice(deliveryCharge)}</span>
               </div>
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>Cart handling</span>
                 <span>{formatPrice(handlingCharge)}</span>
               </div>
               <div className="flex items-center justify-between text-sm text-muted">
-                <span>Small cart charge</span>
-                <span>{formatPrice(smallCartCharge)}</span>
+                <span>Delivery charges</span>
+                <span>{formatPrice(deliveryCharge)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex items-center justify-between text-sm text-mint">
+                  <span>Coupon discount</span>
+                  <span>-{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between border-t border-line pt-4 text-base font-semibold text-white">
                 <span>Total</span>
                 <span>{formatPrice(grandTotal)}</span>

@@ -11,13 +11,8 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'storeAddress',
   'promoBanner',
   'earlyDelivery',
-  'colorPrimary',
-  'colorPrimaryLight',
-  'colorAccent',
-  'colorBackground',
-  'colorFooterFrom',
-  'colorFooterVia',
-  'fontFamily',
+  'shippingFee',
+  'handlingFee',
   'homeBannerEnabled',
   'homeCategoriesEnabled',
   'homeBestSellersEnabled',
@@ -35,6 +30,8 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'twilioSmsFrom',
   'twilioWhatsappFrom',
 ])
+
+const NUMBER_FIELDS = new Set(['shippingFee', 'handlingFee'])
 
 const BOOLEAN_FIELDS = new Set([
   'homeBannerEnabled',
@@ -74,6 +71,13 @@ export function payloadToSettingData(payload) {
   for (const [key, value] of Object.entries(cleanSettingsPayload(payload))) {
     if (BOOLEAN_FIELDS.has(key)) {
       data[key] = toBoolean(value)
+      continue
+    }
+
+    if (NUMBER_FIELDS.has(key)) {
+      const amount = Number(value)
+      if (!Number.isFinite(amount) || amount < 0) continue
+      data[key] = amount
       continue
     }
 

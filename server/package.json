@@ -12,7 +12,9 @@
     "db:seed": "node prisma/seed.js",
     "admin:reset": "node scripts/reset-admin.js",
     "db:setup": "prisma db push && prisma generate && node prisma/seed.js",
-    "db:apply-customers": "node scripts/apply-customer-schema.js"
+    "db:apply-customers": "node scripts/apply-customer-schema.js",
+    "db:apply-commerce": "node scripts/apply-commerce-settings.js",
+    "db:apply-product-categories": "node scripts/apply-product-categories.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -26,17 +26,9 @@ const TABS = [
     ],
   },
   {
-    id: 'appearance',
-    label: 'Appearance',
-    fields: [
-      'colorPrimary',
-      'colorPrimaryLight',
-      'colorAccent',
-      'colorBackground',
-      'colorFooterFrom',
-      'colorFooterVia',
-      'fontFamily',
-    ],
+    id: 'charges',
+    label: 'Charges',
+    fields: ['shippingFee', 'handlingFee'],
   },
   {
     id: 'homepage',
@@ -81,6 +73,10 @@ const SettingsEdit = (props) => {
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '')
+    if (hash === 'appearance') {
+      setActiveTab('charges')
+      return
+    }
     if (hash && TABS.some((tab) => tab.id === hash)) {
       setActiveTab(hash)
     }
@@ -148,18 +144,49 @@ const SettingsEdit = (props) => {
             >
               <H4 mb="sm">{tab.label}</H4>
               <Text mb="xl" opacity={0.75}>
-                Update your store settings and click Save changes below.
+                {tab.id === 'charges'
+                  ? 'Shipping fee and handling charge are added to every order on the website and the app.'
+                  : 'Update your store settings and click Save changes below.'}
               </Text>
-              {properties.map((property) => (
-                <BasePropertyComponent
-                  key={property.propertyPath}
-                  where="edit"
-                  onChange={handleChange}
-                  property={property}
-                  resource={resource}
-                  record={record}
-                />
-              ))}
+              {tab.id === 'charges' ? (
+                <div className="tokri-charges-fields">
+                  <label className="tokri-coupon-label">
+                    Shipping fee (₹)
+                    <input
+                      className="tokri-coupon-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={record?.params?.shippingFee ?? ''}
+                      onChange={(event) => handleChange('shippingFee', event.target.value)}
+                    />
+                    <span className="tokri-field-hint">Delivery charge added to every order</span>
+                  </label>
+                  <label className="tokri-coupon-label">
+                    Handling charge (₹)
+                    <input
+                      className="tokri-coupon-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={record?.params?.handlingFee ?? ''}
+                      onChange={(event) => handleChange('handlingFee', event.target.value)}
+                    />
+                    <span className="tokri-field-hint">Cart handling fee added to every order</span>
+                  </label>
+                </div>
+              ) : (
+                properties.map((property) => (
+                  <BasePropertyComponent
+                    key={property.propertyPath}
+                    where="edit"
+                    onChange={handleChange}
+                    property={property}
+                    resource={resource}
+                    record={record}
+                  />
+                ))
+              )}
             </Box>
           )
         })}

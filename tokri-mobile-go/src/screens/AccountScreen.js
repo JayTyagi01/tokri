@@ -15,7 +15,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
@@ -71,9 +71,12 @@ function formatDobFromDate(date) {
 export default function AccountScreen({ navigation }) {
   const insets = useSafeAreaInsets()
   const { user, isLoggedIn, logout, updateProfile } = useAuth()
+  const { mode, setMode, colors, isDark } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const { setCart } = useCart()
   const { openPicker } = useAddress()
   const [nameOpen, setNameOpen] = useState(false)
+  const [appearanceOpen, setAppearanceOpen] = useState(false)
   const [name, setName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [showDobPicker, setShowDobPicker] = useState(false)
@@ -154,7 +157,7 @@ export default function AccountScreen({ navigation }) {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <Pressable style={styles.back} onPress={goBack} hitSlop={12}>
-        <Icon name="chevron-back" size={22} color={COLORS.text} />
+        <Icon name="chevron-back" size={22} color={colors.text} />
       </Pressable>
 
       <ScrollView
@@ -163,7 +166,7 @@ export default function AccountScreen({ navigation }) {
       >
         <View style={styles.hero}>
           <View style={styles.avatar}>
-            <Icon name="person" size={42} color={COLORS.white} />
+            <Icon name="person" size={42} color={colors.white} />
           </View>
           <Text style={styles.title}>Your account</Text>
           {isLoggedIn ? (
@@ -189,7 +192,12 @@ export default function AccountScreen({ navigation }) {
         </View>
 
         <View style={styles.block}>
-          <Row icon="moon-outline" label="Appearance" trailing="DARK" />
+          <Row
+            icon={isDark ? 'moon-outline' : 'sunny-outline'}
+            label="Appearance"
+            trailing={isDark ? 'DARK' : 'LIGHT'}
+            onPress={() => setAppearanceOpen(true)}
+          />
         </View>
 
         {isLoggedIn ? (
@@ -233,14 +241,14 @@ export default function AccountScreen({ navigation }) {
             <View style={styles.formHead}>
               <Text style={styles.sheetTitle}>Profile</Text>
               <Pressable onPress={closeNameSheet} hitSlop={10}>
-                <Icon name="close" size={20} color={COLORS.muted} />
+                <Icon name="close" size={20} color={colors.muted} />
               </Pressable>
             </View>
             <Text style={styles.fieldLabel}>Name</Text>
             <TextInput
               style={styles.input}
               placeholder="Your name"
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={colors.muted}
               value={name}
               onChangeText={setName}
               autoFocus
@@ -255,7 +263,7 @@ export default function AccountScreen({ navigation }) {
               <TextInput
                 style={styles.dobInput}
                 placeholder="DD/MM/YYYY"
-                placeholderTextColor={COLORS.muted}
+                placeholderTextColor={colors.muted}
                 value={dateOfBirth}
                 onChangeText={(value) => setDateOfBirth(maskDob(value))}
                 keyboardType="number-pad"
@@ -266,7 +274,7 @@ export default function AccountScreen({ navigation }) {
                 onSubmitEditing={saveName}
               />
               <Pressable style={styles.dobIcon} onPress={() => setShowDobPicker((open) => !open)} hitSlop={8}>
-                <Icon name="calendar-outline" size={22} color={COLORS.brand} />
+                <Icon name="calendar-outline" size={22} color={colors.brand} />
               </Pressable>
             </View>
             {showDobPicker ? (
@@ -274,7 +282,7 @@ export default function AccountScreen({ navigation }) {
                 value={parseDobDate(dateOfBirth) || new Date(2000, 0, 1)}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                themeVariant="dark"
+                themeVariant={isDark ? 'dark' : 'light'}
                 maximumDate={new Date()}
                 minimumDate={new Date(1920, 0, 1)}
                 onChange={onDobPicked}
@@ -291,39 +299,93 @@ export default function AccountScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal visible={appearanceOpen} transparent animationType="slide" onRequestClose={() => setAppearanceOpen(false)}>
+        <View style={styles.sheetWrap}>
+          <Pressable style={styles.overlay} onPress={() => setAppearanceOpen(false)} />
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <View style={styles.handle} />
+            <View style={styles.formHead}>
+              <Text style={styles.sheetTitle}>Appearance</Text>
+              <Pressable onPress={() => setAppearanceOpen(false)} hitSlop={10}>
+                <Icon name="close" size={20} color={colors.muted} />
+              </Pressable>
+            </View>
+            <ThemeChoice
+              icon="moon-outline"
+              title="Dark theme"
+              hint="Green night mode currently used in the app"
+              selected={mode === 'dark'}
+              onPress={() => {
+                setMode('dark')
+                setAppearanceOpen(false)
+              }}
+            />
+            <ThemeChoice
+              icon="sunny-outline"
+              title="Light theme"
+              hint="Bright screens with white cards"
+              selected={mode === 'light'}
+              onPress={() => {
+                setMode('light')
+                setAppearanceOpen(false)
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
 
+function ThemeChoice({ icon, title, hint, selected, onPress }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
+  return (
+    <Pressable style={[styles.themeChoice, selected && styles.themeChoiceSelected]} onPress={onPress}>
+      <Icon name={icon} size={22} color={selected ? colors.brand : colors.text} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.themeTitle}>{title}</Text>
+        <Text style={styles.themeHint}>{hint}</Text>
+      </View>
+      {selected ? <Icon name="checkmark-circle" size={22} color={colors.brand} /> : null}
+    </Pressable>
+  )
+}
+
 function QuickCard({ icon, label, onPress }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   return (
     <Pressable style={styles.quick} onPress={onPress}>
-      <Icon name={icon} size={26} color={COLORS.text} />
+      <Icon name={icon} size={26} color={colors.text} />
       <Text style={styles.quickLabel}>{label}</Text>
     </Pressable>
   )
 }
 
 function Row({ icon, label, trailing, onPress, danger }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   return (
     <Pressable style={styles.row} onPress={onPress} disabled={!onPress}>
-      <Icon name={icon} size={20} color={danger ? COLORS.danger : COLORS.text} />
-      <Text style={[styles.rowLabel, danger && { color: COLORS.danger }]}>{label}</Text>
-      {trailing ? <Text style={styles.trailing}>{trailing}{onPress ? '' : '  ⌄'}</Text> : null}
-      {onPress ? <Icon name="chevron-forward" size={16} color={COLORS.muted} /> : null}
+      <Icon name={icon} size={20} color={danger ? colors.danger : colors.text} />
+      <Text style={[styles.rowLabel, danger && { color: colors.danger }]}>{label}</Text>
+      {trailing ? <Text style={styles.trailing}>{trailing}</Text> : null}
+      {onPress ? <Icon name="chevron-forward" size={16} color={colors.muted} /> : null}
     </Pressable>
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   back: {
     marginLeft: 16,
     marginTop: 8,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -333,50 +395,50 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#3a3a3a',
+    backgroundColor: c.avatar,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
-  title: { color: COLORS.text, fontSize: 26, fontWeight: '800' },
-  subtitle: { color: COLORS.muted, fontSize: 14, marginTop: 6, textAlign: 'center' },
+  title: { color: c.text, fontSize: 26, fontWeight: '800' },
+  subtitle: { color: c.muted, fontSize: 14, marginTop: 6, textAlign: 'center' },
   loginBtn: {
     marginTop: 18,
     width: '100%',
     borderWidth: 1.5,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  loginText: { color: COLORS.brand, fontSize: 18, fontWeight: '800' },
+  loginText: { color: c.brand, fontSize: 18, fontWeight: '800' },
   quickRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   quick: {
     flex: 1,
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 8,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
-  quickLabel: { color: COLORS.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  quickLabel: { color: c.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   section: {
-    color: COLORS.text,
+    color: c.text,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 10,
     marginTop: 8,
   },
   block: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderRadius: 14,
     marginBottom: 18,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
   row: {
     flexDirection: 'row',
@@ -385,13 +447,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.line,
+    borderBottomColor: c.line,
   },
-  rowLabel: { flex: 1, color: COLORS.text, fontSize: 15, fontWeight: '600' },
-  trailing: { color: COLORS.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 },
+  rowLabel: { flex: 1, color: c.text, fontSize: 15, fontWeight: '600' },
+  trailing: { color: c.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.4 },
   brandMark: {
     textAlign: 'center',
-    color: COLORS.line,
+    color: c.line,
     fontSize: 28,
     fontWeight: '800',
     marginTop: 12,
@@ -400,23 +462,23 @@ const styles = StyleSheet.create({
   sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: c.overlay,
   },
   sheet: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 16,
     paddingTop: 12,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
   handle: {
     alignSelf: 'center',
     width: 42,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.line,
+    backgroundColor: c.line,
     marginBottom: 12,
   },
   formHead: {
@@ -425,32 +487,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  sheetTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
-  fieldLabel: { color: COLORS.text, fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  sheetTitle: { color: c.text, fontSize: 18, fontWeight: '800' },
+  fieldLabel: { color: c.text, fontSize: 13, fontWeight: '700', marginBottom: 8 },
   input: {
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    color: COLORS.text,
+    color: c.text,
     fontSize: 16,
     marginBottom: 16,
   },
   dobRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     borderRadius: 14,
     marginBottom: 16,
     paddingRight: 6,
   },
   dobInput: {
     flex: 1,
-    color: COLORS.text,
+    color: c.text,
     fontSize: 16,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -461,16 +523,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  error: { color: COLORS.danger, marginBottom: 12, fontSize: 13 },
+  error: { color: c.danger, marginBottom: 12, fontSize: 13 },
   saveBtn: {
     width: '100%',
     borderWidth: 1.5,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 8,
   },
   buttonDisabled: { opacity: 0.55 },
-  saveText: { color: COLORS.brand, fontSize: 18, fontWeight: '800' },
+  saveText: { color: c.brand, fontSize: 18, fontWeight: '800' },
+  themeChoice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: c.line,
+    marginBottom: 10,
+    backgroundColor: c.panel2,
+  },
+  themeChoiceSelected: {
+    borderColor: c.brand,
+    backgroundColor: c.successBg,
+  },
+  themeTitle: { color: c.text, fontSize: 16, fontWeight: '800' },
+  themeHint: { color: c.muted, fontSize: 12, marginTop: 2 },
 })

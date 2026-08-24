@@ -88,7 +88,7 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-12 items-center gap-2 rounded-full border border-line bg-panel-2 px-5 text-sm font-semibold text-white transition hover:bg-canvas"
+        className="inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-line bg-panel-2 px-5 text-sm font-semibold text-white transition hover:bg-canvas"
       >
         Account
         <ChevronDown size={16} className={`transition ${open ? 'rotate-180' : ''}`} />

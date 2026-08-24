@@ -33,6 +33,7 @@ export function formatCustomerOrder(order) {
     handlingCharge: Number(order.handlingCharge),
     smallCartCharge: Number(order.smallCartCharge),
     discount: Number(order.discount),
+    couponCode: order.couponCode || null,
     grandTotal: Number(order.grandTotal),
     itemCount: order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
     address: address

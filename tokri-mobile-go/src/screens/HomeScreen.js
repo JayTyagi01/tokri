@@ -4,7 +4,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native'
@@ -12,10 +11,8 @@ import { Image } from 'expo-image'
 import AppHeader from '../components/AppHeader'
 import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
-import { COLORS } from '../config'
-import { authGet, fetchJson, normalizeProduct } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
+import { fetchJson, normalizeProduct } from '../lib/api'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 const CAT_GAP = 10
@@ -23,6 +20,7 @@ const CAT_PAD = 16
 const CAT_ITEM_WIDTH = (SCREEN_WIDTH - CAT_PAD - CAT_GAP * 3) / 3.5
 
 function ProductSection({ title, products, onSeeAll, onProduct }) {
+  const styles = useThemedStyles(createStyles)
   const list = products.slice(0, 6)
   if (!list.length) return null
 
@@ -46,8 +44,8 @@ function ProductSection({ title, products, onSeeAll, onProduct }) {
 }
 
 export default function HomeScreen({ navigation }) {
-  const { token, isLoggedIn } = useAuth()
-  const { setCart } = useCart()
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const [data, setData] = useState({ categories: [], bestSellers: [] })
   const [categoryRows, setCategoryRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -55,8 +53,7 @@ export default function HomeScreen({ navigation }) {
   const [error, setError] = useState('')
 
   const openProduct = (slug) => {
-    if (slug === 'login') navigation.navigate('Login')
-    else navigation.navigate('Product', { slug })
+    navigation.navigate('Product', { slug })
   }
 
   const openCategory = (slug) => {
@@ -72,15 +69,6 @@ export default function HomeScreen({ navigation }) {
     setData({ categories, bestSellers })
     setError('')
 
-    if (isLoggedIn && token) {
-      try {
-        const cartData = await authGet('/account/cart', token)
-        if (cartData.cart) setCart(cartData.cart)
-      } catch {
-        // Cart API can fail independently; still show the store.
-      }
-    }
-
     const rows = await Promise.all(
       categories.map(async (category) => {
         try {
@@ -95,7 +83,7 @@ export default function HomeScreen({ navigation }) {
       }),
     )
     setCategoryRows(rows.filter((row) => row.products.length))
-  }, [isLoggedIn, token, setCart])
+  }, [])
 
   useEffect(() => {
     load()
@@ -119,7 +107,7 @@ export default function HomeScreen({ navigation }) {
       <AppHeader navigation={navigation} />
       <ScrollView
         style={styles.container}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
       >
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -164,10 +152,10 @@ export default function HomeScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   container: { flex: 1 },
-  error: { color: COLORS.danger, marginHorizontal: 16, marginTop: 12 },
+  error: { color: c.danger, marginHorizontal: 16, marginTop: 12 },
   catSlider: {
     paddingLeft: CAT_PAD,
     paddingRight: CAT_PAD,
@@ -183,35 +171,35 @@ const styles = StyleSheet.create({
     width: CAT_ITEM_WIDTH - 8,
     height: CAT_ITEM_WIDTH - 8,
     borderRadius: 14,
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
   },
   catLabel: {
     marginTop: 6,
-    color: COLORS.muted,
+    color: c.muted,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
   },
   section: { marginTop: 8 },
   sectionTitle: {
-    color: COLORS.text,
+    color: c.text,
     fontSize: 20,
     fontWeight: '800',
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 10,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8 },
-  cardWrap: { width: '33.333%' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 3 },
+  cardWrap: { width: '33.333%', paddingHorizontal: 3, marginBottom: 5 },
   seeAllBtn: {
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  seeAllText: { color: COLORS.brand, fontWeight: '800', fontSize: 14 },
+  seeAllText: { color: c.brand, fontWeight: '800', fontSize: 14 },
 })

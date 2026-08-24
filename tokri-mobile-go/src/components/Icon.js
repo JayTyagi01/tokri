@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
-import { COLORS } from '../config'
+import { useTheme } from '../context/ThemeContext'
 
-export default function Icon({ name, size = 22, color = COLORS.mint, style }) {
-  return <Ionicons name={name} size={size} color={color} style={style} />
+export default function Icon({ name, size = 22, color, style }) {
+  const { colors } = useTheme()
+  return <Ionicons name={name} size={size} color={color || colors.mint} style={style} />
 }

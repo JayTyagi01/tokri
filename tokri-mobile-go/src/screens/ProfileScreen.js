@@ -1,9 +1,11 @@
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 export default function ProfileScreen({ navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const { user, isLoggedIn, logout } = useAuth()
   const { setCart } = useCart()
 
@@ -45,36 +47,36 @@ export default function ProfileScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background, padding: 16 },
+const createStyles = (c) => ({
+  container: { flex: 1, backgroundColor: c.background, padding: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { fontSize: 24, fontWeight: '800', color: COLORS.primary },
-  subtitle: { color: COLORS.muted, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 22 },
+  title: { fontSize: 24, fontWeight: '800', color: c.primary },
+  subtitle: { color: c.muted, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 22 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     marginBottom: 16,
   },
-  label: { color: COLORS.muted, fontSize: 12, marginTop: 8 },
-  value: { color: COLORS.text, fontSize: 16, fontWeight: '600' },
+  label: { color: c.muted, fontSize: 12, marginTop: 8 },
+  value: { color: c.text, fontSize: 16, fontWeight: '600' },
   menuItem: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     marginBottom: 12,
   },
-  menuText: { fontSize: 16, fontWeight: '600', color: COLORS.text },
+  menuText: { fontSize: 16, fontWeight: '600', color: c.text },
   button: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: c.primaryLight,
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  logout: { marginTop: 'auto', backgroundColor: COLORS.danger },
+  logout: { marginTop: 'auto', backgroundColor: c.danger },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 })

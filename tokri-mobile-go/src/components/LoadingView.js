@@ -1,19 +1,21 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
-import { COLORS } from '../config'
+import { ActivityIndicator, View } from 'react-native'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 
 export default function LoadingView() {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={COLORS.brand} />
+      <ActivityIndicator size="large" color={colors.brand} />
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c) => ({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.canvas,
+    backgroundColor: c.canvas,
   },
 })

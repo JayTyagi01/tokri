@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAddress } from '../context/AddressContext'
 import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
@@ -15,6 +15,8 @@ function shortAddress(address) {
 }
 
 export default function AppHeader({ navigation, onSearch }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { isLoggedIn } = useAuth()
   const { selectedAddress, openPicker } = useAddress()
@@ -52,24 +54,24 @@ export default function AppHeader({ navigation, onSearch }) {
         <Pressable style={styles.address} onPress={openPicker}>
           <Text style={styles.eta}>Delivery in 12 minutes</Text>
           <View style={styles.addressLine}>
-            <Icon name="location" size={14} color={COLORS.brand} />
+            <Icon name="location" size={14} color={colors.brand} />
             <Text style={styles.addressText} numberOfLines={1}>
               {!isLoggedIn ? 'Select address' : shortAddress(selectedAddress)}
             </Text>
-            <Icon name="chevron-down" size={14} color={COLORS.muted} />
+            <Icon name="chevron-down" size={14} color={colors.muted} />
           </View>
         </Pressable>
         <Pressable style={styles.profile} onPress={onProfile}>
-          <Icon name="person-circle-outline" size={32} color={COLORS.text} />
+          <Icon name="person-circle-outline" size={32} color={colors.text} />
         </Pressable>
       </View>
 
       <View style={styles.search}>
-        <Icon name="search" size={18} color={COLORS.muted} />
+        <Icon name="search" size={18} color={colors.muted} />
         <TextInput
           style={styles.input}
           placeholder=""
-          placeholderTextColor={COLORS.muted}
+          placeholderTextColor={colors.muted}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
@@ -79,26 +81,26 @@ export default function AppHeader({ navigation, onSearch }) {
         />
         <SearchPlaceholderSlider visible={showHints} />
         <Pressable onPress={onMic} hitSlop={8}>
-          <Icon name={listening ? 'mic' : 'mic-outline'} size={20} color={listening ? COLORS.brand : COLORS.mint} />
+          <Icon name={listening ? 'mic' : 'mic-outline'} size={20} color={listening ? colors.brand : colors.mint} />
         </Pressable>
       </View>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c) => ({
   wrap: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.line,
+    borderBottomColor: c.line,
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   address: { flex: 1 },
-  eta: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
+  eta: { color: c.text, fontSize: 14, fontWeight: '800' },
   addressLine: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  addressText: { flex: 1, color: COLORS.mint, fontSize: 12 },
+  addressText: { flex: 1, color: c.mint, fontSize: 12 },
   profile: {
     width: 40,
     height: 40,
@@ -110,13 +112,13 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.line,
-    backgroundColor: COLORS.panel2,
+    borderColor: c.line,
+    backgroundColor: c.panel2,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     overflow: 'hidden',
   },
-  input: { flex: 1, color: COLORS.text, fontSize: 14, paddingVertical: 0 },
+  input: { flex: 1, color: c.text, fontSize: 14, paddingVertical: 0 },
 })

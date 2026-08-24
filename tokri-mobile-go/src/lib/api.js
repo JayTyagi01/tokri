@@ -44,6 +44,15 @@ export async function authPost(path, token, body) {
   return parseResponse(response)
 }
 
+export async function authPut(path, token, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  return parseResponse(response)
+}
+
 export async function authPatch(path, token, body) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'PATCH',

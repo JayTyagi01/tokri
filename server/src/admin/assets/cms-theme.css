@@ -15,6 +15,28 @@ body {
   background: var(--tokri-bg) !important;
 }
 
+a,
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="file"],
+input[type="checkbox"],
+input[type="radio"],
+label,
+select,
+summary {
+  cursor: pointer !important;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed !important;
+}
+
 [data-css="sidebar"] {
   background: var(--tokri-sidebar) !important;
   border-right: 1px solid #101517 !important;
@@ -220,6 +242,382 @@ section[data-css="logged-in"] {
 .tokri-settings-form [data-css="drawer-footer"] {
   background: var(--tokri-card) !important;
   border-top: 1px solid var(--tokri-border) !important;
+}
+
+.tokri-coupon-form,
+.tokri-coupon-form *,
+.tokri-charges-fields,
+.tokri-charges-fields * {
+  box-sizing: border-box;
+}
+
+.tokri-coupon-form {
+  padding: 8px 8px 24px;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.tokri-coupon-hero {
+  background: linear-gradient(135deg, #022c22, #047857);
+  color: #fff;
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.tokri-coupon-hero h3 {
+  margin: 0 0 6px;
+  color: #fff;
+}
+
+.tokri-coupon-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 960px) {
+  .tokri-coupon-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tokri-coupon-card {
+  background: #fff;
+  border: 1px solid var(--tokri-border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  min-width: 0;
+  overflow: visible;
+}
+
+.tokri-coupon-card h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.tokri-coupon-card p {
+  margin: 0 0 14px;
+  color: #64748b;
+}
+
+.tokri-coupon-input,
+.tokri-datepicker-control,
+.tokri-multiselect-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.tokri-coupon-code {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tokri-coupon-label {
+  display: block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  min-width: 0;
+}
+
+.tokri-coupon-label .tokri-coupon-input,
+.tokri-coupon-label .tokri-datepicker,
+.tokri-coupon-label .tokri-multiselect {
+  margin-top: 6px;
+}
+
+.tokri-field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.tokri-charges-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .tokri-charges-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tokri-coupon-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .tokri-coupon-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tokri-coupon-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.tokri-choice-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.tokri-choice-card {
+  appearance: none;
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.tokri-choice-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tokri-choice-card span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.tokri-choice-card.is-selected {
+  border-color: #047857;
+  background: #ecfdf5;
+  box-shadow: inset 0 0 0 1px #047857;
+}
+
+.tokri-multiselect,
+.tokri-datepicker {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.tokri-multiselect-control,
+.tokri-datepicker-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 42px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tokri-multiselect-placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.tokri-multiselect-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tokri-multiselect-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.tokri-multiselect-chip span {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tokri-multiselect-caret {
+  color: #64748b;
+}
+
+.tokri-multiselect-menu,
+.tokri-datepicker-pop {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  padding: 10px;
+}
+
+.tokri-multiselect-list {
+  max-height: 220px;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.tokri-multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tokri-multiselect-option.is-selected,
+.tokri-multiselect-option:hover {
+  background: #f0fdf4;
+}
+
+.tokri-multiselect-empty {
+  padding: 12px 8px;
+  color: #64748b;
+}
+
+.tokri-datepicker-pop {
+  width: 300px;
+}
+
+.tokri-datepicker-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tokri-datepicker-nav button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: #f1f5f9;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tokri-datepicker-week,
+.tokri-datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  text-align: center;
+}
+
+.tokri-datepicker-week {
+  color: #64748b;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.tokri-datepicker-grid button {
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tokri-datepicker-grid button.is-selected,
+.tokri-datepicker-grid button:hover {
+  background: #047857;
+  color: #fff;
+}
+
+.tokri-datepicker-time {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.tokri-datepicker-time input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.tokri-datepicker-clear {
+  height: 38px;
+  border: 0;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.tokri-upload-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #f8fafc;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.tokri-upload-drop input {
+  display: none;
+}
+
+.tokri-upload-drop img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.tokri-upload-drop-wide {
+  min-height: 180px;
+}
+
+.tokri-upload-drop-wide img {
+  height: 180px;
+}
+
+.tokri-html-preview {
+  min-height: 220px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.tokri-coupon-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
 }
 
 /* Rich text editor area */

@@ -5,14 +5,13 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native'
 import AppHeader from '../components/AppHeader'
 import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authGet, fetchJson, normalizeProduct } from '../lib/api'
 import { uniqueOrderedProducts } from '../lib/orders'
 import { useAuth } from '../context/AuthContext'
@@ -20,6 +19,7 @@ import { useAuth } from '../context/AuthContext'
 const HERO = require('../../assets/reorder-hero.png')
 
 function ProductGrid({ title, products, onProduct }) {
+  const styles = useThemedStyles(createStyles)
   const list = products.filter((item) => item.slug).slice(0, 12)
   if (!list.length) return null
   return (
@@ -37,6 +37,8 @@ function ProductGrid({ title, products, onProduct }) {
 }
 
 export default function ReorderScreen({ navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const { token, isLoggedIn } = useAuth()
   const [orders, setOrders] = useState([])
   const [bestSellers, setBestSellers] = useState([])
@@ -44,8 +46,7 @@ export default function ReorderScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false)
 
   const openProduct = (slug) => {
-    if (slug === 'login') navigation.navigate('Login')
-    else navigation.navigate('Product', { slug })
+    navigation.navigate('Product', { slug })
   }
 
   const load = useCallback(async () => {
@@ -92,7 +93,7 @@ export default function ReorderScreen({ navigation }) {
     <View style={styles.screen}>
       <AppHeader navigation={navigation} />
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
         contentContainerStyle={styles.content}
       >
         <View style={styles.hero}>
@@ -116,14 +117,14 @@ export default function ReorderScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   content: { paddingBottom: 16 },
   hero: { alignItems: 'center', paddingHorizontal: 28, paddingTop: 18, paddingBottom: 8 },
   heroImage: { width: 168, height: 168, marginBottom: 12 },
-  heroTitle: { color: COLORS.text, fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  heroTitle: { color: c.text, fontSize: 22, fontWeight: '800', textAlign: 'center' },
   heroSubtitle: {
-    color: COLORS.muted,
+    color: c.muted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -132,21 +133,21 @@ const styles = StyleSheet.create({
   loginBtn: {
     marginTop: 16,
     borderWidth: 1.5,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
   },
-  loginText: { color: COLORS.brand, fontWeight: '800' },
+  loginText: { color: c.brand, fontWeight: '800' },
   section: { marginTop: 8 },
   sectionTitle: {
-    color: COLORS.text,
+    color: c.text,
     fontSize: 20,
     fontWeight: '800',
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 10,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8 },
-  cardWrap: { width: '33.333%' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 3 },
+  cardWrap: { width: '33.333%', paddingHorizontal: 3, marginBottom: 5 },
 })

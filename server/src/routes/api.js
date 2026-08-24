@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
 import { formatPublicSettings } from '../utils/settings.js'
 import { formatCategory, formatProduct, formatPage } from '../utils/formatters.js'
+import { PRODUCT_CATEGORY_INCLUDE, categoryProductWhere } from '../utils/catalog.js'
 import authRouter from './auth.js'
 import accountRouter from './account.js'
 import checkoutRouter from './checkout.js'
@@ -46,7 +47,7 @@ router.get('/categories', async (_req, res, next) => {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { productLinks: true } } },
     })
 
     res.json(categories.map((c) => formatCategory(c)))
@@ -59,20 +60,19 @@ router.get('/categories/:slug', async (req, res, next) => {
   try {
     const category = await prisma.category.findFirst({
       where: { slug: req.params.slug, isActive: true },
-      include: {
-        products: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
-          include: { category: true },
-        },
-      },
     })
 
     if (!category) {
       return res.status(404).json({ message: 'Category not found' })
     }
 
-    res.json(formatCategory(category, { includeProducts: true }))
+    const products = await prisma.product.findMany({
+      where: { isActive: true, ...categoryProductWhere(category.id) },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      include: PRODUCT_CATEGORY_INCLUDE,
+    })
+
+    res.json(formatCategory({ ...category, products, _count: { productLinks: products.length } }, { includeProducts: true }))
   } catch (error) {
     next(error)
   }
@@ -92,7 +92,7 @@ router.get('/products', async (req, res, next) => {
 
     if (category) {
       const cat = await prisma.category.findUnique({ where: { slug: String(category) } })
-      if (cat) where.categoryId = cat.id
+      if (cat) Object.assign(where, categoryProductWhere(cat.id))
       else if (page) {
         return res.json({
           products: [],
@@ -114,7 +114,7 @@ router.get('/products', async (req, res, next) => {
           take,
           skip,
           orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-          include: { category: true },
+          include: PRODUCT_CATEGORY_INCLUDE,
         }),
         prisma.product.count({ where }),
       ])
@@ -132,7 +132,7 @@ router.get('/products', async (req, res, next) => {
       where,
       take: pageSize,
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-      include: { category: true },
+      include: PRODUCT_CATEGORY_INCLUDE,
     })
 
     res.json(products.map(formatProduct))
@@ -166,6 +166,7 @@ router.get('/search', async (req, res, next) => {
         { description: { contains: term } },
         { badge: { contains: term } },
         { category: { is: { label: { contains: term } } } },
+        { categoryLinks: { some: { category: { is: { label: { contains: term } } } } } },
       ],
     }
 
@@ -176,7 +177,7 @@ router.get('/search', async (req, res, next) => {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: [{ isBestSeller: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
-        include: { category: true },
+        include: PRODUCT_CATEGORY_INCLUDE,
       }),
     ])
 
@@ -186,7 +187,7 @@ router.get('/search', async (req, res, next) => {
         where: { isActive: true, name: { contains: term } },
         take: 5,
         orderBy: [{ isBestSeller: 'desc' }, { name: 'asc' }],
-        include: { category: true },
+        include: PRODUCT_CATEGORY_INCLUDE,
       })
       suggestions = suggested.map(formatProduct)
     }
@@ -209,7 +210,7 @@ router.get('/products/:slug', async (req, res, next) => {
   try {
     const product = await prisma.product.findFirst({
       where: { slug: req.params.slug, isActive: true },
-      include: { category: true },
+      include: PRODUCT_CATEGORY_INCLUDE,
     })
 
     if (!product) {

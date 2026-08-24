@@ -11,6 +11,8 @@ import ReviewEdit from '../src/admin/components/review-edit'
 AdminJS.UserComponents.ReviewEdit = ReviewEdit
 import SettingsEdit from '../src/admin/components/settings-edit'
 AdminJS.UserComponents.SettingsEdit = SettingsEdit
+import CouponEdit from '../src/admin/components/coupon-edit'
+AdminJS.UserComponents.CouponEdit = CouponEdit
 import OrderDetail from '../src/admin/components/order-detail'
 AdminJS.UserComponents.OrderDetail = OrderDetail
 import ChangePassword from '../src/admin/components/change-password'

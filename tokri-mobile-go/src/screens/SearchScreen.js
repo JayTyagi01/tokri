@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Text, View } from 'react-native'
 import AppHeader from '../components/AppHeader'
 import ProductCard from '../components/ProductCard'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { fetchJson, normalizeProduct } from '../lib/api'
 
 export default function SearchScreen({ navigation, route }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const initial = route.params?.q || ''
   const [query, setQuery] = useState(initial)
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
   const openProduct = (slug) => {
-    if (slug === 'login') navigation.navigate('Login')
-    else navigation.navigate('Product', { slug })
+    navigation.navigate('Product', { slug })
   }
 
   const run = async (term) => {
@@ -48,16 +49,17 @@ export default function SearchScreen({ navigation, route }) {
         }}
       />
       {loading ? (
-        <ActivityIndicator color={COLORS.brand} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={colors.brand} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={products}
           numColumns={2}
           keyExtractor={(item) => item.slug}
-          contentContainerStyle={{ padding: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 3, paddingTop: 5, paddingBottom: 16 }}
+          columnWrapperStyle={{ marginBottom: 5 }}
           ListEmptyComponent={<Text style={styles.empty}>No results for “{query}”</Text>}
           renderItem={({ item }) => (
-            <View style={{ width: '50%' }}>
+            <View style={{ flex: 1, paddingHorizontal: 3 }}>
               <ProductCard product={item} onPress={openProduct} />
             </View>
           )}
@@ -67,7 +69,7 @@ export default function SearchScreen({ navigation, route }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
-  empty: { color: COLORS.muted, textAlign: 'center', marginTop: 40 },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
+  empty: { color: c.muted, textAlign: 'center', marginTop: 40 },
 })

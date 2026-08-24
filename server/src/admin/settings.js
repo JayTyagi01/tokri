@@ -5,12 +5,6 @@ import { settingsEditHandler } from './settings-handlers.js'
 
 const SETTING_RECORD_ID = '1'
 
-const colorField = (label) => ({
-  label,
-  description: 'Hex color e.g. #022c22',
-  props: { placeholder: '#000000' },
-})
-
 export function getSettingResource(SettingsEditComponent) {
   return {
     resource: { model: AdminJSPrisma.getModelByName('Setting'), client: prisma },
@@ -32,13 +26,8 @@ export function getSettingResource(SettingsEditComponent) {
         'storeAddress',
         'promoBanner',
         'earlyDelivery',
-        'colorPrimary',
-        'colorPrimaryLight',
-        'colorAccent',
-        'colorBackground',
-        'colorFooterFrom',
-        'colorFooterVia',
-        'fontFamily',
+        'shippingFee',
+        'handlingFee',
         'homeBannerEnabled',
         'homeCategoriesEnabled',
         'homeBestSellersEnabled',
@@ -99,13 +88,16 @@ export function getSettingResource(SettingsEditComponent) {
         storeAddress: { type: 'textarea', label: 'Store address' },
         promoBanner: { type: 'richtext', label: 'Top promo banner' },
         earlyDelivery: { label: 'Early delivery message' },
-        colorPrimary: colorField('Primary color'),
-        colorPrimaryLight: colorField('Primary light'),
-        colorAccent: colorField('Accent color'),
-        colorBackground: colorField('Page background'),
-        colorFooterFrom: colorField('Footer gradient start'),
-        colorFooterVia: colorField('Footer gradient middle'),
-        fontFamily: { label: 'Font family' },
+        shippingFee: {
+          type: 'number',
+          label: 'Shipping fee (₹)',
+          description: 'Delivery charge added to every order',
+        },
+        handlingFee: {
+          type: 'number',
+          label: 'Handling charge (₹)',
+          description: 'Cart handling fee added to every order',
+        },
         homeBannerEnabled: { label: 'Show hero banner' },
         homeCategoriesEnabled: { label: 'Show categories section' },
         homeBestSellersEnabled: { label: 'Show bestsellers section' },

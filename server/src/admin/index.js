@@ -14,7 +14,8 @@ import {
   defaultStaffPermissions,
 } from './permissions.js'
 import { getSettingResource, ensureSettingsRecord } from './settings.js'
-import { prepareProductPayload } from './product-handlers.js'
+import { prepareProductPayload, afterProductForm } from './product-handlers.js'
+import { prepareCouponPayload } from './coupon-handlers.js'
 import { prepareCategoryPayload } from './category-handlers.js'
 import { orderEditHandler, orderListHandler, orderShowHandler } from './order-handlers.js'
 import { buildCatalogRoutes } from './catalogRoutes.js'
@@ -192,7 +193,6 @@ export async function buildAdminRouter() {
             'oldPriceValue',
             'currency',
             'weight',
-            'category',
             'badge',
             'isBestSeller',
             'isImported',
@@ -208,12 +208,14 @@ export async function buildAdminRouter() {
               isAccessible: canManage('manageProducts'),
               component: Components.ProductEdit,
               before: prepareProductPayload,
+              after: afterProductForm,
             },
             edit: {
               isAccessible: canManage('manageProducts'),
               isVisible: true,
               component: Components.ProductEdit,
               before: prepareProductPayload,
+              after: afterProductForm,
             },
           },
           custom: {
@@ -225,6 +227,7 @@ export async function buildAdminRouter() {
             description: { type: 'richtext', label: 'Description' },
             image: { isVisible: false },
             mediaId: { isVisible: false },
+            category: { isVisible: { list: true, filter: true, show: true, edit: false } },
             slug: {
               label: 'Slug',
               description: 'The public product URL updates below this field.',
@@ -447,13 +450,49 @@ export async function buildAdminRouter() {
         options: {
           name: 'Coupons',
           navigation: { name: null, icon: 'Tag' },
-          listProperties: ['code', 'type', 'value', 'isActive', 'usedCount'],
+          listProperties: ['code', 'type', 'value', 'applyOn', 'targetType', 'usageType', 'isActive', 'usedCount'],
+          editProperties: [
+            'code',
+            'type',
+            'value',
+            'minCart',
+            'maxDiscount',
+            'applyOn',
+            'targetType',
+            'targetSlugs',
+            'usageType',
+            'usageLimit',
+            'startsAt',
+            'expiresAt',
+            'isActive',
+          ],
           actions: {
             ...resourceActions('manageCoupons'),
             list: cmsListView('manageCoupons'),
+            new: {
+              isAccessible: canManage('manageCoupons'),
+              component: Components.CouponEdit,
+              before: prepareCouponPayload,
+            },
+            edit: {
+              isAccessible: canManage('manageCoupons'),
+              isVisible: true,
+              component: Components.CouponEdit,
+              before: prepareCouponPayload,
+            },
+          },
+          custom: {
+            apiBaseUrl: `${env.apiUrl}/api/v1`,
           },
           properties: {
-            code: { isTitle: true },
+            code: { isTitle: true, label: 'Code' },
+            type: { label: 'Discount type' },
+            value: { label: 'Value' },
+            applyOn: { label: 'Applies to' },
+            targetType: { label: 'Target' },
+            usageType: { label: 'Usage' },
+            usedCount: { isVisible: { list: true, filter: true, show: true, edit: false } },
+            targetSlugs: { isVisible: false },
           },
         },
       },

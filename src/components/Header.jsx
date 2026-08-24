@@ -49,7 +49,7 @@ export default function Header({ onLoginClick }) {
             <button
               type="button"
               onClick={handleProfileClick}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-white"
+              className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line text-white"
               aria-label={isLoggedIn ? 'Open profile' : 'Log in'}
             >
               <UserRound size={20} />
@@ -93,12 +93,12 @@ export default function Header({ onLoginClick }) {
             ) : (
               <button
                 onClick={handleDesktopLogin}
-                className="h-12 w-full rounded-full bg-brand px-10 py-3 text-[16px] font-semibold text-black shadow-sm transition hover:bg-brand-hover sm:w-auto"
+                className="h-12 w-full cursor-pointer rounded-full bg-brand px-10 py-3 text-[16px] font-semibold text-black shadow-sm transition hover:bg-brand-hover sm:w-auto"
               >
                 Login
               </button>
             )}
-            <button onClick={openDrawer} className="relative text-white" type="button">
+            <button onClick={openDrawer} className="relative cursor-pointer text-white" type="button">
               <ShoppingBagIcon size={30} />
               <span className="absolute -right-2 -top-1 h-[20px] w-[20px] rounded-full bg-brand text-[13px] font-semibold text-black">
                 {totalCount}

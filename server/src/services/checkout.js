@@ -1,8 +1,10 @@
 import { prisma } from '../lib/prisma.js'
 import { createRazorpayOrder, verifyRazorpayPayment, getPublicPaymentConfig } from './razorpay.js'
 import { listAddresses } from './addresses.js'
-import { calcCartTotals } from '../config/charges.js'
+import { calcCartTotals, getChargeRates } from '../config/charges.js'
 import { clearCart, getCartCheckoutItems } from './cart.js'
+import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
+import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
 
 function parseAddresses(raw) {
@@ -15,10 +17,6 @@ function buildOrderNo() {
   const stamp = Date.now().toString().slice(-8)
   const rand = Math.floor(Math.random() * 900 + 100)
   return `TKR${stamp}${rand}`
-}
-
-function calcTotals(items) {
-  return calcCartTotals(items)
 }
 
 function normalizeCartItem(raw) {
@@ -37,6 +35,7 @@ async function resolveCartItems(rawItems) {
   const slugs = normalized.map((item) => item.slug)
   const products = await prisma.product.findMany({
     where: { slug: { in: slugs }, isActive: true },
+    include: PRODUCT_CATEGORY_INCLUDE,
   })
 
   const productMap = new Map(products.map((product) => [product.slug, product]))
@@ -51,6 +50,9 @@ async function resolveCartItems(rawItems) {
       product,
       quantity: entry.quantity,
       priceValue: Number(product.priceValue),
+      slug: product.slug,
+      category: product.category,
+      categories: (product.categoryLinks || []).map((row) => row.category).filter(Boolean),
     })
   }
 
@@ -70,14 +72,24 @@ export async function getCheckoutConfig() {
   return getPublicPaymentConfig()
 }
 
-export async function createCheckoutOrder(user, { items: rawItems, addressId, paymentMode = 'online' }) {
+export async function createCheckoutOrder(user, { items: rawItems, addressId, paymentMode = 'online', couponCode }) {
   const sourceItems =
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems
       : await getCartCheckoutItems(user.id)
   const cartItems = await resolveCartItems(sourceItems)
   const address = await resolveAddress(user, addressId)
-  const totals = calcTotals(cartItems)
+  const rates = await getChargeRates()
+  let totals = calcCartTotals(cartItems, rates)
+  let appliedCoupon = null
+
+  if (String(couponCode || '').trim()) {
+    const coupon = await findActiveCoupon(couponCode)
+    const applied = await applyCouponToItems(coupon, cartItems, user.id)
+    totals = applied.totals
+    appliedCoupon = applied.coupon
+  }
+
   const paymentConfig = await getPublicPaymentConfig()
   const useRazorpay = paymentMode === 'online' && paymentConfig.razorpay.enabled
 
@@ -108,6 +120,8 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
       deliveryCharge: totals.deliveryCharge,
       handlingCharge: totals.handlingCharge,
       smallCartCharge: totals.smallCartCharge,
+      discount: totals.discount,
+      couponCode: appliedCoupon?.code || null,
       grandTotal: totals.grandTotal,
       address,
       razorpayOrderId,
@@ -124,6 +138,12 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
     },
     include: { items: true },
   })
+
+  if (appliedCoupon) {
+    await redeemCoupon({ coupon: appliedCoupon, customerId: user.id, orderId: order.id }).catch((error) => {
+      console.error('Failed to record coupon use:', error)
+    })
+  }
 
   return {
     order: {

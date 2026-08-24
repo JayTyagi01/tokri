@@ -1,7 +1,8 @@
 import crypto from 'crypto'
 import { prisma } from '../lib/prisma.js'
-import { calcCartTotals } from '../config/charges.js'
+import { calcCartTotals, getChargeRates } from '../config/charges.js'
 import { formatProduct } from '../utils/formatters.js'
+import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 
 function httpError(message, status = 400) {
   return Object.assign(new Error(message), { status })
@@ -29,7 +30,7 @@ function newId() {
 async function loadProduct(slug) {
   const product = await prisma.product.findFirst({
     where: { slug, isActive: true },
-    include: { category: true },
+    include: PRODUCT_CATEGORY_INCLUDE,
   })
   if (!product) throw httpError('This product is no longer available.', 404)
   return product
@@ -69,7 +70,7 @@ async function loadCartRecord(customerId) {
   const products = productIds.length
     ? await prisma.product.findMany({
         where: { id: { in: productIds } },
-        include: { category: true },
+        include: PRODUCT_CATEGORY_INCLUDE,
       })
     : []
   const productMap = new Map(products.map((product) => [product.id, product]))
@@ -95,21 +96,23 @@ function formatCartItem(item) {
   }
 }
 
-export function formatCart(cart) {
+export async function formatCart(cart) {
   const activeItems = (cart?.items || []).filter((item) => item.product?.isActive)
   const items = activeItems.map((item) => ({
     ...formatCartItem(item),
     priceValue: Number(item.product.priceValue),
   }))
-  const totals = calcCartTotals(items)
+  const totals = calcCartTotals(items, await getChargeRates())
 
   return {
-    items: items.map(({ id, slug, name, price, priceValue, image, weight, quantity, lineTotal, category, stock }) => ({
+    items: items.map(({ id, slug, name, price, priceValue, oldPrice, oldPriceValue, image, weight, quantity, lineTotal, category, stock }) => ({
       id,
       slug,
       name,
       price,
       priceValue,
+      oldPrice,
+      oldPriceValue,
       image,
       weight,
       quantity,

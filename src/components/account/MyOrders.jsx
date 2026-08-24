@@ -123,20 +123,16 @@ function OrderCard({ order, defaultOpen = false }) {
               <span>{formatPrice(order.itemsTotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Delivery charges</span>
-              <span>{formatPrice(order.deliveryCharge)}</span>
-            </div>
-            <div className="flex justify-between">
               <span>Cart handling</span>
               <span>{formatPrice(order.handlingCharge)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Small cart charge</span>
-              <span>{formatPrice(order.smallCartCharge)}</span>
+              <span>Delivery charges</span>
+              <span>{formatPrice(order.deliveryCharge)}</span>
             </div>
             {order.discount > 0 && (
-              <div className="flex justify-between">
-                <span>Discount</span>
+              <div className="flex justify-between text-mint">
+                <span>{order.couponCode ? `Coupon (${order.couponCode})` : 'Discount'}</span>
                 <span>-{formatPrice(order.discount)}</span>
               </div>
             )}

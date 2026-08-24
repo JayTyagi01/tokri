@@ -1,8 +1,7 @@
 import { Image } from 'expo-image'
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLORS } from '../config'
+import { Alert, Pressable, Text, View } from 'react-native'
+import { useThemedStyles } from '../context/ThemeContext'
 import { formatPrice } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 function discountPercent(product) {
@@ -13,17 +12,13 @@ function discountPercent(product) {
 }
 
 export default function ProductCard({ product, onPress, compact = false }) {
-  const { isLoggedIn } = useAuth()
+  const styles = useThemedStyles(createStyles)
   const { addItem, updateQuantity, items } = useCart()
   const qty = items.find((item) => item.slug === product.slug)?.quantity || 0
   const off = discountPercent(product)
 
   const onAdd = async (event) => {
     event?.stopPropagation?.()
-    if (!isLoggedIn) {
-      onPress?.('login')
-      return
-    }
     try {
       if (qty) await updateQuantity(product.slug, qty + 1)
       else await addItem(product.slug, 1, product)
@@ -53,8 +48,8 @@ export default function ProductCard({ product, onPress, compact = false }) {
       </Text>
       {product.weight ? <Text style={styles.weight}>{product.weight}</Text> : null}
       <View style={styles.footer}>
-        <View style={{ flex: 1, paddingRight: 4 }}>
-          <Text style={[styles.price, compact && styles.priceCompact]}>
+        <View style={{ flex: 1, paddingRight: 2, minWidth: 0 }}>
+          <Text style={[styles.price, compact && styles.priceCompact]} numberOfLines={1}>
             {product.price || formatPrice(product.priceValue)}
           </Text>
           {off > 0 && product.oldPrice ? <Text style={styles.old}>{product.oldPrice}</Text> : null}
@@ -79,26 +74,30 @@ export default function ProductCard({ product, onPress, compact = false }) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c) => ({
   card: {
+    width: '100%',
     flex: 1,
-    backgroundColor: COLORS.card,
+    backgroundColor: c.card,
     borderRadius: 12,
-    padding: 8,
-    margin: 5,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: c.line,
+    overflow: 'hidden',
   },
-  compact: { margin: 3, padding: 6 },
+  compact: { padding: 5 },
   nameCompact: { fontSize: 11, minHeight: 28, lineHeight: 14 },
   priceCompact: { fontSize: 12 },
   addCompact: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   addTextCompact: { fontSize: 10 },
-  qtyBoxCompact: { paddingHorizontal: 4, paddingVertical: 3, gap: 4 },
+  qtyBoxCompact: { paddingHorizontal: 3, paddingVertical: 3, gap: 1 },
   imageWrap: {
+    width: '100%',
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
-    marginBottom: 6,
+    backgroundColor: c.panel2,
+    marginBottom: 3,
   },
   image: { width: '100%', height: '100%' },
   off: {
@@ -116,34 +115,35 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
     overflow: 'hidden',
   },
-  name: { fontSize: 12, fontWeight: '700', color: COLORS.cardText, minHeight: 32, lineHeight: 16 },
-  weight: { fontSize: 11, color: COLORS.cardMuted, marginTop: 2 },
+  name: { fontSize: 12, fontWeight: '700', color: c.cardText, minHeight: 32, lineHeight: 16 },
+  weight: { fontSize: 11, color: c.cardMuted, marginTop: 1 },
   footer: {
-    marginTop: 8,
+    marginTop: 4,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  price: { fontSize: 13, fontWeight: '800', color: COLORS.cardText },
-  old: { fontSize: 11, color: COLORS.cardMuted, textDecorationLine: 'line-through' },
+  price: { fontSize: 13, fontWeight: '800', color: c.cardText },
+  old: { fontSize: 11, color: c.cardMuted, textDecorationLine: 'line-through' },
   add: {
     borderWidth: 1,
-    borderColor: COLORS.brand,
+    borderColor: c.brand,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 5,
-    backgroundColor: '#edf8f1',
+    backgroundColor: c.addBg,
   },
-  addText: { color: COLORS.brandDeep, fontWeight: '800', fontSize: 12 },
+  addText: { color: c.brandDeep, fontWeight: '800', fontSize: 12 },
   qtyBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.brand,
+    flexShrink: 0,
+    backgroundColor: c.brand,
     borderRadius: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     paddingVertical: 4,
-    gap: 8,
+    gap: 2,
   },
-  qtyBtn: { color: '#fff', fontWeight: '800', fontSize: 16, width: 16, textAlign: 'center' },
-  qty: { color: '#fff', fontWeight: '800', minWidth: 14, textAlign: 'center' },
+  qtyBtn: { color: '#fff', fontWeight: '800', fontSize: 16, width: 14, textAlign: 'center' },
+  qty: { color: '#fff', fontWeight: '800', fontSize: 12, minWidth: 12, textAlign: 'center' },
 })

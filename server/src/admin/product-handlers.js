@@ -9,6 +9,26 @@ export function slugify(value) {
     .replace(/^-+|-+$/g, '')
 }
 
+function parseCategoryIds(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) return [...new Set(raw.map((item) => String(item).trim()).filter(Boolean))]
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed) return []
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) return parseCategoryIds(parsed)
+    } catch {
+      // comma-separated
+    }
+    return trimmed
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
 export async function uniqueProductSlug(value, currentId) {
   const base = slugify(value)
   if (!base) return ''
@@ -32,6 +52,15 @@ export async function uniqueProductSlug(value, currentId) {
   return candidate
 }
 
+export async function syncProductCategories(productId, categoryIds) {
+  const unique = [...new Set((categoryIds || []).filter(Boolean))]
+  await prisma.productCategory.deleteMany({ where: { productId } })
+  if (!unique.length) return
+  await prisma.productCategory.createMany({
+    data: unique.map((categoryId) => ({ productId, categoryId })),
+  })
+}
+
 export async function prepareProductPayload(request) {
   if (request.method !== 'post') return request
 
@@ -50,6 +79,55 @@ export async function prepareProductPayload(request) {
     if (media) payload.image = media.path
   }
 
+  const slugs = parseCategoryIds(payload.categoryIds)
+  const matched = slugs.length
+    ? await prisma.category.findMany({
+        where: { slug: { in: slugs } },
+        select: { id: true, slug: true },
+      })
+    : []
+  const categoryBySlug = new Map(matched.map((item) => [item.slug, item.id]))
+  const categoryIds = slugs.map((slug) => categoryBySlug.get(slug)).filter(Boolean)
+  request.tokriCategoryIds = categoryIds
+  payload.category = categoryIds[0] || null
+  delete payload.categoryIds
+
   request.payload = payload
   return request
+}
+
+export async function afterProductForm(response, request) {
+  const record = response?.record
+  if (!record) return response
+
+  const productId = record.id || record.params?.id
+  const postedIds = request.tokriCategoryIds || parseCategoryIds(record.params?.categoryIds)
+
+  if (request.method === 'post' && productId) {
+    await syncProductCategories(productId, postedIds)
+    if (postedIds[0]) {
+      await prisma.product.update({
+        where: { id: productId },
+        data: { categoryId: postedIds[0] },
+      })
+    }
+  }
+
+  if (productId) {
+    const rows = await prisma.productCategory.findMany({
+      where: { productId },
+      include: { category: { select: { slug: true } } },
+    })
+    let slugs = rows.map((row) => row.category?.slug).filter(Boolean)
+    if (!slugs.length && record.params?.category) {
+      const primary = await prisma.category.findUnique({
+        where: { id: String(record.params.category) },
+        select: { slug: true },
+      })
+      if (primary?.slug) slugs = [primary.slug]
+    }
+    record.params.categoryIds = JSON.stringify(slugs)
+  }
+
+  return response
 }

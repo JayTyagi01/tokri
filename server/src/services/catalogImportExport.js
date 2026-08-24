@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js'
-import { slugify } from '../admin/product-handlers.js'
+import { slugify, syncProductCategories } from '../admin/product-handlers.js'
 
 function escapeCsv(value) {
   if (value == null || value === '') return ''
@@ -114,7 +114,7 @@ const PRODUCT_HEADERS = [
   'oldPriceValue',
   'currency',
   'weight',
-  'categorySlug',
+  'categorySlugs',
   'badge',
   'isBestSeller',
   'isImported',
@@ -123,6 +123,22 @@ const PRODUCT_HEADERS = [
   'sortOrder',
   'isActive',
 ]
+
+function productCategorySlugs(product) {
+  const fromLinks = (product.categoryLinks || [])
+    .map((row) => row.category?.slug)
+    .filter(Boolean)
+  if (fromLinks.length) return [...new Set(fromLinks)]
+  return product.category?.slug ? [product.category.slug] : []
+}
+
+function parseCategorySlugs(row) {
+  const raw = row.categoryslugs ?? row.categorySlugs ?? row.categoryslug ?? row.categorySlug ?? row.categories ?? ''
+  return [...new Set(String(raw)
+    .split(/[,|;]+/)
+    .map((item) => slugify(item))
+    .filter(Boolean))]
+}
 
 export async function exportCategoriesCsv() {
   const categories = await prisma.category.findMany({ orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }] })
@@ -143,7 +159,10 @@ export async function exportCategoriesCsv() {
 export async function exportProductsCsv() {
   const products = await prisma.product.findMany({
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    include: { category: { select: { slug: true } } },
+    include: {
+      category: { select: { slug: true } },
+      categoryLinks: { include: { category: { select: { slug: true } } } },
+    },
   })
 
   const rows = products.map((item) => ({
@@ -155,7 +174,7 @@ export async function exportProductsCsv() {
     oldPriceValue: item.oldPriceValue ?? '',
     currency: item.currency || 'INR',
     weight: item.weight || '',
-    categorySlug: item.category?.slug || '',
+    categorySlugs: productCategorySlugs(item).join(', '),
     badge: item.badge || '',
     isBestSeller: item.isBestSeller ? 'true' : 'false',
     isImported: item.isImported ? 'true' : 'false',
@@ -234,8 +253,11 @@ export async function importProductsCsv(csvText) {
       }
 
       const slug = slugify(row.slug || name)
-      const categorySlug = slugify(row.categoryslug || row.categorySlug || '')
-      const categoryId = categorySlug ? categoryBySlug.get(categorySlug) || null : null
+      const categorySlugs = parseCategorySlugs(row)
+      const categoryIds = categorySlugs
+        .map((categorySlug) => categoryBySlug.get(categorySlug))
+        .filter(Boolean)
+      const categoryId = categoryIds[0] || null
 
       const data = {
         name,
@@ -257,13 +279,12 @@ export async function importProductsCsv(csvText) {
       }
 
       const existing = await prisma.product.findUnique({ where: { slug } })
-      if (existing) {
-        await prisma.product.update({ where: { id: existing.id }, data })
-        updated += 1
-      } else {
-        await prisma.product.create({ data })
-        created += 1
-      }
+      const saved = existing
+        ? await prisma.product.update({ where: { id: existing.id }, data })
+        : await prisma.product.create({ data })
+      await syncProductCategories(saved.id, categoryIds)
+      if (existing) updated += 1
+      else created += 1
     } catch (error) {
       errors.push({ line, message: error.message || 'Could not import row.' })
     }
@@ -299,7 +320,7 @@ export function productImportTemplateCsv() {
       oldPriceValue: 249,
       currency: 'INR',
       weight: '1 kg',
-      categorySlug: 'fresh-fruits',
+      categorySlugs: 'fresh-fruits, imported',
       badge: '',
       isBestSeller: 'true',
       isImported: 'false',

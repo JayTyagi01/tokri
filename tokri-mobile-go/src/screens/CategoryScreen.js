@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native'
+import { Alert, FlatList, Text, View } from 'react-native'
 import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { fetchJson, normalizeProduct } from '../lib/api'
 
 export default function CategoryScreen({ route, navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const { slug, label } = route.params
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,16 +29,21 @@ export default function CategoryScreen({ route, navigation }) {
       numColumns={2}
       keyExtractor={(item) => item.slug}
       contentContainerStyle={styles.list}
+      columnWrapperStyle={styles.row}
       ListEmptyComponent={<Text style={styles.empty}>No products in this category.</Text>}
       renderItem={({ item }) => (
-        <ProductCard product={item} onPress={() => navigation.navigate('Product', { slug: item.slug })} />
+        <View style={styles.cardWrap}>
+          <ProductCard product={item} onPress={() => navigation.navigate('Product', { slug: item.slug })} />
+        </View>
       )}
     />
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  list: { padding: 10 },
-  empty: { textAlign: 'center', color: COLORS.muted, marginTop: 40 },
+const createStyles = (c) => ({
+  container: { flex: 1, backgroundColor: c.background },
+  list: { paddingHorizontal: 3, paddingTop: 5, paddingBottom: 16 },
+  row: { marginBottom: 5 },
+  cardWrap: { flex: 1, paddingHorizontal: 3 },
+  empty: { textAlign: 'center', color: c.muted, marginTop: 40 },
 })

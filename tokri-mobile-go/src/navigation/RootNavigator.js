@@ -1,9 +1,9 @@
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { useMemo } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { COLORS } from '../config'
 import Icon from '../components/Icon'
 import HomeScreen from '../screens/HomeScreen'
 import ShopScreen from '../screens/ShopScreen'
@@ -18,28 +18,18 @@ import SearchScreen from '../screens/SearchScreen'
 import OrdersScreen from '../screens/OrdersScreen'
 import OrderDetailScreen from '../screens/OrderDetailScreen'
 import { useCart } from '../context/CartContext'
+import { useTheme } from '../context/ThemeContext'
 import AddressPicker from '../components/AddressPicker'
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
 
-const navTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: COLORS.canvas,
-    card: COLORS.panel,
-    text: COLORS.text,
-    border: COLORS.line,
-    primary: COLORS.brand,
-  },
-}
-
 function TabIcon({ name, focused, badge }) {
+  const { colors } = useTheme()
   return (
     <View>
-      <Icon name={focused ? name : `${name}-outline`} size={22} color={focused ? COLORS.brand : COLORS.muted} />
-      {badge ? <View style={styles.dot} /> : null}
+      <Icon name={focused ? name : `${name}-outline`} size={22} color={focused ? colors.brand : colors.muted} />
+      {badge ? <View style={[styles.dot, { backgroundColor: colors.brand }]} /> : null}
     </View>
   )
 }
@@ -52,18 +42,18 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.brand,
   },
 }
 
 function Tabs() {
   const { totalCount } = useCart()
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const bottomInset = Math.max(insets.bottom, 8)
 
   const tabBarStyle = {
-    backgroundColor: COLORS.panel,
-    borderTopColor: COLORS.line,
+    backgroundColor: colors.panel,
+    borderTopColor: colors.line,
     height: 52 + bottomInset,
     paddingTop: 6,
     paddingBottom: bottomInset,
@@ -75,8 +65,8 @@ function Tabs() {
         headerShown: false,
         safeAreaInsets: { bottom: 0 },
         tabBarStyle,
-        tabBarActiveTintColor: COLORS.brand,
-        tabBarInactiveTintColor: COLORS.muted,
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}
     >
@@ -122,16 +112,33 @@ function Tabs() {
 }
 
 export default function RootNavigator() {
+  const { colors, isDark } = useTheme()
+  const navTheme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      dark: isDark,
+      colors: {
+        ...DefaultTheme.colors,
+        background: colors.canvas,
+        card: colors.panel,
+        text: colors.text,
+        border: colors.line,
+        primary: colors.brand,
+      },
+    }),
+    [colors, isDark],
+  )
+
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: COLORS.panel },
-          headerTintColor: COLORS.text,
+          headerStyle: { backgroundColor: colors.panel },
+          headerTintColor: colors.text,
           headerShadowVisible: false,
           headerTitle: '',
           headerBackTitleVisible: false,
-          contentStyle: { backgroundColor: COLORS.canvas },
+          contentStyle: { backgroundColor: colors.canvas },
         }}
       >
         <Stack.Screen name="Main" component={Tabs} options={{ headerShown: false }} />

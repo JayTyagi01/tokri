@@ -20,7 +20,7 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
       <button
         type="button"
         onClick={openPicker}
-        className={`text-left text-sm text-mint sm:flex sm:items-center sm:gap-2 ${className}`}
+        className={`cursor-pointer text-left text-sm text-mint sm:flex sm:items-center sm:gap-2 ${className}`}
       >
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-panel-2 text-brand">
           <MapPin size={18} />
@@ -50,7 +50,7 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
       <button
         type="button"
         onClick={openPicker}
-        className="mt-0.5 flex max-w-full items-center gap-1.5 text-left text-xs"
+        className="mt-0.5 flex max-w-full cursor-pointer items-center gap-1.5 text-left text-xs"
       >
         <span
           className={`truncate ${!isLoggedIn || !selectedAddress ? 'font-semibold text-brand' : 'text-mint'}`}

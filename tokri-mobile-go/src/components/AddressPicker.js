@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authPost } from '../lib/api'
 import { useAddress } from '../context/AddressContext'
 import { useAuth } from '../context/AuthContext'
@@ -32,6 +32,8 @@ const emptyForm = (phone = '') => ({
 })
 
 export default function AddressPicker() {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const navigation = useNavigation()
   const { isLoggedIn, user, token } = useAuth()
   const { addresses, selectedId, pickerOpen, closePicker, selectAddress, refresh } = useAddress()
@@ -86,7 +88,7 @@ export default function AddressPicker() {
           <View style={styles.formHead}>
             <Text style={styles.title}>Add new address</Text>
             <Pressable onPress={closeForm} hitSlop={10}>
-              <Icon name="close" size={20} color={COLORS.muted} />
+              <Icon name="close" size={20} color={colors.muted} />
             </Pressable>
           </View>
           <Text style={styles.hint}>Where should we deliver your fresh fruits?</Text>
@@ -180,17 +182,17 @@ export default function AddressPicker() {
                     style={[styles.row, selectedId === address.id && styles.rowActive]}
                     onPress={() => selectAddress(address.id)}
                   >
-                    <Icon name="location" size={18} color={COLORS.brand} />
+                    <Icon name="location" size={18} color={colors.brand} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.label}>{address.label || 'Home'}</Text>
                       <Text style={styles.line}>{address.formatted}</Text>
                     </View>
-                    {selectedId === address.id ? <Icon name="checkmark-circle" color={COLORS.brand} /> : null}
+                    {selectedId === address.id ? <Icon name="checkmark-circle" color={colors.brand} /> : null}
                   </Pressable>
                 ))}
               </ScrollView>
               <Pressable style={styles.addBtn} onPress={startForm}>
-                <Icon name="add" size={18} color={COLORS.brand} />
+                <Icon name="add" size={18} color={colors.brand} />
                 <Text style={styles.addText}>Add new address</Text>
               </Pressable>
             </>
@@ -204,6 +206,8 @@ export default function AddressPicker() {
 }
 
 function Field({ label, prefix, ...inputProps }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -211,7 +215,7 @@ function Field({ label, prefix, ...inputProps }) {
         {prefix ? <Text style={styles.prefix}>{prefix}</Text> : null}
         <TextInput
           style={styles.input}
-          placeholderTextColor={COLORS.muted}
+          placeholderTextColor={colors.muted}
           {...inputProps}
         />
       </View>
@@ -219,32 +223,32 @@ function Field({ label, prefix, ...inputProps }) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c) => ({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: c.overlay,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
     maxHeight: '88%',
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
   handle: {
     alignSelf: 'center',
     width: 42,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.line,
+    backgroundColor: c.line,
     marginBottom: 12,
   },
-  title: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
-  hint: { color: COLORS.muted, marginTop: 6, marginBottom: 12, fontSize: 13 },
-  loginHint: { color: COLORS.muted, paddingVertical: 12 },
+  title: { color: c.text, fontSize: 18, fontWeight: '800' },
+  hint: { color: c.muted, marginTop: 6, marginBottom: 12, fontSize: 13 },
+  loginHint: { color: c.muted, paddingVertical: 12 },
   list: { maxHeight: 320 },
   row: {
     flexDirection: 'row',
@@ -252,51 +256,51 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     marginBottom: 8,
     alignItems: 'flex-start',
   },
-  rowActive: { borderColor: COLORS.brand, backgroundColor: COLORS.panel2 },
-  label: { color: COLORS.text, fontWeight: '700', marginBottom: 4 },
-  line: { color: COLORS.mint, fontSize: 12, lineHeight: 18 },
+  rowActive: { borderColor: c.brand, backgroundColor: c.panel2 },
+  label: { color: c.text, fontWeight: '700', marginBottom: 4 },
+  line: { color: c.mint, fontSize: 12, lineHeight: 18 },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 14,
   },
-  addText: { color: COLORS.brand, fontWeight: '800' },
+  addText: { color: c.brand, fontWeight: '800' },
   formHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   formScroll: { maxHeight: 520 },
   field: { marginBottom: 12 },
-  fieldLabel: { color: COLORS.text, fontSize: 13, fontWeight: '700', marginBottom: 6 },
+  fieldLabel: { color: c.text, fontSize: 13, fontWeight: '700', marginBottom: 6 },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   chip: {
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: COLORS.panel2,
+    backgroundColor: c.panel2,
   },
-  chipActive: { backgroundColor: COLORS.brand, borderColor: COLORS.brand },
-  chipText: { color: COLORS.text, fontWeight: '700' },
+  chipActive: { backgroundColor: c.brand, borderColor: c.brand },
+  chipText: { color: c.text, fontWeight: '700' },
   chipTextActive: { color: '#04140c' },
   twoCol: { flexDirection: 'row', gap: 10 },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.line,
-    backgroundColor: COLORS.panel2,
+    borderColor: c.line,
+    backgroundColor: c.panel2,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
-  prefix: { color: COLORS.muted, marginRight: 8, fontWeight: '700' },
-  input: { flex: 1, color: COLORS.text, paddingVertical: 11, fontSize: 14 },
-  error: { color: COLORS.danger, marginBottom: 10 },
+  prefix: { color: c.muted, marginRight: 8, fontWeight: '700' },
+  input: { flex: 1, color: c.text, paddingVertical: 11, fontSize: 14 },
+  error: { color: c.danger, marginBottom: 10 },
   save: {
-    backgroundColor: COLORS.brand,
+    backgroundColor: c.brand,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

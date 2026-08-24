@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Image } from 'expo-image'
 import { useRoute } from '@react-navigation/native'
 import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
 import AppHeader from '../components/AppHeader'
-import { COLORS } from '../config'
+import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { fetchJson, normalizeProduct } from '../lib/api'
 
 const PAGE_SIZE = 24
+const RAIL_WIDTH = 82
+const BOX_MARGIN = 10
 
 export default function ShopScreen({ navigation }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const route = useRoute()
   const initialSlug = route.params?.slug || ''
   const [categories, setCategories] = useState([])
@@ -23,8 +27,7 @@ export default function ShopScreen({ navigation }) {
   const [loadingMore, setLoadingMore] = useState(false)
 
   const openProduct = (slug) => {
-    if (slug === 'login') navigation.navigate('Login')
-    else navigation.navigate('Product', { slug })
+    navigation.navigate('Product', { slug })
   }
 
   useEffect(() => {
@@ -112,7 +115,7 @@ export default function ShopScreen({ navigation }) {
         <View style={styles.products}>
           {loadingProducts ? (
             <View style={styles.center}>
-              <ActivityIndicator color={COLORS.brand} />
+              <ActivityIndicator color={colors.brand} />
             </View>
           ) : (
             <FlatList
@@ -120,10 +123,11 @@ export default function ShopScreen({ navigation }) {
               numColumns={2}
               keyExtractor={(item) => item.slug}
               contentContainerStyle={styles.productList}
+              columnWrapperStyle={styles.productRow}
               onEndReached={loadMore}
               onEndReachedThreshold={0.4}
               ListEmptyComponent={<Text style={styles.empty}>No products yet in this category.</Text>}
-              ListFooterComponent={loadingMore ? <ActivityIndicator color={COLORS.brand} style={{ margin: 12 }} /> : null}
+              ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.brand} style={{ margin: 12 }} /> : null}
               renderItem={({ item }) => (
                 <View style={styles.cardWrap}>
                   <ProductCard product={item} onPress={openProduct} compact />
@@ -137,30 +141,30 @@ export default function ShopScreen({ navigation }) {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.canvas },
+const createStyles = (c) => ({
+  screen: { flex: 1, backgroundColor: c.canvas },
   box: {
     flex: 1,
     flexDirection: 'row',
-    margin: 10,
+    margin: BOX_MARGIN,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: COLORS.panel,
+    backgroundColor: c.panel,
   },
   rail: {
-    width: 82,
+    width: RAIL_WIDTH,
     borderRightWidth: 1,
-    borderRightColor: COLORS.line,
-    backgroundColor: COLORS.panel,
+    borderRightColor: c.line,
+    backgroundColor: c.panel,
   },
   railItem: {
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 6,
   },
-  railActive: { backgroundColor: COLORS.panel2 },
+  railActive: { backgroundColor: c.panel2 },
   railBar: {
     position: 'absolute',
     right: 0,
@@ -169,30 +173,31 @@ const styles = StyleSheet.create({
     width: 3,
     borderTopLeftRadius: 4,
     borderBottomLeftRadius: 4,
-    backgroundColor: COLORS.brand,
+    backgroundColor: c.brand,
   },
   railImageWrap: {
     width: 42,
     height: 42,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: COLORS.line,
+    borderColor: c.line,
   },
-  railImageActive: { borderColor: COLORS.brand },
+  railImageActive: { borderColor: c.brand },
   railImage: { width: '100%', height: '100%' },
   railLabel: {
     marginTop: 4,
     fontSize: 9,
-    color: COLORS.muted,
+    color: c.muted,
     textAlign: 'center',
     fontWeight: '600',
   },
-  railLabelActive: { color: COLORS.mint, fontWeight: '800' },
-  products: { flex: 1, backgroundColor: COLORS.canvas },
-  productList: { padding: 4, paddingBottom: 24 },
-  cardWrap: { width: '50%' },
+  railLabelActive: { color: c.mint, fontWeight: '800' },
+  products: { flex: 1, backgroundColor: c.canvas },
+  productList: { paddingHorizontal: 3, paddingTop: 5, paddingBottom: 24 },
+  productRow: { marginBottom: 5 },
+  cardWrap: { flex: 1, paddingHorizontal: 3 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty: { color: COLORS.muted, textAlign: 'center', marginTop: 40, paddingHorizontal: 16 },
+  empty: { color: c.muted, textAlign: 'center', marginTop: 40, paddingHorizontal: 16 },
 })

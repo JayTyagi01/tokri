@@ -58,6 +58,7 @@ model Customer {
   orders      Order[]
   cart        Cart?
   devices     DeviceToken[]
+  couponUses  CouponRedemption[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -77,52 +78,64 @@ model AdminPermission {
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  slug        String    @unique
+  id          String            @id @default(cuid())
+  slug        String            @unique
   label       String
   title       String?
-  subtitle    String?   @db.Text
-  description String?   @db.Text
+  subtitle    String?           @db.Text
+  description String?           @db.Text
   image       String?
   bannerImage String?
-  sortOrder   Int       @default(0)
-  isActive    Boolean   @default(true)
+  sortOrder   Int               @default(0)
+  isActive    Boolean           @default(true)
   products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  productLinks ProductCategory[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model Product {
-  id            String      @id @default(cuid())
-  slug          String      @unique
+  id            String            @id @default(cuid())
+  slug          String            @unique
   name          String
-  description   String?     @db.Text
-  priceValue    Decimal     @db.Decimal(10, 2)
-  oldPriceValue Decimal?    @db.Decimal(10, 2)
-  currency      String      @default("INR")
+  description   String?           @db.Text
+  priceValue    Decimal           @db.Decimal(10, 2)
+  oldPriceValue Decimal?          @db.Decimal(10, 2)
+  currency      String            @default("INR")
   weight        String?
   image         String?
   mediaId       String?
-  media         Media?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  media         Media?            @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   categoryId    String?
-  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryLinks ProductCategory[]
   badge         String?
-  isBestSeller  Boolean     @default(false)
-  isImported    Boolean     @default(false)
-  isFeatured    Boolean     @default(false)
-  stock         Int         @default(100)
-  isActive      Boolean     @default(true)
-  sortOrder     Int         @default(0)
+  isBestSeller  Boolean           @default(false)
+  isImported    Boolean           @default(false)
+  isFeatured    Boolean           @default(false)
+  stock         Int               @default(100)
+  isActive      Boolean           @default(true)
+  sortOrder     Int               @default(0)
   reviews       Review[]
   orderItems    OrderItem[]
   cartItems     CartItem[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([categoryId])
   @@index([isBestSeller])
   @@index([isImported])
   @@index([isActive])
+}
+
+model ProductCategory {
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
 }
 
 model Media {
@@ -138,19 +151,37 @@ model Media {
 }
 
 model Coupon {
-  id          String     @id @default(cuid())
-  code        String     @unique
-  type        CouponType @default(percent)
-  value       Decimal    @db.Decimal(10, 2)
-  minCart     Decimal?   @db.Decimal(10, 2)
-  maxDiscount Decimal?   @db.Decimal(10, 2)
-  startsAt    DateTime?
-  expiresAt   DateTime?
-  usageLimit  Int?
-  usedCount   Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String     @id @default(cuid())
+  code         String     @unique
+  type         CouponType @default(percent)
+  value        Decimal    @db.Decimal(10, 2)
+  minCart      Decimal?   @db.Decimal(10, 2)
+  maxDiscount  Decimal?   @db.Decimal(10, 2)
+  applyOn      String     @default("cart")
+  targetType   String     @default("all")
+  targetSlugs  Json?
+  usageType    String     @default("unlimited")
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  usageLimit   Int?
+  usedCount    Int        @default(0)
+  isActive     Boolean    @default(true)
+  redemptions  CouponRedemption[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model CouponRedemption {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId    String?
+  createdAt  DateTime @default(now())
+
+  @@index([couponId, customerId])
+  @@index([customerId])
 }
 
 model Order {
@@ -224,13 +255,8 @@ model Setting {
   storeAddress              String?  @db.Text
   promoBanner               String?  @db.Text
   earlyDelivery             String?
-  colorPrimary              String?  @default("#022c22")
-  colorPrimaryLight         String?  @default("#047857")
-  colorAccent               String?  @default("#fbbf24")
-  colorBackground           String?  @default("#ffffff")
-  colorFooterFrom           String?  @default("#020617")
-  colorFooterVia            String?  @default("#0c1612")
-  fontFamily                String?  @default("Plus Jakarta Sans")
+  shippingFee               Decimal  @default(25) @db.Decimal(10, 2)
+  handlingFee               Decimal  @default(2) @db.Decimal(10, 2)
   homeBannerEnabled         Boolean  @default(true)
   homeCategoriesEnabled     Boolean  @default(true)
   homeBestSellersEnabled    Boolean  @default(true)

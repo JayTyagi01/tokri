@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight, Minus, Plus } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
 import { resolveAssetUrl } from '../lib/api'
+import CouponBox from '../components/CouponBox'
 
 const formatPrice = (value) =>
   `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -71,7 +72,7 @@ function MobileCartView({
   itemsTotal,
   deliveryCharge,
   handlingCharge,
-  smallCartCharge,
+  discount,
   grandTotal,
   updateQuantity,
   removeItem,
@@ -125,15 +126,17 @@ function MobileCartView({
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-line bg-panel p-4">
+            <CouponBox compact />
+          </section>
+
+          <section className="overflow-hidden rounded-2xl border border-line bg-panel p-4">
             <h2 className="text-base font-bold text-white">Bill details</h2>
 
             <div className="mt-1 divide-y divide-line">
               <BillRow label="Items total" value={formatPrice(itemsTotal)} />
-              <BillRow label="Delivery charge" value={formatPrice(deliveryCharge)} />
-              <BillRow label="Handling charge" value={formatPrice(handlingCharge)} />
-              {smallCartCharge > 0 && (
-                <BillRow label="Small cart charge" value={formatPrice(smallCartCharge)} />
-              )}
+              <BillRow label="Cart handling" value={formatPrice(handlingCharge)} />
+              <BillRow label="Delivery charges" value={formatPrice(deliveryCharge)} />
+              {discount > 0 && <BillRow label="Coupon discount" value={`-${formatPrice(discount)}`} />}
             </div>
 
             <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
@@ -191,7 +194,7 @@ function DesktopCartView({
   itemsTotal,
   deliveryCharge,
   handlingCharge,
-  smallCartCharge,
+  discount,
   grandTotal,
   updateQuantity,
   removeItem,
@@ -271,23 +274,24 @@ function DesktopCartView({
 
             <div className="space-y-6 rounded-[2rem] border border-line bg-panel p-6">
               <h2 className="text-xl font-semibold text-white">Order summary</h2>
+              <CouponBox />
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm text-muted">
                   <span>Item total</span>
                   <span>{formatPrice(itemsTotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm text-muted">
+                  <span>Cart handling</span>
+                  <span>{formatPrice(handlingCharge)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted">
                   <span>Delivery charges</span>
                   <span>{formatPrice(deliveryCharge)}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm text-muted">
-                  <span>Handling charge</span>
-                  <span>{formatPrice(handlingCharge)}</span>
-                </div>
-                {smallCartCharge > 0 && (
-                  <div className="flex items-center justify-between text-sm text-muted">
-                    <span>Small cart charge</span>
-                    <span>{formatPrice(smallCartCharge)}</span>
+                {discount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-mint">
+                    <span>Coupon discount</span>
+                    <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
               </div>
@@ -328,7 +332,7 @@ export default function CartPage() {
     itemsTotal,
     deliveryCharge,
     handlingCharge,
-    smallCartCharge,
+    discount,
     grandTotal,
     updateQuantity,
     removeItem,
@@ -343,7 +347,7 @@ export default function CartPage() {
         itemsTotal={itemsTotal}
         deliveryCharge={deliveryCharge}
         handlingCharge={handlingCharge}
-        smallCartCharge={smallCartCharge}
+        discount={discount}
         grandTotal={grandTotal}
         updateQuantity={updateQuantity}
         removeItem={removeItem}
@@ -356,7 +360,7 @@ export default function CartPage() {
         itemsTotal={itemsTotal}
         deliveryCharge={deliveryCharge}
         handlingCharge={handlingCharge}
-        smallCartCharge={smallCartCharge}
+        discount={discount}
         grandTotal={grandTotal}
         updateQuantity={updateQuantity}
         removeItem={removeItem}
