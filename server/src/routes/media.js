@@ -1,5 +1,6 @@
 import { Router } from 'express'
-import fs from 'fs/promises'
+import fs from 'fs'
+import fsp from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import multer from 'multer'
@@ -14,13 +15,14 @@ function normalizeFolder(value) {
   return ALLOWED_FOLDERS.has(folder) ? folder : 'general'
 }
 
-const storage = multer.diskStorage({
-  destination: async (req, _file, cb) => {
-    const folder = normalizeFolder(req.body?.folder || req.query?.folder)
+for (const folder of ALLOWED_FOLDERS) {
+  fs.mkdirSync(path.join(uploadsRoot, folder), { recursive: true })
+}
 
-    const dir = path.join(uploadsRoot, folder)
-    await fs.mkdir(dir, { recursive: true })
-    cb(null, dir)
+const storage = multer.diskStorage({
+  destination: (req, _file, cb) => {
+    const folder = normalizeFolder(req.body?.folder || req.query?.folder)
+    cb(null, path.join(uploadsRoot, folder))
   },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase()
@@ -101,7 +103,7 @@ router.delete('/:id', async (req, res, next) => {
     }
 
     const absolutePath = path.join(uploadsRoot, media.folder, media.filename)
-    await fs.unlink(absolutePath).catch(() => {})
+    await fsp.unlink(absolutePath).catch(() => {})
     await prisma.media.delete({ where: { id: media.id } })
 
     res.json({ message: 'Media deleted', id: media.id })

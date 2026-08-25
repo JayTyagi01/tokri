@@ -276,8 +276,8 @@ export default function SearchBox({ variant = 'desktop' }) {
                   </ul>
                 )}
 
-                <div className="p-4">
-                  <p className="mb-3 text-sm font-semibold text-white">
+                <div className="flex flex-col gap-8 px-4 pb-4 pt-5">
+                  <p className="text-sm font-semibold leading-6 text-white">
                     {total > 0
                       ? `Showing results for "${resultQuery}"`
                       : `No products found for "${resultQuery}"`}

@@ -639,3 +639,10 @@ section[data-css="logged-in"] {
 table {
   background: var(--tokri-card);
 }
+
+/* Selected-records bar is position:absolute above the table (translateY(-100%)).
+   Leave room so it does not cover the custom search input. */
+.adminjs_Table:has(caption),
+table:has(caption.adminjs_TableCaption) {
+  margin-top: 56px;
+}

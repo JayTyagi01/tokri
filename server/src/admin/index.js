@@ -725,6 +725,10 @@ export async function buildAdminRouter() {
         sameSite: 'lax',
       },
     },
+    {
+      maxFileSize: 50 * 1024 * 1024,
+      keepExtensions: true,
+    },
   )
 
   adminRouter.use('/catalog', buildCatalogRoutes())
