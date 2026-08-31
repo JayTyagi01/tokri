@@ -1,11 +1,70 @@
+import { appendFileSync } from 'node:fs'
 import { env } from '../config/env.js'
 import { formatCategoryRef, productCategoryList } from './catalog.js'
 
 export function toPublicAssetUrl(value) {
   if (!value) return null
-  if (/^(https?:|data:|blob:)/i.test(value)) return value
-  if (String(value).startsWith('/')) return `${env.apiUrl}${value}`
-  return value
+  const raw = String(value)
+
+  // Absolute URLs: rewrite known broken upload host → working public asset host
+  if (/^(https?:|data:|blob:)/i.test(raw)) {
+    let out = raw
+    if (out.startsWith('https://server.tokriii.com/uploads/')) {
+      out = out.replace('https://server.tokriii.com', env.publicAssetUrl)
+    }
+    // #region agent log
+    if (raw.includes('/uploads/')) {
+      try {
+        appendFileSync(
+          '/var/www/html/tokri/.cursor/debug-e35128.log',
+          `${JSON.stringify({
+            sessionId: 'e35128',
+            runId: 'post-fix',
+            hypothesisId: 'uploads-host',
+            location: 'server/src/utils/formatters.js:toPublicAssetUrl',
+            message: 'Backend absolute upload URL',
+            data: { input: raw, publicAssetUrl: env.publicAssetUrl, output: out },
+            timestamp: Date.now(),
+          })}\n`,
+        )
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    // #endregion
+    return out
+  }
+
+  if (raw.startsWith('/')) {
+    const out = `${env.publicAssetUrl}${raw}`
+    // #region agent log
+    if (raw.includes('/uploads/')) {
+      try {
+        appendFileSync(
+          '/var/www/html/tokri/.cursor/debug-e35128.log',
+          `${JSON.stringify({
+            sessionId: 'e35128',
+            runId: 'post-fix',
+            hypothesisId: 'uploads-host',
+            location: 'server/src/utils/formatters.js:toPublicAssetUrl',
+            message: 'Backend built public upload URL',
+            data: {
+              input: raw,
+              apiUrl: env.apiUrl,
+              publicAssetUrl: env.publicAssetUrl,
+              output: out,
+            },
+            timestamp: Date.now(),
+          })}\n`,
+        )
+      } catch (_) {
+        /* ignore debug log failures */
+      }
+    }
+    // #endregion
+    return out
+  }
+  return raw
 }
 
 export function formatProduct(product) {

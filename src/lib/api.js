@@ -13,7 +13,7 @@ function resolveApiBaseUrl() {
     const { hostname, origin } = window.location
 
     if (hostname === 'www.tokriii.com' || hostname === 'tokriii.com') {
-      return 'https://server.tokriii.com/api/v1'
+      return 'https://tokriii.com/api/v1'
     }
 
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -131,20 +131,69 @@ export async function authDelete(path, user) {
 
 export function resolveAssetUrl(value) {
   if (!value) return PLACEHOLDER_IMAGE
-  if (/^(https?:|data:|blob:)/.test(value)) return value
-  if (value.startsWith('/')) {
+  let resolved = value
+  let branch = 'passthrough'
+  if (/^(https?:|data:|blob:)/.test(value)) {
+    resolved = value
+    branch = 'absolute'
+  } else if (value.startsWith('/')) {
     if (typeof window !== 'undefined') {
       const { hostname, origin } = window.location
       if (hostname === 'www.tokriii.com' || hostname === 'tokriii.com') {
-        return `https://server.tokriii.com${value}`
+        // Uploads are served on tokriii.com; server.tokriii.com /uploads currently 502s
+        resolved = `https://tokriii.com${value}`
+        branch = 'prod-relative'
+      } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        resolved = `${origin}${value}`
+        branch = 'local-relative'
+      } else {
+        resolved = `${ASSET_BASE_URL}${value}`
+        branch = 'asset-base-relative'
       }
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return `${origin}${value}`
-      }
+    } else {
+      resolved = `${ASSET_BASE_URL}${value}`
+      branch = 'ssr-relative'
     }
-    return `${ASSET_BASE_URL}${value}`
   }
-  return value
+
+  // Live evidence: API returns https://server.tokriii.com/uploads/* (502),
+  // while https://tokriii.com/uploads/* returns 200.
+  if (
+    typeof resolved === 'string' &&
+    resolved.startsWith('https://server.tokriii.com/uploads/')
+  ) {
+    resolved = resolved.replace(
+      'https://server.tokriii.com/uploads/',
+      'https://tokriii.com/uploads/',
+    )
+    branch = `${branch}+rewrite-server-uploads`
+  }
+
+  // #region agent log
+  if (typeof window !== 'undefined' && String(value).includes('/uploads/')) {
+    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'e35128' },
+      body: JSON.stringify({
+        sessionId: 'e35128',
+        runId: 'post-fix',
+        hypothesisId: 'uploads-host',
+        location: 'src/lib/api.js:resolveAssetUrl',
+        message: 'Resolved upload asset URL',
+        data: {
+          input: String(value).slice(0, 200),
+          resolved: String(resolved).slice(0, 200),
+          branch,
+          apiBase: API_BASE_URL,
+          assetBase: ASSET_BASE_URL,
+          pageHost: window.location.hostname,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {})
+  }
+  // #endregion
+  return resolved
 }
 
 export function normalizeProduct(product) {
