@@ -24,11 +24,18 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'razorpayEnabled',
   'razorpayKeyId',
   'razorpayKeySecret',
-  'twilioEnabled',
-  'twilioAccountSid',
-  'twilioAuthToken',
-  'twilioSmsFrom',
-  'twilioWhatsappFrom',
+  'msg91Enabled',
+  'msg91AuthKey',
+  'msg91SenderId',
+  'msg91OtpTemplateId',
+  'msg91OrderTemplateId',
+  'msg91WhatsappEnabled',
+  'msg91WhatsappNumber',
+  'msg91WhatsappNamespace',
+  'msg91WhatsappLanguage',
+  'msg91WhatsappOtpTemplate',
+  'msg91WhatsappOrderTemplate',
+  'msg91WhatsappOtpButton',
 ])
 
 const NUMBER_FIELDS = new Set(['shippingFee', 'handlingFee'])
@@ -42,7 +49,9 @@ const BOOLEAN_FIELDS = new Set([
   'homeImportedFruitsEnabled',
   'homeReviewsEnabled',
   'razorpayEnabled',
-  'twilioEnabled',
+  'msg91Enabled',
+  'msg91WhatsappEnabled',
+  'msg91WhatsappOtpButton',
 ])
 
 function toBoolean(value) {
@@ -60,7 +69,7 @@ export function cleanSettingsPayload(payload = {}) {
   delete cleaned.id
   delete cleaned.updatedAt
   if (!cleaned.razorpayKeySecret) delete cleaned.razorpayKeySecret
-  if (!cleaned.twilioAuthToken) delete cleaned.twilioAuthToken
+  if (!cleaned.msg91AuthKey) delete cleaned.msg91AuthKey
 
   return cleaned
 }

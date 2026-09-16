@@ -6,6 +6,7 @@ import { clearCart, getCartCheckoutItems } from './cart.js'
 import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
+import { sendOrderConfirmation } from './msg91.js'
 
 function parseAddresses(raw) {
   if (!raw) return []
@@ -196,6 +197,9 @@ export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, r
 
   await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
   notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
+  sendOrderConfirmation(updated, { phone: user.phone, name: user.name }).catch((error) =>
+    console.error('Failed to send order confirmation:', error),
+  )
 
   return { orderNo: updated.orderNo, paymentStatus: updated.paymentStatus }
 }
@@ -210,6 +214,9 @@ export async function confirmCodOrder(user, { orderNo }) {
   await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
   notifyOrderStatus(order, order.status || 'pending').catch((error) =>
     console.error('Failed to send push:', error),
+  )
+  sendOrderConfirmation(order, { phone: user.phone, name: user.name }).catch((error) =>
+    console.error('Failed to send order confirmation:', error),
   )
 
   return { orderNo: order.orderNo, paymentStatus: order.paymentStatus, status: order.status }

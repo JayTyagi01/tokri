@@ -321,7 +321,7 @@ async function main() {
       homeImportedFruitsEnabled: true,
       homeReviewsEnabled: true,
       razorpayEnabled: false,
-      twilioEnabled: false,
+      msg91Enabled: false,
     },
     create: {
       id: 1,
@@ -344,7 +344,7 @@ async function main() {
       homeImportedFruitsEnabled: true,
       homeReviewsEnabled: true,
       razorpayEnabled: false,
-      twilioEnabled: false,
+      msg91Enabled: false,
     },
   })
 

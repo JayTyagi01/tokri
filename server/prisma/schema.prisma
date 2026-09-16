@@ -268,11 +268,18 @@ model Setting {
   razorpayEnabled           Boolean  @default(false)
   razorpayKeyId             String?
   razorpayKeySecret         String?
-  twilioEnabled             Boolean  @default(false)
-  twilioAccountSid          String?
-  twilioAuthToken           String?
-  twilioSmsFrom             String?
-  twilioWhatsappFrom        String?
+  msg91Enabled              Boolean  @default(false)
+  msg91AuthKey              String?
+  msg91SenderId             String?
+  msg91OtpTemplateId        String?
+  msg91OrderTemplateId      String?
+  msg91WhatsappEnabled      Boolean  @default(false)
+  msg91WhatsappNumber       String?
+  msg91WhatsappNamespace    String?
+  msg91WhatsappLanguage     String?  @default("en")
+  msg91WhatsappOtpTemplate  String?
+  msg91WhatsappOrderTemplate String?
+  msg91WhatsappOtpButton    Boolean  @default(false)
   store                     Json?
   theme                     Json?
   home                      Json?

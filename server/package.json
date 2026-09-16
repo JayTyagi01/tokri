@@ -14,7 +14,8 @@
     "db:setup": "prisma db push && prisma generate && node prisma/seed.js",
     "db:apply-customers": "node scripts/apply-customer-schema.js",
     "db:apply-commerce": "node scripts/apply-commerce-settings.js",
-    "db:apply-product-categories": "node scripts/apply-product-categories.js"
+    "db:apply-product-categories": "node scripts/apply-product-categories.js",
+    "db:apply-msg91": "node scripts/apply-msg91-settings.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -31,8 +32,7 @@
     "express-session": "^1.18.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.6",
-    "razorpay": "^2.9.6",
-    "twilio": "^6.0.2"
+    "razorpay": "^2.9.6"
   },
   "devDependencies": {
     "prisma": "^6.19.0"

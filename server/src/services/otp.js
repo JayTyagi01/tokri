@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { prisma } from '../lib/prisma.js'
 import { env } from '../config/env.js'
-import { sendOtpMessage } from './twilio.js'
+import { sendOtpMessage } from './msg91.js'
 import { formatAuthUser, signCustomerToken } from './jwt.js'
 
 const OTP_TTL_MS = 10 * 60 * 1000
@@ -57,7 +57,7 @@ export async function requestOtp(rawPhone) {
     channel: delivery.channel,
   }
 
-  // Local dev only: show OTP in API response when Twilio is off (no SMS sent).
+  // Local dev only: show OTP in API response when MSG91 is off (no SMS sent).
   if (env.nodeEnv !== 'production' && delivery.channel === 'dev') {
     result.devOtp = code
   }

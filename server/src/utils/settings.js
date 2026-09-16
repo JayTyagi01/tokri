@@ -37,10 +37,10 @@ export function formatPublicSettings(settings) {
       },
     },
     messaging: {
-      twilio: {
-        enabled: Boolean(settings.twilioEnabled),
-        smsFrom: settings.twilioSmsFrom || '',
-        whatsappFrom: settings.twilioWhatsappFrom || '',
+      msg91: {
+        enabled: Boolean(settings.msg91Enabled),
+        senderId: settings.msg91SenderId || '',
+        whatsappEnabled: Boolean(settings.msg91WhatsappEnabled),
       },
     },
     charges: {

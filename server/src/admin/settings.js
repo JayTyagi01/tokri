@@ -39,11 +39,18 @@ export function getSettingResource(SettingsEditComponent) {
         'razorpayEnabled',
         'razorpayKeyId',
         'razorpayKeySecret',
-        'twilioEnabled',
-        'twilioAccountSid',
-        'twilioAuthToken',
-        'twilioSmsFrom',
-        'twilioWhatsappFrom',
+        'msg91Enabled',
+        'msg91AuthKey',
+        'msg91SenderId',
+        'msg91OtpTemplateId',
+        'msg91OrderTemplateId',
+        'msg91WhatsappEnabled',
+        'msg91WhatsappNumber',
+        'msg91WhatsappOtpTemplate',
+        'msg91WhatsappOrderTemplate',
+        'msg91WhatsappLanguage',
+        'msg91WhatsappNamespace',
+        'msg91WhatsappOtpButton',
       ],
       actions: {
         list: {
@@ -113,15 +120,52 @@ export function getSettingResource(SettingsEditComponent) {
           label: 'Razorpay Key Secret',
           description: 'Leave blank to keep current secret',
         },
-        twilioEnabled: { label: 'Enable Twilio SMS / WhatsApp' },
-        twilioAccountSid: { label: 'Twilio Account SID' },
-        twilioAuthToken: {
+        msg91Enabled: { label: 'Enable MSG91 SMS' },
+        msg91AuthKey: {
           type: 'password',
-          label: 'Twilio Auth Token',
-          description: 'Leave blank to keep current token',
+          label: 'MSG91 Auth Key',
+          description: 'Leave blank to keep the current key',
         },
-        twilioSmsFrom: { label: 'SMS sender number' },
-        twilioWhatsappFrom: { label: 'WhatsApp sender number' },
+        msg91SenderId: {
+          label: 'Sender ID',
+          description: '6-character DLT approved header, e.g. TOKRII',
+        },
+        msg91OtpTemplateId: {
+          label: 'Login OTP flow ID',
+          description: 'MSG91 flow whose template uses the variable ##otp##',
+        },
+        msg91OrderTemplateId: {
+          label: 'Order confirmation flow ID',
+          description: 'MSG91 flow whose template uses ##name##, ##order_id## and ##amount##',
+        },
+        msg91WhatsappEnabled: {
+          label: 'Enable MSG91 WhatsApp',
+          description: 'Used when SMS is off or the SMS gateway rejects a message',
+        },
+        msg91WhatsappNumber: {
+          label: 'WhatsApp business number',
+          description: 'The integrated number on your MSG91 WhatsApp account, e.g. 919580280280',
+        },
+        msg91WhatsappOtpTemplate: {
+          label: 'WhatsApp OTP template name',
+          description: 'Approved template with 1 body variable: the OTP code',
+        },
+        msg91WhatsappOrderTemplate: {
+          label: 'WhatsApp order template name',
+          description: 'Approved template with 3 body variables: name, order number, amount',
+        },
+        msg91WhatsappLanguage: {
+          label: 'WhatsApp template language',
+          description: 'Language code of the approved templates, e.g. en or en_US',
+        },
+        msg91WhatsappNamespace: {
+          label: 'WhatsApp template namespace',
+          description: 'Optional. Only needed if your MSG91 account requires it',
+        },
+        msg91WhatsappOtpButton: {
+          label: 'OTP template has a copy-code button',
+          description: 'Turn on only if your WhatsApp OTP template includes the copy-code button',
+        },
       },
     },
   }
