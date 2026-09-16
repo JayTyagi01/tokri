@@ -2,10 +2,13 @@ import { API_BASE_URL } from '../config'
 
 const ASSET_BASE = API_BASE_URL.replace(/\/api\/v1$/, '')
 
-function resolveAssetUrl(value) {
+export function resolveAssetUrl(value) {
   if (!value) return null
   if (/^https?:\/\//i.test(value)) {
-    return value.replace('http://localhost:5223', ASSET_BASE).replace('http://127.0.0.1:5223', ASSET_BASE)
+    return value
+      .replace('http://localhost:5223', ASSET_BASE)
+      .replace('http://127.0.0.1:5223', ASSET_BASE)
+      .replace('https://server.tokriii.com/uploads/', `${ASSET_BASE}/uploads/`)
   }
   if (value.startsWith('/')) return `${ASSET_BASE}${value}`
   return value
