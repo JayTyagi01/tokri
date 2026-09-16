@@ -49,7 +49,11 @@ function AppShell() {
   const { totalCount } = useCart()
   const hideChrome = FULLSCREEN_ROUTES.includes(location.pathname)
   const isCartPage = location.pathname === '/cart'
+  const isShopPage = location.pathname === '/shop'
   const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage
+  // Shop all pins itself to the viewport on mobile, so the footer would sit in
+  // unreachable space below it. It comes back from md up, where the page scrolls.
+  const footerVisibility = isCartPage ? 'hidden lg:block' : isShopPage ? 'hidden md:block' : ''
 
   useEffect(() => {
     if (location.state?.openLogin) {
@@ -82,7 +86,7 @@ function AppShell() {
         ))}
       </Routes>
       {!hideChrome && (
-        <div className={isCartPage ? 'hidden lg:block' : ''}>
+        <div className={footerVisibility}>
           <Footer />
         </div>
       )}
