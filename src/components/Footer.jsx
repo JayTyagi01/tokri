@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Truck, ShieldCheck, Clock, Leaf, Mail, Phone, MapPin } from 'lucide-react'
 import tokriLogo from '../assets/tokri-logo.png'
@@ -63,30 +62,6 @@ const appStoreLinks = {
 }
 
 const Footer = () => {
-  // #region agent log
-  useEffect(() => {
-    const ig = document.querySelector('footer svg[data-icon="instagram"]')
-    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'e35128' },
-      body: JSON.stringify({
-        sessionId: 'e35128',
-        runId: 'instagram-fix',
-        hypothesisId: 'A',
-        location: 'Footer.jsx:mount',
-        message: 'Instagram footer icon rendered',
-        data: {
-          found: Boolean(ig),
-          fillRule: ig?.getAttribute('fill-rule') || ig?.getAttribute('fillRule') || null,
-          pathLength: ig?.querySelector('path')?.getAttribute('d')?.length || 0,
-          labels: socialLinks.map((s) => s.label),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-  }, [])
-  // #endregion
-
   return (
     <footer className="bg-gradient-to-b from-canvas via-panel to-canvas text-white">
       {/* Early order highlight */}

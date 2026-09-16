@@ -1,4 +1,3 @@
-import { appendFileSync } from 'node:fs'
 import { env } from '../config/env.js'
 import { formatCategoryRef, productCategoryList } from './catalog.js'
 
@@ -12,57 +11,11 @@ export function toPublicAssetUrl(value) {
     if (out.startsWith('https://server.tokriii.com/uploads/')) {
       out = out.replace('https://server.tokriii.com', env.publicAssetUrl)
     }
-    // #region agent log
-    if (raw.includes('/uploads/')) {
-      try {
-        appendFileSync(
-          '/var/www/html/tokri/.cursor/debug-e35128.log',
-          `${JSON.stringify({
-            sessionId: 'e35128',
-            runId: 'post-fix',
-            hypothesisId: 'uploads-host',
-            location: 'server/src/utils/formatters.js:toPublicAssetUrl',
-            message: 'Backend absolute upload URL',
-            data: { input: raw, publicAssetUrl: env.publicAssetUrl, output: out },
-            timestamp: Date.now(),
-          })}\n`,
-        )
-      } catch (_) {
-        /* ignore */
-      }
-    }
-    // #endregion
     return out
   }
 
   if (raw.startsWith('/')) {
-    const out = `${env.publicAssetUrl}${raw}`
-    // #region agent log
-    if (raw.includes('/uploads/')) {
-      try {
-        appendFileSync(
-          '/var/www/html/tokri/.cursor/debug-e35128.log',
-          `${JSON.stringify({
-            sessionId: 'e35128',
-            runId: 'post-fix',
-            hypothesisId: 'uploads-host',
-            location: 'server/src/utils/formatters.js:toPublicAssetUrl',
-            message: 'Backend built public upload URL',
-            data: {
-              input: raw,
-              apiUrl: env.apiUrl,
-              publicAssetUrl: env.publicAssetUrl,
-              output: out,
-            },
-            timestamp: Date.now(),
-          })}\n`,
-        )
-      } catch (_) {
-        /* ignore debug log failures */
-      }
-    }
-    // #endregion
-    return out
+    return `${env.publicAssetUrl}${raw}`
   }
   return raw
 }
