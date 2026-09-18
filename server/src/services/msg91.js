@@ -1,8 +1,22 @@
 import { getMsg91Settings } from '../utils/msg91Settings.js'
 
 const MSG91_FLOW_URL = 'https://api.msg91.com/api/v5/flow/'
+const MSG91_SMS_URL = 'https://api.msg91.com/api/v2/sendsms'
 const MSG91_WHATSAPP_URL =
   'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'
+
+// Exact Airtel DLT bodies. {#numeric#} / {#alphanumeric#} are filled here.
+function buildOtpSms(code) {
+  return `Use OTP ${code} to login to your Tokriii (M Mahajan Trading Pvt Ltd) account. Valid for 15 minutes. Do not share this OTP with anyone.`
+}
+
+function buildOrderSms(orderNo) {
+  return `Order Confirmed! Your Tokriii (M Mahajan Trading Pvt Ltd) order ${orderNo} has been received. Delivery partner: Assigned shortly. You can track your order status from the Orders section in the app.`
+}
+
+function isDltTemplateId(value) {
+  return /^\d{16,20}$/.test(String(value || '').trim())
+}
 
 function formatAmount(value) {
   const amount = Number(value || 0)
@@ -59,12 +73,29 @@ function buildSmsRecipient(mobiles, variables) {
   return recipient
 }
 
-async function sendSms({ config, mobiles, templateId, variables, label }) {
+async function sendSms({ config, mobiles, templateId, variables, message, label }) {
+  const id = String(templateId || '').trim()
+
+  // 19-digit Airtel DLT ids are not MSG91 flow ids. Send the approved body
+  // through the SMS API with DLT_TE_ID so the admin values already entered work.
+  if (isDltTemplateId(id) && message) {
+    const payload = {
+      route: '4',
+      country: '91',
+      DLT_TE_ID: id,
+      sms: [{ message, to: [mobiles] }],
+    }
+    if (config.senderId) payload.sender = config.senderId
+
+    const result = await postToMsg91(MSG91_SMS_URL, config.authKey, payload, label)
+    return { channel: 'sms', sent: true, requestId: result?.request_id || null }
+  }
+
   // MSG91 renamed flows to templates part way through v5, so the id is sent under
   // both names to work regardless of which the account expects.
   const payload = {
-    template_id: templateId,
-    flow_id: templateId,
+    template_id: id,
+    flow_id: id,
     short_url: '0',
     recipients: [buildSmsRecipient(mobiles, variables)],
   }
@@ -159,6 +190,7 @@ async function deliver({ phone, label, sms, whatsapp }) {
         mobiles,
         templateId: config[sms.templateKey],
         variables: sms.variables,
+        message: sms.message,
         label,
       })
     } catch (error) {
@@ -187,7 +219,11 @@ export function sendOtpMessage(phone, code) {
   return deliver({
     phone,
     label: 'login OTP',
-    sms: { templateKey: 'otpTemplateId', variables: { otp: code } },
+    sms: {
+      templateKey: 'otpTemplateId',
+      variables: { otp: code },
+      message: buildOtpSms(code),
+    },
     whatsapp: { templateKey: 'whatsappOtpTemplate', values: [code], otpValue: code },
   })
 }
@@ -210,6 +246,7 @@ export async function sendOrderConfirmation(order, { phone, name } = {}) {
     sms: {
       templateKey: 'orderTemplateId',
       variables: { order_id: order.orderNo },
+      message: buildOrderSms(order.orderNo),
     },
     whatsapp: {
       templateKey: 'whatsappOrderTemplate',

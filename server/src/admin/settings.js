@@ -131,12 +131,14 @@ export function getSettingResource(SettingsEditComponent) {
           description: '6-character DLT approved header, e.g. TOKRII',
         },
         msg91OtpTemplateId: {
-          label: 'Login OTP flow ID',
-          description: 'MSG91 flow whose template uses the variable ##otp##',
+          label: 'Login OTP template ID',
+          description:
+            '19-digit Airtel DLT template ID, or the MSG91 template ID from the copy icon',
         },
         msg91OrderTemplateId: {
-          label: 'Order confirmation flow ID',
-          description: 'MSG91 flow whose template uses ##name##, ##order_id## and ##amount##',
+          label: 'Order confirmation template ID',
+          description:
+            '19-digit Airtel DLT template ID, or the MSG91 template ID from the copy icon',
         },
         msg91WhatsappEnabled: {
           label: 'Enable MSG91 WhatsApp',
