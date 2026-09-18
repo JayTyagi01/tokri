@@ -4,7 +4,8 @@ import { env } from '../config/env.js'
 import { sendOtpMessage } from './msg91.js'
 import { formatAuthUser, signCustomerToken } from './jwt.js'
 
-const OTP_TTL_MS = 10 * 60 * 1000
+// Matches the "Valid for 15 minutes" wording in the approved DLT OTP template.
+const OTP_TTL_MS = 15 * 60 * 1000
 const MAX_ATTEMPTS = 5
 const RESEND_COOLDOWN_MS = 60 * 1000
 

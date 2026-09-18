@@ -1,6 +1,6 @@
 import { getMsg91Settings } from '../utils/msg91Settings.js'
 
-const MSG91_FLOW_URL = 'https://control.msg91.com/api/v5/flow/'
+const MSG91_FLOW_URL = 'https://api.msg91.com/api/v5/flow/'
 const MSG91_WHATSAPP_URL =
   'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'
 
@@ -60,8 +60,11 @@ function buildSmsRecipient(mobiles, variables) {
 }
 
 async function sendSms({ config, mobiles, templateId, variables, label }) {
+  // MSG91 renamed flows to templates part way through v5, so the id is sent under
+  // both names to work regardless of which the account expects.
   const payload = {
     template_id: templateId,
+    flow_id: templateId,
     short_url: '0',
     recipients: [buildSmsRecipient(mobiles, variables)],
   }
@@ -203,9 +206,10 @@ export async function sendOrderConfirmation(order, { phone, name } = {}) {
   return deliver({
     phone: to,
     label: `order confirmation ${order.orderNo}`,
+    // The approved DLT order template carries a single variable, the order number.
     sms: {
       templateKey: 'orderTemplateId',
-      variables: { name: customerName, order_id: order.orderNo, amount },
+      variables: { order_id: order.orderNo },
     },
     whatsapp: {
       templateKey: 'whatsappOrderTemplate',
