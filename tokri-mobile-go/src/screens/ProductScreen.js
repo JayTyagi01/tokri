@@ -140,7 +140,7 @@ const createStyles = (c) => ({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: {
-    color: c.panel === '#ffffff' ? '#ffffff' : '#04140c',
+    color: c.onBrand,
     fontWeight: '800',
     fontSize: 16,
   },

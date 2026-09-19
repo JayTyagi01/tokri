@@ -93,7 +93,7 @@ const createStyles = (c) => ({
     alignItems: 'center',
     marginBottom: 16,
   },
-  primaryText: { color: '#04140c', fontWeight: '800' },
+  primaryText: { color: c.onBrand, fontWeight: '800' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',

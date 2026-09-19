@@ -280,7 +280,7 @@ const createStyles = (c) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyBtnText: { fontSize: 16, fontWeight: '800', color: c.panel === '#ffffff' ? '#ffffff' : '#04140c' },
+  qtyBtnText: { fontSize: 16, fontWeight: '800', color: c.onBrand },
   qty: { fontSize: 16, fontWeight: '800', color: c.text, minWidth: 18, textAlign: 'center' },
   likeSection: { marginTop: 4, marginBottom: 4 },
   likeTitle: { color: c.text, fontSize: 18, fontWeight: '800', marginBottom: 10 },
@@ -357,5 +357,5 @@ const createStyles = (c) => ({
     minWidth: 160,
     alignItems: 'center',
   },
-  buttonText: { color: c.panel === '#ffffff' ? '#ffffff' : '#04140c', fontWeight: '800', fontSize: 16 },
+  buttonText: { color: c.onBrand, fontWeight: '800', fontSize: 16 },
 })

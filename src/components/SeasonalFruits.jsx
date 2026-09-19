@@ -113,7 +113,7 @@ export default function SeasonalFruits() {
     track.scrollBy({ left: direction * amount, behavior: 'smooth' })
   }
 
-  if (!loading && products.length === 0) {
+  if (loading || products.length === 0) {
     return null
   }
 
@@ -126,49 +126,43 @@ export default function SeasonalFruits() {
           </h2>
         </div>
 
-        {loading ? (
-          <div className="rounded-xl border border-line bg-panel p-10 text-center text-muted">
-            Loading products...
-          </div>
-        ) : (
-          <div className="relative">
-            {showArrows && (
-              <button
-                type="button"
-                onClick={() => scrollByCard(-1)}
-                aria-label="Previous products"
-                className="absolute -left-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
-              >
-                <ChevronLeft size={20} />
-              </button>
-            )}
-
-            <div
-              ref={trackRef}
-              className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 scrollbar-hide sm:gap-4"
+        <div className="relative">
+          {showArrows && (
+            <button
+              type="button"
+              onClick={() => scrollByCard(-1)}
+              aria-label="Previous products"
+              className="absolute -left-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
             >
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="w-[48%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-5*1rem)/6)]"
-                >
-                  <ProductCard product={product} onNavigate={navigate} />
-                </div>
-              ))}
-            </div>
+              <ChevronLeft size={20} />
+            </button>
+          )}
 
-            {showArrows && (
-              <button
-                type="button"
-                onClick={() => scrollByCard(1)}
-                aria-label="Next products"
-                className="absolute -right-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
+          <div
+            ref={trackRef}
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 scrollbar-hide sm:gap-4"
+          >
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="w-[48%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-5*1rem)/6)]"
               >
-                <ChevronRight size={20} />
-              </button>
-            )}
+                <ProductCard product={product} onNavigate={navigate} />
+              </div>
+            ))}
           </div>
-        )}
+
+          {showArrows && (
+            <button
+              type="button"
+              onClick={() => scrollByCard(1)}
+              aria-label="Next products"
+              className="absolute -right-3 top-1/2 z-10 flex -translate-y-1/2 rounded-full border border-line bg-panel p-2.5 text-white shadow-md transition hover:bg-brand hover:text-black"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+        </div>
       </div>
     </section>
   )

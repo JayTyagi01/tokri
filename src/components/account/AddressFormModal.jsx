@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { LocateFixed, X } from 'lucide-react'
+import { fetchAddressFromBrowser } from '../../lib/geolocation'
+import { scrollFieldAboveKeyboard, useMobileKeyboardPad } from '../../lib/useMobileKeyboardPad'
 
 const LABELS = ['Home', 'Work', 'Other']
 
@@ -18,10 +20,40 @@ const emptyForm = (defaultPhone = '') => ({
 export default function AddressFormModal({ initial, defaultPhone, saving, onClose, onSave }) {
   const [form, setForm] = useState(initial ? { ...emptyForm(defaultPhone), ...initial } : emptyForm(defaultPhone))
   const [error, setError] = useState('')
+  const [locating, setLocating] = useState(false)
+  const autoTried = useRef(false)
+  const keyboardPad = useMobileKeyboardPad()
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
+
+  const fillFromLocation = async ({ silent = false } = {}) => {
+    setLocating(true)
+    setError('')
+    try {
+      const found = await fetchAddressFromBrowser()
+      setForm((current) => ({
+        ...current,
+        line1: current.line1 || found.line1 || '',
+        line2: current.line2 || found.line2 || '',
+        city: current.city || found.city || '',
+        state: current.state || found.state || '',
+        pincode: current.pincode || found.pincode || '',
+        landmark: current.landmark || found.landmark || '',
+      }))
+    } catch (err) {
+      if (!silent) setError(err.message || 'Could not detect your location.')
+    } finally {
+      setLocating(false)
+    }
+  }
+
+  useEffect(() => {
+    if (initial || autoTried.current) return
+    autoTried.current = true
+    fillFromLocation({ silent: true })
+  }, [initial])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -34,23 +66,38 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/60 md:flex md:items-center md:justify-center md:p-4">
+      <div className="flex h-dvh w-full flex-col bg-panel md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl md:border md:border-line md:shadow-2xl">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="pr-8 text-xl font-bold text-white">
+            {initial ? 'Edit address' : 'Add new address'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted hover:text-white"
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div
+          className="min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-6"
+        >
+        <p className="text-sm text-muted">Where should we deliver your fresh fruits?</p>
+
         <button
           type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-muted hover:text-white"
-          aria-label="Close"
+          onClick={() => fillFromLocation()}
+          disabled={locating}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand bg-panel-2 px-4 py-3 text-sm font-semibold text-brand transition hover:bg-brand/10 disabled:opacity-60"
         >
-          <X size={20} />
+          <LocateFixed size={16} />
+          {locating ? 'Detecting your location…' : 'Use current location'}
         </button>
 
-        <h2 className="text-xl font-bold text-white">
-          {initial ? 'Edit address' : 'Add new address'}
-        </h2>
-        <p className="mt-1 text-sm text-muted">Where should we deliver your fresh fruits?</p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form id="address-form" onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="mb-2 block text-sm font-medium text-white">Save as</label>
             <div className="flex flex-wrap gap-2">
@@ -78,6 +125,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
               onChange={(e) => update('name', e.target.value)}
               className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
               placeholder="Receiver name"
+              onFocus={scrollFieldAboveKeyboard}
               required
             />
           </div>
@@ -91,6 +139,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
                 onChange={(e) => update('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className="ml-2 w-full bg-transparent text-sm text-white outline-none"
                 placeholder="10-digit mobile"
+                onFocus={scrollFieldAboveKeyboard}
                 required
               />
             </div>
@@ -103,6 +152,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
               onChange={(e) => update('line1', e.target.value)}
               className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
               placeholder="Flat 402, Green Valley Apartments"
+              onFocus={scrollFieldAboveKeyboard}
               required
             />
           </div>
@@ -114,6 +164,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
               onChange={(e) => update('line2', e.target.value)}
               className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
               placeholder="Sector 18, Noida"
+              onFocus={scrollFieldAboveKeyboard}
               required
             />
           </div>
@@ -125,6 +176,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
                 value={form.city}
                 onChange={(e) => update('city', e.target.value)}
                 className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
+                onFocus={scrollFieldAboveKeyboard}
                 required
               />
             </div>
@@ -134,6 +186,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
                 value={form.state}
                 onChange={(e) => update('state', e.target.value)}
                 className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
+                onFocus={scrollFieldAboveKeyboard}
                 required
               />
             </div>
@@ -147,6 +200,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
                 onChange={(e) => update('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
                 className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
                 placeholder="6-digit pincode"
+                onFocus={scrollFieldAboveKeyboard}
                 required
               />
             </div>
@@ -157,6 +211,7 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
                 onChange={(e) => update('landmark', e.target.value)}
                 className="w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-white outline-none focus:border-brand"
                 placeholder="Near metro gate"
+                onFocus={scrollFieldAboveKeyboard}
               />
             </div>
           </div>
@@ -166,15 +221,21 @@ export default function AddressFormModal({ initial, defaultPhone, saving, onClos
               {error}
             </div>
           )}
-
+        </form>
+        </div>
+        <div
+          className="border-t border-line bg-panel px-5 pt-3"
+          style={{ paddingBottom: Math.max(16, keyboardPad + 12) }}
+        >
           <button
             type="submit"
+            form="address-form"
             disabled={saving}
             className="w-full rounded-xl bg-brand py-3 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
           >
             {saving ? 'Saving...' : initial ? 'Save changes' : 'Save address'}
           </button>
-        </form>
+        </div>
       </div>
     </div>
   )

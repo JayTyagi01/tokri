@@ -257,14 +257,9 @@ model Setting {
   earlyDelivery             String?
   shippingFee               Decimal  @default(25) @db.Decimal(10, 2)
   handlingFee               Decimal  @default(2) @db.Decimal(10, 2)
-  homeBannerEnabled         Boolean  @default(true)
-  homeCategoriesEnabled     Boolean  @default(true)
-  homeBestSellersEnabled    Boolean  @default(true)
-  homeBestSellersTitle      String?  @default("Shop Our Bestsellers")
-  homeShopOurRangeEnabled   Boolean  @default(true)
-  homeFruitHighlightEnabled Boolean  @default(true)
-  homeImportedFruitsEnabled Boolean  @default(true)
-  homeReviewsEnabled        Boolean  @default(true)
+  homeBannerImage           String?  @db.Text
+  homeHighlightImage        String?  @db.Text
+  homeFeaturedCategorySlugs String?  @db.Text
   razorpayEnabled           Boolean  @default(false)
   razorpayKeyId             String?
   razorpayKeySecret         String?

@@ -84,7 +84,7 @@ const createStyles = (c) => ({
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
-  buttonText: { color: c.panel === '#ffffff' ? '#ffffff' : '#04140c', fontWeight: '800' },
+  buttonText: { color: c.onBrand, fontWeight: '800' },
   error: { color: '#f87171', marginTop: 8, fontSize: 12 },
   applied: {
     flexDirection: 'row',

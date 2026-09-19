@@ -140,5 +140,5 @@ const createStyles = (c) => ({
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: '#04140c', fontWeight: '800', fontSize: 16 },
+  buttonText: { color: c.onBrand, fontWeight: '800', fontSize: 16 },
 })

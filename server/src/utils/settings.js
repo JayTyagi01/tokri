@@ -1,21 +1,26 @@
+import { toPublicAssetUrl } from './formatters.js'
+
+export function parseFeaturedCategorySlugs(value) {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return [...new Set(value.map((item) => String(item).trim()).filter(Boolean))]
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) return parseFeaturedCategorySlugs(parsed)
+    } catch {
+      // comma-separated fallback
+    }
+    return [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))]
+  }
+  return []
+}
+
 export function formatPublicSettings(settings) {
   if (!settings) {
     return { store: null, home: null, payment: null, messaging: null, charges: null }
   }
-
-  const homeSections = [
-    { type: 'banner', enabled: settings.homeBannerEnabled !== false },
-    { type: 'categories', enabled: settings.homeCategoriesEnabled !== false },
-    {
-      type: 'bestSellers',
-      enabled: settings.homeBestSellersEnabled !== false,
-      title: settings.homeBestSellersTitle || 'Shop Our Bestsellers',
-    },
-    { type: 'shopOurRange', enabled: settings.homeShopOurRangeEnabled !== false },
-    { type: 'fruitHighlight', enabled: settings.homeFruitHighlightEnabled !== false },
-    { type: 'importedFruits', enabled: settings.homeImportedFruitsEnabled !== false },
-    { type: 'reviews', enabled: settings.homeReviewsEnabled !== false },
-  ]
 
   return {
     store: {
@@ -28,7 +33,9 @@ export function formatPublicSettings(settings) {
       earlyDelivery: settings.earlyDelivery,
     },
     home: {
-      sections: homeSections,
+      bannerImage: toPublicAssetUrl(settings.homeBannerImage),
+      highlightImage: toPublicAssetUrl(settings.homeHighlightImage),
+      featuredCategorySlugs: parseFeaturedCategorySlugs(settings.homeFeaturedCategorySlugs),
     },
     payment: {
       razorpay: {

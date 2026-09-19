@@ -46,7 +46,7 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
 
   return (
     <div className={className}>
-      <p className="text-sm font-bold text-white">Delivery in 12 minutes</p>
+      <p className="text-sm font-bold text-white">Delivery to</p>
       <button
         type="button"
         onClick={openPicker}

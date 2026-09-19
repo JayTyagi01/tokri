@@ -359,6 +359,12 @@ section[data-css="logged-in"] {
   }
 }
 
+.tokri-homepage-fields {
+  display: grid;
+  gap: 22px;
+  max-width: 720px;
+}
+
 .tokri-coupon-two {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

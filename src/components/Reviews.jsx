@@ -10,7 +10,7 @@ const fallbackReviews = [
     title: 'Super fresh fruits',
     content: 'Super fresh fruits. Always fresh and delivered right on time.',
     name: 'Tina McDonnell',
-    image: 'https://i.imgur.com/1X4VR6f.png',
+    image: '',
     rating: 5,
   },
   {
@@ -18,7 +18,7 @@ const fallbackReviews = [
     title: 'Excellent quality produce',
     content: 'Excellent quality produce. Clean packaging and great consistency.',
     name: 'Aarav Sharma',
-    image: 'https://i.imgur.com/1X4VR6f.png',
+    image: '',
     rating: 5,
   },
   {
@@ -26,7 +26,7 @@ const fallbackReviews = [
     title: 'Tasty and juicy fruits',
     content: 'Tasty and juicy fruits. Better taste than local market options.',
     name: 'Priya Nair',
-    image: 'https://i.imgur.com/1X4VR6f.png',
+    image: '',
     rating: 4,
   },
 ]
@@ -72,6 +72,8 @@ function ReviewCard({ review }) {
             src={avatar}
             alt={review.name}
             className="h-12 w-12 rounded-full object-cover ring-2 ring-brand/30"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/20 text-sm font-semibold text-mint">

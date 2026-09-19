@@ -1,4 +1,8 @@
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/600x600?text=Tokriii'
+export const PLACEHOLDER_IMAGE =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect fill="#f8fafc" width="100%" height="100%"/></svg>',
+  )
 const FETCH_TIMEOUT_MS = 15000
 
 function stripTrailingSlash(value) {

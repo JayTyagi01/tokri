@@ -166,7 +166,7 @@ export default function OrderDetailScreen({ navigation, route }) {
         <View style={{ height: 88 }} />
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={[styles.footer, { paddingBottom: 12 }]}>
         <Pressable style={styles.repeat} onPress={repeatOrder}>
           <Text style={styles.repeatTitle}>Repeat Order</Text>
           <Text style={styles.repeatSub}>VIEW CART ON NEXT STEP</Text>
@@ -238,7 +238,7 @@ const createStyles = (c) => ({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  rateNowText: { color: '#04140c', fontWeight: '800', fontSize: 12 },
+  rateNowText: { color: c.onBrand, fontWeight: '800', fontSize: 12 },
   blockTitle: { color: c.text, fontSize: 18, fontWeight: '800', marginTop: 16, marginBottom: 10 },
   billRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   billLabel: { color: c.muted },

@@ -211,5 +211,5 @@ const createStyles = (c) => ({
     paddingVertical: 14,
     paddingHorizontal: 24,
   },
-  buttonText: { color: '#04140c', fontWeight: '800' },
+  buttonText: { color: c.onBrand, fontWeight: '800' },
 })

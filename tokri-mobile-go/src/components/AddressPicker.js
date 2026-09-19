@@ -1,20 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  KeyboardAvoidingView,
+  ActivityIndicator,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authPost } from '../lib/api'
+import { explainLocationError, fetchAddressFromDevice } from '../lib/location'
 import { useAddress } from '../context/AddressContext'
 import { useAuth } from '../context/AuthContext'
+import { useScrollFocusedInput } from '../lib/keyboard'
 import Icon from './Icon'
 
 const LABELS = ['Home', 'Work', 'Other']
@@ -34,15 +35,47 @@ const emptyForm = (phone = '') => ({
 export default function AddressPicker() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const { isLoggedIn, user, token } = useAuth()
   const { addresses, selectedId, pickerOpen, closePicker, selectAddress, refresh } = useAddress()
   const [formOpen, setFormOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [locating, setLocating] = useState(false)
   const [form, setForm] = useState(emptyForm())
   const [error, setError] = useState('')
+  const autoTried = useRef(false)
 
   const showForm = isLoggedIn && (formOpen || addresses.length === 0)
+
+  const applyDetected = useCallback((found) => {
+    setForm((current) => ({
+      ...current,
+      line1: current.line1 || found.line1 || '',
+      line2: current.line2 || found.line2 || '',
+      city: current.city || found.city || '',
+      state: current.state || found.state || '',
+      pincode: current.pincode || found.pincode || '',
+      landmark: current.landmark || found.landmark || '',
+    }))
+  }, [])
+
+  const fillFromLocation = useCallback(
+    async ({ silent = false } = {}) => {
+      setLocating(true)
+      setError('')
+      try {
+        const found = await fetchAddressFromDevice()
+        applyDetected(found)
+      } catch (err) {
+        if (silent) setError(err.message || 'Could not detect your location.')
+        else explainLocationError(err)
+      } finally {
+        setLocating(false)
+      }
+    },
+    [applyDetected],
+  )
 
   const startForm = () => {
     setError('')
@@ -53,8 +86,20 @@ export default function AddressPicker() {
   const closeForm = () => {
     setFormOpen(false)
     setError('')
+    setLocating(false)
+    autoTried.current = false
     if (addresses.length === 0) closePicker()
   }
+
+  useEffect(() => {
+    if (!pickerOpen || !showForm) {
+      autoTried.current = false
+      return
+    }
+    if (autoTried.current) return
+    autoTried.current = true
+    fillFromLocation({ silent: true })
+  }, [pickerOpen, showForm, fillFromLocation])
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }))
 
@@ -78,21 +123,51 @@ export default function AddressPicker() {
     return 'Choose where we should deliver your order.'
   }, [isLoggedIn])
 
+  const scrollRef = useRef(null)
+  const { keyboardHeight, onScroll, ensureVisible } = useScrollFocusedInput(scrollRef)
+
   return (
-    <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={showForm ? closeForm : closePicker}>
-      <Pressable style={styles.overlay} onPress={showForm ? closeForm : closePicker}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <View style={styles.handle} />
+    <Modal
+      visible={pickerOpen}
+      animationType="slide"
+      transparent={!showForm}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
+      onRequestClose={showForm ? closeForm : closePicker}
+    >
       {showForm ? (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={[styles.fullScreen, { paddingTop: insets.top }]}>
           <View style={styles.formHead}>
             <Text style={styles.title}>Add new address</Text>
             <Pressable onPress={closeForm} hitSlop={10}>
               <Icon name="close" size={20} color={colors.muted} />
             </Pressable>
           </View>
-          <Text style={styles.hint}>Where should we deliver your fresh fruits?</Text>
-          <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            ref={scrollRef}
+            style={styles.formScroll}
+            contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            automaticallyAdjustKeyboardInsets={false}
+          >
+            <Text style={styles.hint}>Where should we deliver your fresh fruits?</Text>
+            <Pressable
+              style={[styles.locateBtn, locating && { opacity: 0.7 }]}
+              onPress={() => fillFromLocation()}
+              disabled={locating}
+            >
+              {locating ? (
+                <ActivityIndicator color={colors.brand} size="small" />
+              ) : (
+                <Icon name="navigate" size={18} color={colors.brand} />
+              )}
+              <Text style={styles.locateText}>
+                {locating ? 'Detecting your location…' : 'Use current location'}
+              </Text>
+            </Pressable>
             <Text style={styles.fieldLabel}>Save as</Text>
             <View style={styles.chips}>
               {LABELS.map((label) => (
@@ -105,7 +180,13 @@ export default function AddressPicker() {
                 </Pressable>
               ))}
             </View>
-            <Field label="Full name" value={form.name} onChangeText={(value) => update('name', value)} placeholder="Receiver name" />
+            <Field
+              label="Full name"
+              value={form.name}
+              onChangeText={(value) => update('name', value)}
+              placeholder="Receiver name"
+              onFocusField={ensureVisible}
+            />
             <Field
               label="Mobile number"
               value={form.phone}
@@ -113,25 +194,28 @@ export default function AddressPicker() {
               placeholder="10-digit mobile"
               keyboardType="number-pad"
               prefix="+91"
+              onFocusField={ensureVisible}
             />
             <Field
               label="House / flat / building"
               value={form.line1}
               onChangeText={(value) => update('line1', value)}
               placeholder="Flat 402, Green Valley Apartments"
+              onFocusField={ensureVisible}
             />
             <Field
               label="Street / area"
               value={form.line2}
               onChangeText={(value) => update('line2', value)}
               placeholder="Sector 18, Noida"
+              onFocusField={ensureVisible}
             />
             <View style={styles.twoCol}>
               <View style={{ flex: 1 }}>
-                <Field label="City" value={form.city} onChangeText={(value) => update('city', value)} />
+                <Field label="City" value={form.city} onChangeText={(value) => update('city', value)} onFocusField={ensureVisible} />
               </View>
               <View style={{ flex: 1 }}>
-                <Field label="State" value={form.state} onChangeText={(value) => update('state', value)} />
+                <Field label="State" value={form.state} onChangeText={(value) => update('state', value)} onFocusField={ensureVisible} />
               </View>
             </View>
             <View style={styles.twoCol}>
@@ -142,6 +226,7 @@ export default function AddressPicker() {
                   onChangeText={(value) => update('pincode', value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="6-digit pincode"
                   keyboardType="number-pad"
+                  onFocusField={ensureVisible}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -150,66 +235,80 @@ export default function AddressPicker() {
                   value={form.landmark}
                   onChangeText={(value) => update('landmark', value)}
                   placeholder="Near metro gate"
+                  onFocusField={ensureVisible}
                 />
               </View>
             </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
+          </ScrollView>
+          <View
+            style={[
+              styles.formFooter,
+              { paddingBottom: Math.max(insets.bottom, 12) + keyboardHeight },
+            ]}
+          >
             <Pressable style={[styles.save, saving && { opacity: 0.7 }]} onPress={saveAddress} disabled={saving}>
               <Text style={styles.saveText}>{saving ? 'Saving…' : 'Save address'}</Text>
             </Pressable>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </View>
+        </View>
       ) : (
-        <>
-          <Text style={styles.title}>Delivery address</Text>
-          <Text style={styles.hint}>{hint}</Text>
-          {!isLoggedIn ? (
-            <Pressable
-              style={styles.save}
-              onPress={() => {
-                closePicker()
-                navigation.navigate('Login')
-              }}
-            >
-              <Text style={styles.saveText}>Log in to continue</Text>
-            </Pressable>
-          ) : (
-            <>
-              <ScrollView style={styles.list}>
-                {addresses.map((address) => (
-                  <Pressable
-                    key={address.id}
-                    style={[styles.row, selectedId === address.id && styles.rowActive]}
-                    onPress={() => selectAddress(address.id)}
-                  >
-                    <Icon name="location" size={18} color={colors.brand} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.label}>{address.label || 'Home'}</Text>
-                      <Text style={styles.line}>{address.formatted}</Text>
-                    </View>
-                    {selectedId === address.id ? <Icon name="checkmark-circle" color={colors.brand} /> : null}
-                  </Pressable>
-                ))}
-              </ScrollView>
-              <Pressable style={styles.addBtn} onPress={startForm}>
-                <Icon name="add" size={18} color={colors.brand} />
-                <Text style={styles.addText}>Add new address</Text>
+        <Pressable style={styles.overlay} onPress={closePicker}>
+          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]} onPress={() => {}}>
+            <View style={styles.handle} />
+            <Text style={styles.title}>Delivery address</Text>
+            <Text style={styles.hint}>{hint}</Text>
+            {!isLoggedIn ? (
+              <Pressable
+                style={styles.save}
+                onPress={() => {
+                  closePicker()
+                  navigation.navigate('Login')
+                }}
+              >
+                <Text style={styles.saveText}>Log in to continue</Text>
               </Pressable>
-            </>
-          )}
-        </>
-      )}
+            ) : (
+              <>
+                <ScrollView style={styles.list}>
+                  {addresses.map((address) => (
+                    <Pressable
+                      key={address.id}
+                      style={[styles.row, selectedId === address.id && styles.rowActive]}
+                      onPress={() => selectAddress(address.id)}
+                    >
+                      <Icon name="location" size={18} color={colors.brand} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>{address.label || 'Home'}</Text>
+                        <Text style={styles.line}>{address.formatted}</Text>
+                      </View>
+                      {selectedId === address.id ? <Icon name="checkmark-circle" color={colors.brand} /> : null}
+                    </Pressable>
+                  ))}
+                </ScrollView>
+                <Pressable style={styles.locateBtn} onPress={startForm}>
+                  <Icon name="navigate" size={18} color={colors.brand} />
+                  <Text style={styles.locateText}>Use current location</Text>
+                </Pressable>
+                <Pressable style={styles.addBtn} onPress={startForm}>
+                  <Icon name="add" size={18} color={colors.brand} />
+                  <Text style={styles.addText}>Add new address</Text>
+                </Pressable>
+              </>
+            )}
+          </Pressable>
         </Pressable>
-      </Pressable>
+      )}
     </Modal>
   )
 }
 
-function Field({ label, prefix, ...inputProps }) {
+function Field({ label, prefix, onFocusField, ...inputProps }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const wrapRef = useRef(null)
   return (
-    <View style={styles.field}>
+    <View ref={wrapRef} style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <View style={styles.inputWrap}>
         {prefix ? <Text style={styles.prefix}>{prefix}</Text> : null}
@@ -217,6 +316,10 @@ function Field({ label, prefix, ...inputProps }) {
           style={styles.input}
           placeholderTextColor={colors.muted}
           {...inputProps}
+          onFocus={(event) => {
+            inputProps.onFocus?.(event)
+            onFocusField?.(wrapRef)
+          }}
         />
       </View>
     </View>
@@ -228,6 +331,10 @@ const createStyles = (c) => ({
     flex: 1,
     backgroundColor: c.overlay,
     justifyContent: 'flex-end',
+  },
+  fullScreen: {
+    flex: 1,
+    backgroundColor: c.canvas,
   },
   sheet: {
     backgroundColor: c.panel,
@@ -270,8 +377,39 @@ const createStyles = (c) => ({
     paddingVertical: 14,
   },
   addText: { color: c.brand, fontWeight: '800' },
-  formHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  formScroll: { maxHeight: 520 },
+  locateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: c.brand,
+    backgroundColor: c.addBg,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  locateText: { color: c.brand, fontWeight: '800', flex: 1 },
+  formHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: c.line,
+    backgroundColor: c.panel,
+  },
+  formScroll: { flex: 1, backgroundColor: c.canvas },
+  formContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28 },
+  formFooter: {
+    borderTopWidth: 1,
+    borderTopColor: c.line,
+    backgroundColor: c.panel,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
   field: { marginBottom: 12 },
   fieldLabel: { color: c.text, fontSize: 13, fontWeight: '700', marginBottom: 6 },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 12 },
@@ -285,7 +423,7 @@ const createStyles = (c) => ({
   },
   chipActive: { backgroundColor: c.brand, borderColor: c.brand },
   chipText: { color: c.text, fontWeight: '700' },
-  chipTextActive: { color: '#04140c' },
+  chipTextActive: { color: c.onBrand },
   twoCol: { flexDirection: 'row', gap: 10 },
   inputWrap: {
     flexDirection: 'row',
@@ -304,8 +442,6 @@ const createStyles = (c) => ({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 12,
   },
-  saveText: { color: '#04140c', fontWeight: '800' },
+  saveText: { color: c.onBrand, fontWeight: '800' },
 })

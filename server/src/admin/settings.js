@@ -1,5 +1,6 @@
 import * as AdminJSPrisma from '@adminjs/prisma'
 import { prisma } from '../lib/prisma.js'
+import { env } from '../config/env.js'
 import { canManage } from './permissions.js'
 import { settingsEditHandler } from './settings-handlers.js'
 
@@ -28,14 +29,9 @@ export function getSettingResource(SettingsEditComponent) {
         'earlyDelivery',
         'shippingFee',
         'handlingFee',
-        'homeBannerEnabled',
-        'homeCategoriesEnabled',
-        'homeBestSellersEnabled',
-        'homeBestSellersTitle',
-        'homeShopOurRangeEnabled',
-        'homeFruitHighlightEnabled',
-        'homeImportedFruitsEnabled',
-        'homeReviewsEnabled',
+        'homeBannerImage',
+        'homeHighlightImage',
+        'homeFeaturedCategorySlugs',
         'razorpayEnabled',
         'razorpayKeyId',
         'razorpayKeySecret',
@@ -105,14 +101,9 @@ export function getSettingResource(SettingsEditComponent) {
           label: 'Handling charge (₹)',
           description: 'Cart handling fee added to every order',
         },
-        homeBannerEnabled: { label: 'Show hero banner' },
-        homeCategoriesEnabled: { label: 'Show categories section' },
-        homeBestSellersEnabled: { label: 'Show bestsellers section' },
-        homeBestSellersTitle: { label: 'Bestsellers heading' },
-        homeShopOurRangeEnabled: { label: 'Show shop our range section' },
-        homeFruitHighlightEnabled: { label: 'Show fruit highlight section' },
-        homeImportedFruitsEnabled: { label: 'Show imported fruits section' },
-        homeReviewsEnabled: { label: 'Show customer reviews section' },
+        homeBannerImage: { label: 'Home banner image' },
+        homeHighlightImage: { label: 'Fruit highlight image' },
+        homeFeaturedCategorySlugs: { label: 'Homepage categories' },
         razorpayEnabled: { label: 'Enable Razorpay checkout' },
         razorpayKeyId: { label: 'Razorpay Key ID' },
         razorpayKeySecret: {
@@ -168,6 +159,10 @@ export function getSettingResource(SettingsEditComponent) {
           label: 'OTP template has a copy-code button',
           description: 'Turn on only if your WhatsApp OTP template includes the copy-code button',
         },
+      },
+      custom: {
+        apiBaseUrl: `${env.apiUrl}/api/v1`,
+        appUrl: env.apiUrl,
       },
     },
   }

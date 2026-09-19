@@ -133,7 +133,7 @@ const createStyles = (c) => ({
     paddingVertical: 5,
     backgroundColor: c.addBg,
   },
-  addText: { color: c.brandDeep, fontWeight: '800', fontSize: 12 },
+  addText: { color: c.brand, fontWeight: '800', fontSize: 12 },
   qtyBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,6 +144,6 @@ const createStyles = (c) => ({
     paddingVertical: 4,
     gap: 2,
   },
-  qtyBtn: { color: '#fff', fontWeight: '800', fontSize: 16, width: 14, textAlign: 'center' },
-  qty: { color: '#fff', fontWeight: '800', fontSize: 12, minWidth: 12, textAlign: 'center' },
+  qtyBtn: { color: c.onBrand, fontWeight: '800', fontSize: 16, width: 14, textAlign: 'center' },
+  qty: { color: c.onBrand, fontWeight: '800', fontSize: 12, minWidth: 12, textAlign: 'center' },
 })

@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
-  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -19,6 +18,7 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
+import { useScrollFocusedInput } from '../lib/keyboard'
 
 const SUPPORT_EMAIL = 'support@tokriii.com'
 
@@ -82,6 +82,10 @@ export default function AccountScreen({ navigation }) {
   const [showDobPicker, setShowDobPicker] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const profileScrollRef = useRef(null)
+  const nameFieldRef = useRef(null)
+  const dobFieldRef = useRef(null)
+  const { keyboardHeight, onScroll, ensureVisible } = useScrollFocusedInput(profileScrollRef)
 
   const goBack = () => {
     if (navigation.canGoBack()) navigation.goBack()
@@ -230,52 +234,67 @@ export default function AccountScreen({ navigation }) {
         <Text style={styles.brandMark}>tokriii</Text>
       </ScrollView>
 
-      <Modal visible={nameOpen} transparent animationType="slide" onRequestClose={closeNameSheet}>
-        <KeyboardAvoidingView
-          style={styles.sheetWrap}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <Pressable style={styles.overlay} onPress={closeNameSheet} />
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <View style={styles.handle} />
-            <View style={styles.formHead}>
-              <Text style={styles.sheetTitle}>Profile</Text>
-              <Pressable onPress={closeNameSheet} hitSlop={10}>
-                <Icon name="close" size={20} color={colors.muted} />
-              </Pressable>
-            </View>
-            <Text style={styles.fieldLabel}>Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your name"
-              placeholderTextColor={colors.muted}
-              value={name}
-              onChangeText={setName}
-              autoFocus
-              autoCapitalize="words"
-              autoComplete="name"
-              textContentType="name"
-              maxLength={80}
-              returnKeyType="next"
-            />
-            <Text style={styles.fieldLabel}>Date of birth</Text>
-            <View style={styles.dobRow}>
+      <Modal
+        visible={nameOpen}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        statusBarTranslucent
+        onRequestClose={closeNameSheet}
+      >
+        <View style={[styles.fullScreen, { paddingTop: insets.top }]}>
+          <View style={styles.formHead}>
+            <Text style={styles.sheetTitle}>Profile</Text>
+            <Pressable onPress={closeNameSheet} hitSlop={10}>
+              <Icon name="close" size={20} color={colors.muted} />
+            </Pressable>
+          </View>
+          <ScrollView
+            ref={profileScrollRef}
+            style={styles.formScroll}
+            contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+          >
+            <View ref={nameFieldRef}>
+              <Text style={styles.fieldLabel}>Name</Text>
               <TextInput
-                style={styles.dobInput}
-                placeholder="DD/MM/YYYY"
+                style={styles.input}
+                placeholder="Your name"
                 placeholderTextColor={colors.muted}
-                value={dateOfBirth}
-                onChangeText={(value) => setDateOfBirth(maskDob(value))}
-                keyboardType="number-pad"
-                inputMode="numeric"
-                maxLength={10}
-                autoComplete="birthdate-full"
-                returnKeyType="done"
-                onSubmitEditing={saveName}
+                value={name}
+                onChangeText={setName}
+                autoFocus
+                autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
+                maxLength={80}
+                returnKeyType="next"
+                onFocus={() => ensureVisible(nameFieldRef)}
               />
-              <Pressable style={styles.dobIcon} onPress={() => setShowDobPicker((open) => !open)} hitSlop={8}>
-                <Icon name="calendar-outline" size={22} color={colors.brand} />
-              </Pressable>
+            </View>
+            <View ref={dobFieldRef}>
+              <Text style={styles.fieldLabel}>Date of birth</Text>
+              <View style={styles.dobRow}>
+                <TextInput
+                  style={styles.dobInput}
+                  placeholder="DD/MM/YYYY"
+                  placeholderTextColor={colors.muted}
+                  value={dateOfBirth}
+                  onChangeText={(value) => setDateOfBirth(maskDob(value))}
+                  keyboardType="number-pad"
+                  inputMode="numeric"
+                  maxLength={10}
+                  autoComplete="birthdate-full"
+                  returnKeyType="done"
+                  onSubmitEditing={saveName}
+                  onFocus={() => ensureVisible(dobFieldRef)}
+                />
+                <Pressable style={styles.dobIcon} onPress={() => setShowDobPicker((open) => !open)} hitSlop={8}>
+                  <Icon name="calendar-outline" size={22} color={colors.brand} />
+                </Pressable>
+              </View>
             </View>
             {showDobPicker ? (
               <DateTimePicker
@@ -289,6 +308,13 @@ export default function AccountScreen({ navigation }) {
               />
             ) : null}
             {error ? <Text style={styles.error}>{error}</Text> : null}
+          </ScrollView>
+          <View
+            style={[
+              styles.formFooter,
+              { paddingBottom: Math.max(insets.bottom, 12) + keyboardHeight },
+            ]}
+          >
             <Pressable
               style={[styles.saveBtn, saving && styles.buttonDisabled]}
               onPress={saveName}
@@ -297,7 +323,7 @@ export default function AccountScreen({ navigation }) {
               <Text style={styles.saveText}>{saving ? 'Please wait…' : 'Save'}</Text>
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <Modal visible={appearanceOpen} transparent animationType="slide" onRequestClose={() => setAppearanceOpen(false)}>
@@ -459,6 +485,16 @@ const createStyles = (c) => ({
     marginTop: 12,
     letterSpacing: -0.5,
   },
+  fullScreen: { flex: 1, backgroundColor: c.canvas },
+  formScroll: { flex: 1 },
+  formContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28 },
+  formFooter: {
+    borderTopWidth: 1,
+    borderTopColor: c.line,
+    backgroundColor: c.panel,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
   sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -485,7 +521,12 @@ const createStyles = (c) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: c.line,
+    backgroundColor: c.panel,
   },
   sheetTitle: { color: c.text, fontSize: 18, fontWeight: '800' },
   fieldLabel: { color: c.text, fontSize: 13, fontWeight: '700', marginBottom: 8 },

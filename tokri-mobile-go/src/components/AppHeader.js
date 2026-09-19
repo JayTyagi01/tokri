@@ -52,7 +52,7 @@ export default function AppHeader({ navigation, onSearch }) {
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
       <View style={styles.topRow}>
         <Pressable style={styles.address} onPress={openPicker}>
-          <Text style={styles.eta}>Delivery in 12 minutes</Text>
+          <Text style={styles.eta}>Delivery to</Text>
           <View style={styles.addressLine}>
             <Icon name="location" size={14} color={colors.brand} />
             <Text style={styles.addressText} numberOfLines={1}>

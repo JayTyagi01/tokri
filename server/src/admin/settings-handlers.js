@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js'
+import { parseFeaturedCategorySlugs } from '../utils/settings.js'
 
 const SETTING_ID = 1
 
@@ -13,14 +14,9 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'earlyDelivery',
   'shippingFee',
   'handlingFee',
-  'homeBannerEnabled',
-  'homeCategoriesEnabled',
-  'homeBestSellersEnabled',
-  'homeBestSellersTitle',
-  'homeShopOurRangeEnabled',
-  'homeFruitHighlightEnabled',
-  'homeImportedFruitsEnabled',
-  'homeReviewsEnabled',
+  'homeBannerImage',
+  'homeHighlightImage',
+  'homeFeaturedCategorySlugs',
   'razorpayEnabled',
   'razorpayKeyId',
   'razorpayKeySecret',
@@ -41,13 +37,6 @@ export const ALLOWED_SETTING_FIELDS = new Set([
 const NUMBER_FIELDS = new Set(['shippingFee', 'handlingFee'])
 
 const BOOLEAN_FIELDS = new Set([
-  'homeBannerEnabled',
-  'homeCategoriesEnabled',
-  'homeBestSellersEnabled',
-  'homeShopOurRangeEnabled',
-  'homeFruitHighlightEnabled',
-  'homeImportedFruitsEnabled',
-  'homeReviewsEnabled',
   'razorpayEnabled',
   'msg91Enabled',
   'msg91WhatsappEnabled',
@@ -78,6 +67,11 @@ export function payloadToSettingData(payload) {
   const data = {}
 
   for (const [key, value] of Object.entries(cleanSettingsPayload(payload))) {
+    if (key === 'homeFeaturedCategorySlugs') {
+      data[key] = JSON.stringify(parseFeaturedCategorySlugs(value))
+      continue
+    }
+
     if (BOOLEAN_FIELDS.has(key)) {
       data[key] = toBoolean(value)
       continue

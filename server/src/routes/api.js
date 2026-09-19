@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js'
 import { formatPublicSettings } from '../utils/settings.js'
 import { formatCategory, formatProduct, formatPage } from '../utils/formatters.js'
 import { PRODUCT_CATEGORY_INCLUDE, categoryProductWhere } from '../utils/catalog.js'
+import { reverseGeocode } from '../services/geocode.js'
 import authRouter from './auth.js'
 import accountRouter from './account.js'
 import checkoutRouter from './checkout.js'
@@ -32,6 +33,15 @@ router.use('/auth', authRouter)
 router.use('/account', accountRouter)
 router.use('/checkout', checkoutRouter)
 router.use('/app', appRouter)
+
+router.get('/geo/reverse', async (req, res, next) => {
+  try {
+    const address = await reverseGeocode(req.query.lat, req.query.lng)
+    res.json({ address })
+  } catch (error) {
+    next(error)
+  }
+})
 
 router.get('/settings/public', async (_req, res, next) => {
   try {

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { authPost, fetchJson, postJson } from '../lib/api'
+import { authPost, fetchJson, PLACEHOLDER_IMAGE, postJson } from '../lib/api'
 
 const CartContext = createContext(null)
 
@@ -66,7 +66,7 @@ export function CartProvider({ children }) {
           name: product.name,
           price: product.price,
           priceValue,
-          image: product.image || 'https://via.placeholder.com/150',
+          image: product.image || PLACEHOLDER_IMAGE,
           weight: product.weight || '250 g',
           quantity: 1,
           categorySlug: categorySlugFrom(product),
