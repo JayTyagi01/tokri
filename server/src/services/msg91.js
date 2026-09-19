@@ -1,21 +1,15 @@
 import { getMsg91Settings } from '../utils/msg91Settings.js'
 
 const MSG91_FLOW_URL = 'https://api.msg91.com/api/v5/flow/'
-const MSG91_SMS_URL = 'https://api.msg91.com/api/v2/sendsms'
 const MSG91_WHATSAPP_URL =
   'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'
 
-// Exact Airtel DLT bodies. {#numeric#} / {#alphanumeric#} are filled here.
-function buildOtpSms(code) {
-  return `Use OTP ${code} to login to your Tokriii (M Mahajan Trading Pvt Ltd) account. Valid for 15 minutes. Do not share this OTP with anyone.`
-}
-
-function buildOrderSms(orderNo) {
-  return `Order Confirmed! Your Tokriii (M Mahajan Trading Pvt Ltd) order ${orderNo} has been received. Delivery partner: Assigned shortly. You can track your order status from the Orders section in the app.`
-}
-
 function isDltTemplateId(value) {
   return /^\d{16,20}$/.test(String(value || '').trim())
+}
+
+function isMsg91TemplateId(value) {
+  return /^[a-f0-9]{24}$/i.test(String(value || '').trim())
 }
 
 function formatAmount(value) {
@@ -73,26 +67,19 @@ function buildSmsRecipient(mobiles, variables) {
   return recipient
 }
 
-async function sendSms({ config, mobiles, templateId, variables, message, label }) {
+async function sendSms({ config, mobiles, templateId, variables, label }) {
   const id = String(templateId || '').trim()
 
-  // 19-digit Airtel DLT ids are not MSG91 flow ids. Send the approved body
-  // through the SMS API with DLT_TE_ID so the admin values already entered work.
-  if (isDltTemplateId(id) && message) {
-    const payload = {
-      route: '4',
-      country: '91',
-      DLT_TE_ID: id,
-      sms: [{ message, to: [mobiles] }],
-    }
-    if (config.senderId) payload.sender = config.senderId
-
-    const result = await postToMsg91(MSG91_SMS_URL, config.authKey, payload, label)
-    return { channel: 'sms', sent: true, requestId: result?.request_id || null }
+  // 19-digit Airtel DLT ids cannot be used as MSG91 flow ids. Those must be
+  // replaced in admin with the hex Template ID from MSG91 (copy icon).
+  if (isDltTemplateId(id) && !isMsg91TemplateId(id)) {
+    throw new Error(
+      'Paste the MSG91 Template ID from the copy icon (e.g. 6aae9748…), not the 19-digit Airtel DLT ID. MSG91 already has the approved text and only needs the OTP or order number.',
+    )
   }
 
   // MSG91 renamed flows to templates part way through v5, so the id is sent under
-  // both names to work regardless of which the account expects.
+  // both names. Only the template variable is sent — never a custom SMS body.
   const payload = {
     template_id: id,
     flow_id: id,
@@ -190,7 +177,6 @@ async function deliver({ phone, label, sms, whatsapp }) {
         mobiles,
         templateId: config[sms.templateKey],
         variables: sms.variables,
-        message: sms.message,
         label,
       })
     } catch (error) {
@@ -221,8 +207,8 @@ export function sendOtpMessage(phone, code) {
     label: 'login OTP',
     sms: {
       templateKey: 'otpTemplateId',
-      variables: { otp: code },
-      message: buildOtpSms(code),
+      // MSG91 template: "Please use OTP ##numeric## to login..."
+      variables: { numeric: code },
     },
     whatsapp: { templateKey: 'whatsappOtpTemplate', values: [code], otpValue: code },
   })
@@ -245,8 +231,8 @@ export async function sendOrderConfirmation(order, { phone, name } = {}) {
     // The approved DLT order template carries a single variable, the order number.
     sms: {
       templateKey: 'orderTemplateId',
-      variables: { order_id: order.orderNo },
-      message: buildOrderSms(order.orderNo),
+      // MSG91 template uses ##alphanumeric## for the order number.
+      variables: { alphanumeric: order.orderNo },
     },
     whatsapp: {
       templateKey: 'whatsappOrderTemplate',

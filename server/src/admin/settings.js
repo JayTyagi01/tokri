@@ -133,12 +133,12 @@ export function getSettingResource(SettingsEditComponent) {
         msg91OtpTemplateId: {
           label: 'Login OTP template ID',
           description:
-            '19-digit Airtel DLT template ID, or the MSG91 template ID from the copy icon',
+            'MSG91 Template ID from the copy icon, e.g. 6aae9748a337d718910d31f3. Do not paste the 19-digit Airtel DLT ID.',
         },
         msg91OrderTemplateId: {
           label: 'Order confirmation template ID',
           description:
-            '19-digit Airtel DLT template ID, or the MSG91 template ID from the copy icon',
+            'MSG91 Template ID from the copy icon, e.g. 6aae978b1d0d6a12170b93f4. Do not paste the 19-digit Airtel DLT ID.',
         },
         msg91WhatsappEnabled: {
           label: 'Enable MSG91 WhatsApp',
