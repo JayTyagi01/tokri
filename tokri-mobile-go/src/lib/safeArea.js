@@ -1,13 +1,10 @@
-import { Platform } from 'react-native'
 import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context'
 
-// 3-button nav is typically ~48px. Gesture / home-handle is 0–24px.
-const ANDROID_BUTTON_NAV_MIN = 28
+// Some phones hide the 3-button bar and only show a thin gesture line.
+const GESTURE_LINE = 16
 
 export function useSystemBottomInset() {
   const insets = useSafeAreaInsets()
-  const bottom = insets.bottom || initialWindowMetrics?.insets?.bottom || 0
-  if (Platform.OS !== 'android') return bottom
-  if (bottom < ANDROID_BUTTON_NAV_MIN) return 0
-  return bottom
+  const reported = Math.max(insets.bottom, initialWindowMetrics?.insets?.bottom || 0)
+  return Math.max(reported, GESTURE_LINE)
 }

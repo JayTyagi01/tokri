@@ -18,8 +18,22 @@ import { prepareProductPayload, afterProductForm } from './product-handlers.js'
 import { prepareCouponPayload } from './coupon-handlers.js'
 import { prepareCategoryPayload } from './category-handlers.js'
 import { orderEditHandler, orderListHandler, orderShowHandler } from './order-handlers.js'
+import {
+  preparePartnerPayload,
+  afterPartnerSave,
+  sanitizePartnerRecord,
+  sendPartnerPasswordAction,
+  togglePartnerActiveAction,
+  preparePincodePayload,
+  togglePincodeActiveAction,
+  collectCashAction,
+  generateQrAction,
+} from './partner-handlers.js'
+import { prepareCustomerPayload, attachCustomerAddresses, toggleCustomerActiveAction } from './customer-handlers.js'
 import { buildCatalogRoutes } from './catalogRoutes.js'
 import { adminLocale } from './locale.js'
+import { INDIA_STATES } from '../data/indiaStates.js'
+import { buildDashboardAnalytics } from '../services/dashboardAnalytics.js'
 
 AdminJS.registerAdapter({
   Database: AdminJSPrisma.Database,
@@ -135,35 +149,13 @@ export async function buildAdminRouter() {
     componentLoader,
     dashboard: {
       component: Components.Dashboard,
-      handler: async () => {
-        const [productCount, orderCount, pageCount, reviewCount, recentOrders] =
-          await Promise.all([
-            prisma.product.count(),
-            prisma.order.count(),
-            prisma.page.count(),
-            prisma.review.count(),
-            prisma.order.findMany({
-              take: 5,
-              orderBy: { createdAt: 'desc' },
-              select: {
-                orderNo: true,
-                status: true,
-                grandTotal: true,
-                createdAt: true,
-              },
-            }),
-          ])
-
-        return {
-          productCount,
-          orderCount,
-          pageCount,
-          reviewCount,
-          recentOrders: recentOrders.map((order) => ({
-            ...order,
-            grandTotal: String(order.grandTotal),
-          })),
-        }
+      handler: async (request) => {
+        const query = request?.query || request?.params?.query || {}
+        return buildDashboardAnalytics({
+          widget: query.widget ? String(query.widget) : '',
+          range: String(query.range || '7d'),
+          page: query.page,
+        })
       },
     },
     assets: {
@@ -174,6 +166,22 @@ export async function buildAdminRouter() {
       logo: false,
       withMadeWithLove: false,
       favicon: '/favicon.ico',
+      theme: {
+        colors: {
+          primary100: '#047857',
+          primary80: '#059669',
+          primary60: '#34d399',
+          primary40: '#6ee7b7',
+          primary20: '#d1fae5',
+          accent: '#065f46',
+          infoDark: '#047857',
+          info: '#059669',
+          infoLight: '#d1fae5',
+          love: '#047857',
+          successDark: '#047857',
+          success: '#059669',
+        },
+      },
     },
     locale: adminLocale,
     resources: [
@@ -383,6 +391,7 @@ export async function buildAdminRouter() {
             'status',
             'paymentStatus',
             'paymentMethod',
+            'deliveryPartnerName',
             'addressFormatted',
             'itemsJson',
             'itemsTotal',
@@ -393,7 +402,7 @@ export async function buildAdminRouter() {
             'grandTotal',
             'createdAt',
           ],
-          editProperties: ['status', 'paymentStatus'],
+          editProperties: ['status', 'paymentStatus', 'deliveryPartnerId'],
           actions: {
             ...resourceActions('manageOrders'),
             list: {
@@ -401,15 +410,37 @@ export async function buildAdminRouter() {
               handler: orderListHandler.handler,
             },
             show: {
-              ...orderShowHandler,
+              isAccessible: canManage('manageOrders'),
+              isVisible: false,
               component: Components.OrderDetail,
+              handler: orderShowHandler.handler,
             },
             edit: {
               ...orderEditHandler,
+              label: 'Open',
+              hideActionHeader: true,
               component: Components.OrderDetail,
             },
             new: () => false,
             delete: () => false,
+            collectCash: {
+              actionType: 'record',
+              icon: 'CreditCard',
+              label: 'Mark cash collected',
+              isVisible: false,
+              isAccessible: canManage('manageOrders'),
+              component: false,
+              handler: collectCashAction,
+            },
+            generateQr: {
+              actionType: 'record',
+              icon: 'Camera',
+              label: 'Generate payment QR',
+              isVisible: false,
+              isAccessible: canManage('manageOrders'),
+              component: false,
+              handler: generateQrAction,
+            },
           },
           properties: {
             orderNo: { isTitle: true, label: 'Order number' },
@@ -433,8 +464,14 @@ export async function buildAdminRouter() {
             items: { isVisible: false },
             razorpayOrderId: { isVisible: false },
             razorpayPaymentId: { isVisible: false },
+            razorpayPaymentLinkId: { isVisible: false },
+            razorpayQrUrl: { isVisible: { list: false, show: true, edit: false, filter: false } },
             couponCode: { isVisible: false },
             updatedAt: { isVisible: false },
+            deliveryPartner: { isVisible: false },
+            deliveryPartnerName: { label: 'Delivery partner' },
+            paymentMode: { label: 'Checkout method' },
+            paymentCollectedAs: { label: 'Collected as' },
           },
         },
       },
@@ -505,6 +542,171 @@ export async function buildAdminRouter() {
       },
       getSettingResource(Components.SettingsEdit),
       {
+        resource: { model: AdminJSPrisma.getModelByName('DeliveryPartner'), client: prisma },
+        options: {
+          name: 'Delivery partners',
+          navigation: { name: 'Settings', icon: 'Truck' },
+          listProperties: ['name', 'email', 'phone', 'address', 'isActive'],
+          editProperties: ['name', 'email', 'phone', 'address', 'isActive', 'notes'],
+          filterProperties: ['name', 'email', 'phone', 'isActive'],
+          properties: {
+            name: { isTitle: true, label: 'Partner' },
+            email: { type: 'email', label: 'Email' },
+            phone: { label: 'Mobile' },
+            address: { label: 'Address' },
+            notes: { type: 'textarea', label: 'Notes' },
+            isActive: {
+              label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+                show: Components.StatusToggle,
+              },
+            },
+            password: { isVisible: false },
+            pincodes: { isVisible: false },
+            orders: { isVisible: false },
+            devices: { isVisible: false },
+            passwordTokens: { isVisible: false },
+          },
+          actions: {
+            ...resourceActions('manageSettings'),
+            list: {
+              ...cmsListView('manageSettings'),
+              after: sanitizePartnerRecord,
+            },
+            new: {
+              isAccessible: canManage('manageSettings'),
+              component: Components.PartnerEdit,
+              before: preparePartnerPayload,
+              after: afterPartnerSave,
+            },
+            edit: {
+              isAccessible: canManage('manageSettings'),
+              isVisible: true,
+              component: Components.PartnerEdit,
+              before: preparePartnerPayload,
+              after: sanitizePartnerRecord,
+            },
+            sendPasswordEmail: {
+              actionType: 'record',
+              icon: 'Mail',
+              label: 'Send password email',
+              guard: 'Send a set/reset password link to this partner’s email?',
+              isAccessible: canManage('manageSettings'),
+              component: false,
+              handler: sendPartnerPasswordAction,
+            },
+            toggleActive: {
+              actionType: 'record',
+              isVisible: false,
+              isAccessible: canManage('manageSettings'),
+              component: false,
+              handler: togglePartnerActiveAction,
+            },
+          },
+        },
+      },
+      {
+        resource: { model: AdminJSPrisma.getModelByName('IndiaState'), client: prisma },
+        options: {
+          name: 'Indian states',
+          navigation: false,
+          listProperties: ['code', 'name'],
+          properties: {
+            name: { isTitle: true },
+            code: { isId: true },
+          },
+          actions: {
+            list: { isAccessible: canManage('manageSettings') },
+            search: { isAccessible: canManage('manageSettings') },
+            show: () => false,
+            new: () => false,
+            edit: () => false,
+            delete: () => false,
+            bulkDelete: () => false,
+          },
+        },
+      },
+      {
+        resource: { model: AdminJSPrisma.getModelByName('ServiceablePincode'), client: prisma },
+        options: {
+          name: 'Serviceable pincodes',
+          navigation: { name: 'Settings', icon: 'MapPin' },
+          listProperties: ['pincode', 'city', 'state', 'areaLabel', 'partner', 'isActive'],
+          editProperties: ['pincode', 'city', 'state', 'areaLabel', 'isActive', 'partner'],
+          filterProperties: ['pincode', 'city', 'state', 'areaLabel', 'isActive', 'partner'],
+          custom: {
+            states: INDIA_STATES,
+          },
+          properties: {
+            pincode: { isTitle: true, label: 'Pincode' },
+            areaLabel: { label: 'Area' },
+            city: { label: 'City' },
+            isActive: {
+              label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+                show: Components.StatusToggle,
+              },
+            },
+            partner: { reference: 'DeliveryPartner', label: 'Partner' },
+            partnerId: { isVisible: false },
+            state: { reference: 'IndiaState', label: 'State' },
+            stateCode: { isVisible: false },
+          },
+          actions: {
+            ...resourceActions('manageSettings'),
+            list: cmsListView('manageSettings'),
+            new: {
+              isAccessible: canManage('manageSettings'),
+              component: Components.PincodeEdit,
+              before: preparePincodePayload,
+            },
+            edit: {
+              isAccessible: canManage('manageSettings'),
+              isVisible: true,
+              component: Components.PincodeEdit,
+              before: preparePincodePayload,
+            },
+            toggleActive: {
+              actionType: 'record',
+              isVisible: false,
+              isAccessible: canManage('manageSettings'),
+              component: false,
+              handler: togglePincodeActiveAction,
+            },
+          },
+        },
+      },
+      {
+        resource: { model: AdminJSPrisma.getModelByName('PartnerPasswordToken'), client: prisma },
+        options: {
+          navigation: false,
+          actions: {
+            list: () => false,
+            show: () => false,
+            new: () => false,
+            edit: () => false,
+            delete: () => false,
+            search: () => false,
+          },
+        },
+      },
+      {
+        resource: { model: AdminJSPrisma.getModelByName('PartnerDeviceToken'), client: prisma },
+        options: {
+          navigation: false,
+          actions: {
+            list: () => false,
+            show: () => false,
+            new: () => false,
+            edit: () => false,
+            delete: () => false,
+            search: () => false,
+          },
+        },
+      },
+      {
         resource: { model: AdminJSPrisma.getModelByName('AdminPermission'), client: prisma },
         options: {
           navigation: false,
@@ -526,19 +728,43 @@ export async function buildAdminRouter() {
           listProperties: ['name', 'phone', 'dateOfBirth', 'isActive', 'createdAt'],
           editProperties: ['name', 'phone', 'dateOfBirth', 'isActive'],
           properties: {
-            name: { isTitle: true },
-            phone: { isDisabled: true },
+            name: { isTitle: true, label: 'Customer' },
+            phone: { isDisabled: true, label: 'Mobile' },
             dateOfBirth: { type: 'date', label: 'Date of birth' },
-            addresses: { isVisible: false },
+            isActive: {
+              label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+              },
+            },
+            addresses: {
+              type: 'mixed',
+              isVisible: { list: false, filter: false, show: true, edit: true },
+            },
             orders: { isVisible: false },
             cart: { isVisible: false },
             devices: { isVisible: false },
+            couponUses: { isVisible: false },
           },
           actions: {
             ...resourceActions('manageUsers'),
             list: cmsListView('manageUsers'),
+            edit: {
+              isAccessible: canManage('manageUsers'),
+              isVisible: true,
+              component: Components.CustomerEdit,
+              before: prepareCustomerPayload,
+              after: attachCustomerAddresses,
+            },
             new: () => false,
             delete: () => false,
+            toggleActive: {
+              actionType: 'record',
+              isVisible: false,
+              isAccessible: canManage('manageUsers'),
+              component: false,
+              handler: toggleCustomerActiveAction,
+            },
           },
         },
       },

@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { prisma } from '../lib/prisma.js'
+import { assertPincodeServiceable, normalizePincode, serviceablePincodeSet } from './delivery.js'
 
 const LABELS = new Set(['Home', 'Work', 'Other'])
 
@@ -66,11 +67,40 @@ export function formatAddressRecord(address) {
   }
 }
 
+export async function snapshotCurrentAddress(user, input = {}) {
+  const pincode = String(input.pincode || '').replace(/\D/g, '').slice(0, 6)
+  if (pincode.length !== 6) {
+    throw Object.assign(new Error('Could not detect a valid pincode for this location. Please add a delivery address.'), {
+      status: 400,
+    })
+  }
+  await assertPincodeServiceable(pincode)
+  const line1 = String(input.line1 || input.line2 || input.city || '').trim()
+  const line2 = String(input.line2 || input.line1 || '').trim()
+  return formatAddressRecord({
+    id: 'current',
+    label: 'Current location',
+    name: String(input.name || user?.name || 'Customer').trim() || 'Customer',
+    phone: normalizePhone(input.phone) || normalizePhone(user?.phone) || '',
+    line1,
+    line2,
+    city: String(input.city || '').trim(),
+    state: String(input.state || '').trim(),
+    pincode,
+    landmark: String(input.landmark || '').trim(),
+  })
+}
+
 export async function listAddresses(customerId) {
   const customer = await prisma.customer.findUnique({ where: { id: customerId } })
   if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
-  return parseAddresses(customer.addresses).map(formatAddressRecord)
+  const list = parseAddresses(customer.addresses).map(formatAddressRecord)
+  const allowed = await serviceablePincodeSet(list.map((item) => item.pincode))
+  return list.map((item) => ({
+    ...item,
+    serviceable: allowed.has(normalizePincode(item.pincode)),
+  }))
 }
 
 export async function createAddress(customerId, input) {
@@ -79,6 +109,7 @@ export async function createAddress(customerId, input) {
 
   const addresses = parseAddresses(customer.addresses)
   const payload = sanitizeAddressInput(input, customer.phone)
+  await assertPincodeServiceable(payload.pincode)
   const nextAddress = {
     id: crypto.randomUUID(),
     ...payload,
@@ -103,6 +134,7 @@ export async function updateAddress(customerId, addressId, input) {
   if (index === -1) throw Object.assign(new Error('Address not found.'), { status: 404 })
 
   const payload = sanitizeAddressInput(input, customer.phone)
+  await assertPincodeServiceable(payload.pincode)
   const updated = {
     ...addresses[index],
     ...payload,

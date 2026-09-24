@@ -52,8 +52,8 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
 
-  const openProduct = (slug) => {
-    navigation.navigate('Product', { slug })
+  const openProduct = (slug, origin) => {
+    navigation.navigate('Product', { slug, origin })
   }
 
   const openCategory = (slug) => {

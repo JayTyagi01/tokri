@@ -33,7 +33,7 @@ export default function CategoryScreen({ route, navigation }) {
       ListEmptyComponent={<Text style={styles.empty}>No products in this category.</Text>}
       renderItem={({ item }) => (
         <View style={styles.cardWrap}>
-          <ProductCard product={item} onPress={() => navigation.navigate('Product', { slug: item.slug })} />
+          <ProductCard product={item} onPress={(slug, origin) => navigation.navigate('Product', { slug, origin })} />
         </View>
       )}
     />

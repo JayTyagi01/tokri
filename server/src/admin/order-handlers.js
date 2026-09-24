@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma.js'
 import { canManage } from './permissions.js'
 import { notifyOrderStatus } from '../services/push.js'
+import { assertPincodeServiceable, normalizePincode } from '../services/delivery.js'
 
 function parseAddress(address) {
   if (!address || typeof address !== 'object') return null
@@ -19,7 +20,7 @@ function formatAddress(address) {
   return parts.join(', ')
 }
 
-function flattenOrder(order) {
+export function flattenOrder(order) {
   const address = parseAddress(order.address)
   const customerName = order.customer?.name || address?.name || 'Guest'
   const customerPhone = order.customer?.phone || address?.phone || ''
@@ -38,14 +39,28 @@ function flattenOrder(order) {
     couponCode: order.couponCode || '',
     razorpayOrderId: order.razorpayOrderId || '',
     razorpayPaymentId: order.razorpayPaymentId || '',
+    razorpayQrUrl: order.razorpayQrUrl || '',
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     customerName,
     customerPhone,
+    contactName: address?.name || customerName,
+    contactPhone: address?.phone || customerPhone,
+    addressLine1: address?.line1 || '',
+    addressLine2: address?.line2 || '',
+    addressCity: address?.city || '',
+    addressState: address?.state || '',
+    addressPincode: address?.pincode || '',
+    addressLandmark: address?.landmark || '',
     customerEmail: '',
     addressLabel: address?.label || 'Delivery',
     addressFormatted: formatAddress(address),
     addressJson: JSON.stringify(address || {}),
+    deliveryPartnerId: order.deliveryPartnerId || '',
+    deliveryPartnerName: order.deliveryPartnerName || order.deliveryPartner?.name || '',
+    deliveryPartnerPhone: order.deliveryPartnerPhone || order.deliveryPartner?.phone || '',
+    paymentMode: order.paymentMode || (order.razorpayPaymentId ? 'online' : 'cod'),
+    paymentCollectedAs: order.paymentCollectedAs || '',
     itemsJson: JSON.stringify(
       (order.items || []).map((item) => ({
         id: item.id,
@@ -57,7 +72,14 @@ function flattenOrder(order) {
         lineTotal: String(Number(item.priceValue) * item.quantity),
       })),
     ),
-    paymentMethod: order.razorpayPaymentId ? 'Razorpay' : 'Cash on delivery',
+    paymentMethod:
+      order.paymentCollectedAs === 'cash'
+        ? 'Cash on delivery'
+        : order.paymentCollectedAs === 'qr'
+          ? 'Razorpay QR'
+          : order.paymentMode === 'online' || order.razorpayPaymentId
+            ? 'Razorpay'
+            : 'Cash on delivery',
   }
 }
 
@@ -66,6 +88,7 @@ async function loadOrder(recordId) {
     where: { id: recordId },
     include: {
       customer: { select: { id: true, name: true, phone: true } },
+      deliveryPartner: { select: { id: true, name: true, phone: true } },
       items: { orderBy: { id: 'asc' } },
     },
   })
@@ -113,6 +136,7 @@ export const orderListHandler = {
         createdAt: order.createdAt,
         customerName: order.customer?.name || address?.name || 'Guest',
         customerPhone: order.customer?.phone || address?.phone || '',
+        deliveryPartnerName: order.deliveryPartnerName || '',
       }).toJSON(context.currentAdmin)
     })
 
@@ -142,8 +166,20 @@ export const orderEditHandler = {
   isVisible: true,
   before: async (request) => {
     if (request.method === 'post') {
-      const { status, paymentStatus } = request.payload || {}
-      request.payload = { status, paymentStatus }
+      const payload = request.payload || {}
+      request.payload = {
+        status: payload.status,
+        paymentStatus: payload.paymentStatus,
+        deliveryPartnerId: payload.deliveryPartnerId,
+        contactName: payload.contactName,
+        contactPhone: payload.contactPhone,
+        addressLine1: payload.addressLine1,
+        addressLine2: payload.addressLine2,
+        addressCity: payload.addressCity,
+        addressState: payload.addressState,
+        addressPincode: payload.addressPincode,
+        addressLandmark: payload.addressLandmark,
+      }
     }
     return request
   },
@@ -160,12 +196,91 @@ export const orderEditHandler = {
       where: { id: request.params.recordId },
     })
 
-    const { status, paymentStatus } = request.payload || {}
+    const {
+      status,
+      paymentStatus,
+      deliveryPartnerId,
+      contactName,
+      contactPhone,
+      addressLine1,
+      addressLine2,
+      addressCity,
+      addressState,
+      addressPincode,
+      addressLandmark,
+    } = request.payload || {}
+
+    const phoneDigits = String(contactPhone || '').replace(/\D/g, '')
+    const phone = phoneDigits.length === 12 && phoneDigits.startsWith('91') ? phoneDigits.slice(2) : phoneDigits
+    const pincode = normalizePincode(addressPincode)
+    const reject = async (message) => {
+      const current = await loadOrder(request.params.recordId)
+      return {
+        record: context.resource.build({
+          ...flattenOrder(current),
+          contactName,
+          contactPhone,
+          addressLine1,
+          addressLine2,
+          addressCity,
+          addressState,
+          addressPincode,
+          addressLandmark,
+        }).toJSON(context.currentAdmin),
+        notice: { message, type: 'error' },
+      }
+    }
+    if (!String(contactName || '').trim()) return reject('Customer name is required.')
+    if (phone.length !== 10) return reject('Enter a 10-digit contact number.')
+    if (!String(addressLine1 || '').trim() || !String(addressCity || '').trim() || !String(addressState || '').trim()) {
+      return reject('Address, city, and state are required.')
+    }
+    try {
+      await assertPincodeServiceable(pincode)
+    } catch (error) {
+      return reject(error.message || 'This pincode is not serviceable.')
+    }
+
+    const currentAddress = parseAddress(previous.address) || {}
+    const nextAddress = {
+      ...currentAddress,
+      name: String(contactName).trim(),
+      phone,
+      line1: String(addressLine1).trim(),
+      line2: String(addressLine2 || '').trim(),
+      city: String(addressCity).trim(),
+      state: String(addressState).trim(),
+      pincode,
+      landmark: String(addressLandmark || '').trim(),
+    }
+    let partnerPatch = {}
+    if (deliveryPartnerId) {
+      const partner = await prisma.deliveryPartner.findUnique({ where: { id: deliveryPartnerId } })
+      if (partner) {
+        partnerPatch = {
+          deliveryPartnerId: partner.id,
+          deliveryPartnerName: partner.name,
+          deliveryPartnerPhone: partner.phone,
+          deliveryAssignedAt: new Date(),
+        }
+      }
+    } else if (deliveryPartnerId === '') {
+      partnerPatch = {
+        deliveryPartnerId: null,
+        deliveryPartnerName: null,
+        deliveryPartnerPhone: null,
+        deliveryAssignedAt: null,
+      }
+    }
+
     await prisma.order.update({
       where: { id: request.params.recordId },
       data: {
         ...(status ? { status } : {}),
         ...(paymentStatus ? { paymentStatus } : {}),
+        address: nextAddress,
+        deliveryPincode: pincode,
+        ...partnerPatch,
       },
     })
 
@@ -176,11 +291,6 @@ export const orderEditHandler = {
     return {
       record: context.resource.build(flattenOrder(order)).toJSON(context.currentAdmin),
       notice: { message: 'Order updated successfully.', type: 'success' },
-      redirectUrl: context.h.recordActionUrl({
-        resourceId: context.resource.id(),
-        recordId: order.id,
-        actionName: 'show',
-      }),
     }
   },
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -10,8 +11,9 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSystemBottomInset } from '../lib/safeArea'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { authPost } from '../lib/api'
+import { authDelete, authPost } from '../lib/api'
 import { explainLocationError, fetchAddressFromDevice } from '../lib/location'
 import { useAddress } from '../context/AddressContext'
 import { useAuth } from '../context/AuthContext'
@@ -36,6 +38,7 @@ export default function AddressPicker() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
+  const bottomInset = useSystemBottomInset()
   const navigation = useNavigation()
   const { isLoggedIn, user, token } = useAuth()
   const { addresses, selectedId, pickerOpen, closePicker, selectAddress, refresh } = useAddress()
@@ -102,6 +105,24 @@ export default function AddressPicker() {
   }, [pickerOpen, showForm, fillFromLocation])
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }))
+
+  const removeAddress = (address) => {
+    Alert.alert('Delete address', 'Remove this saved address?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await authDelete(`/account/addresses/${address.id}`, token)
+            await refresh()
+          } catch (err) {
+            setError(err.message || 'Could not delete address.')
+          }
+        },
+      },
+    ])
+  }
 
   const saveAddress = async () => {
     setError('')
@@ -244,7 +265,7 @@ export default function AddressPicker() {
           <View
             style={[
               styles.formFooter,
-              { paddingBottom: Math.max(insets.bottom, 12) + keyboardHeight },
+              { paddingBottom: bottomInset + 12 + keyboardHeight },
             ]}
           >
             <Pressable style={[styles.save, saving && { opacity: 0.7 }]} onPress={saveAddress} disabled={saving}>
@@ -254,7 +275,7 @@ export default function AddressPicker() {
         </View>
       ) : (
         <Pressable style={styles.overlay} onPress={closePicker}>
-          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]} onPress={() => {}}>
+          <Pressable style={[styles.sheet, { paddingBottom: bottomInset + 20 }]} onPress={() => {}}>
             <View style={styles.handle} />
             <Text style={styles.title}>Delivery address</Text>
             <Text style={styles.hint}>{hint}</Text>
@@ -275,14 +296,26 @@ export default function AddressPicker() {
                     <Pressable
                       key={address.id}
                       style={[styles.row, selectedId === address.id && styles.rowActive]}
-                      onPress={() => selectAddress(address.id)}
+                      onPress={() => {
+                        if (address.serviceable === false) {
+                          setError("We don't deliver to this pincode yet.")
+                          return
+                        }
+                        selectAddress(address.id)
+                      }}
                     >
                       <Icon name="location" size={18} color={colors.brand} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.label}>{address.label || 'Home'}</Text>
                         <Text style={styles.line}>{address.formatted}</Text>
+                        {address.serviceable === false ? (
+                          <Text style={styles.error}>We don't deliver to this pincode yet.</Text>
+                        ) : null}
                       </View>
                       {selectedId === address.id ? <Icon name="checkmark-circle" color={colors.brand} /> : null}
+                      <Pressable onPress={() => removeAddress(address)} hitSlop={8}>
+                        <Icon name="trash-outline" size={18} color={colors.danger || '#b91c1c'} />
+                      </Pressable>
                     </Pressable>
                   ))}
                 </ScrollView>

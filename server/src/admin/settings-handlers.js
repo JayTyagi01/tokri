@@ -20,6 +20,7 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'razorpayEnabled',
   'razorpayKeyId',
   'razorpayKeySecret',
+  'codEnabled',
   'msg91Enabled',
   'msg91AuthKey',
   'msg91SenderId',
@@ -38,6 +39,7 @@ const NUMBER_FIELDS = new Set(['shippingFee', 'handlingFee'])
 
 const BOOLEAN_FIELDS = new Set([
   'razorpayEnabled',
+  'codEnabled',
   'msg91Enabled',
   'msg91WhatsappEnabled',
   'msg91WhatsappOtpButton',

@@ -35,6 +35,7 @@ export function getSettingResource(SettingsEditComponent) {
         'razorpayEnabled',
         'razorpayKeyId',
         'razorpayKeySecret',
+        'codEnabled',
         'msg91Enabled',
         'msg91AuthKey',
         'msg91SenderId',
@@ -110,6 +111,10 @@ export function getSettingResource(SettingsEditComponent) {
           type: 'password',
           label: 'Razorpay Key Secret',
           description: 'Leave blank to keep current secret',
+        },
+        codEnabled: {
+          label: 'Enable cash on delivery',
+          description: 'Customers can place unpaid orders and pay cash or scan a QR at the door',
         },
         msg91Enabled: { label: 'Enable MSG91 SMS' },
         msg91AuthKey: {

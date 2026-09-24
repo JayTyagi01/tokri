@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Image } from 'expo-image'
 import { Alert, Pressable, Text, View } from 'react-native'
 import { useThemedStyles } from '../context/ThemeContext'
@@ -13,6 +14,7 @@ function discountPercent(product) {
 
 export default function ProductCard({ product, onPress, compact = false }) {
   const styles = useThemedStyles(createStyles)
+  const cardRef = useRef(null)
   const { addItem, updateQuantity, items } = useCart()
   const qty = items.find((item) => item.slug === product.slug)?.quantity || 0
   const off = discountPercent(product)
@@ -37,8 +39,17 @@ export default function ProductCard({ product, onPress, compact = false }) {
     }
   }
 
+  const open = () => {
+    const emit = (origin) => onPress?.(product.slug, origin)
+    if (!cardRef.current?.measureInWindow) {
+      emit(null)
+      return
+    }
+    cardRef.current.measureInWindow((x, y, width, height) => emit({ x, y, width, height }))
+  }
+
   return (
-    <Pressable style={[styles.card, compact && styles.compact]} onPress={() => onPress?.(product.slug)}>
+    <Pressable ref={cardRef} style={[styles.card, compact && styles.compact]} onPress={open}>
       <View style={styles.imageWrap}>
         {off > 0 ? <Text style={styles.off}>{off}% OFF</Text> : null}
         <Image source={{ uri: product.image }} style={styles.image} contentFit="cover" />

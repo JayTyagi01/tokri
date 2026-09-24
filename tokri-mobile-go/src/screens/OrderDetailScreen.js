@@ -166,7 +166,7 @@ export default function OrderDetailScreen({ navigation, route }) {
         <View style={{ height: 88 }} />
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: 12 }]}>
+      <View style={[styles.footer, { paddingBottom: 12 + insets.bottom }]}>
         <Pressable style={styles.repeat} onPress={repeatOrder}>
           <Text style={styles.repeatTitle}>Repeat Order</Text>
           <Text style={styles.repeatSub}>VIEW CART ON NEXT STEP</Text>

@@ -39,7 +39,7 @@ const TABS = [
   {
     id: 'payments',
     label: 'Payments',
-    fields: ['razorpayEnabled', 'razorpayKeyId', 'razorpayKeySecret'],
+    fields: ['razorpayEnabled', 'razorpayKeyId', 'razorpayKeySecret', 'codEnabled'],
   },
   {
     id: 'notifications',

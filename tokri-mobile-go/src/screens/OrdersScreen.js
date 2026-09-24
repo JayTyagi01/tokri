@@ -112,7 +112,11 @@ export default function OrdersScreen({ navigation }) {
           data={orders}
           keyExtractor={(item) => item.orderNo}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
-          contentContainerStyle={orders.length ? styles.list : styles.center}
+          contentContainerStyle={
+            orders.length
+              ? [styles.list, { paddingBottom: 28 + insets.bottom }]
+              : [styles.center, { paddingBottom: insets.bottom }]
+          }
           ListEmptyComponent={<Text style={styles.emptyTitle}>No orders yet</Text>}
           renderItem={({ item }) => (
             <View style={styles.card}>

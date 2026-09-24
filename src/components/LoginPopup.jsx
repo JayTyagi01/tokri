@@ -1,5 +1,6 @@
 import { useLoginFlow } from '../hooks/useLoginFlow'
 import tokriLogo from '../assets/tokri-logo.png'
+import OtpInput from './OtpInput'
 
 export default function LoginPopup({ onClose }) {
   const {
@@ -66,25 +67,25 @@ export default function LoginPopup({ onClose }) {
         )}
 
         {step === 2 && (
-          <div>
-            <h2 className="mb-2 text-center text-xl font-bold text-white">Enter OTP</h2>
-            <p className="mb-4 text-center text-muted">
-              We sent a 4-digit code to +91 {mobileNumber}
-            </p>
-            <div className="mb-4 rounded-2xl border border-line bg-panel-2 p-3">
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-white outline-none placeholder:text-muted"
-              />
+          <div className="flex flex-col pt-2">
+            <div className="mb-8 flex flex-col items-center">
+              <img src={tokriLogo} alt="Tokriii" className="mb-4 h-12 w-auto object-contain" />
+              <h2 className="text-center text-xl font-bold text-white">Enter OTP</h2>
+              <p className="mt-3 text-center text-sm leading-6 text-muted">
+                We sent a 4-digit code to
+              </p>
+              <p className="mt-1 text-center text-sm font-semibold tracking-wide text-white">
+                +91 {mobileNumber}
+              </p>
             </div>
+
+            <OtpInput value={otp} onChange={setOtp} disabled={loading} />
+
             <button
               type="button"
               onClick={handleLogin}
-              disabled={loading}
-              className="w-full rounded-2xl bg-brand py-3 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
+              disabled={loading || otp.length !== 4}
+              className="mt-8 w-full rounded-2xl bg-brand py-3 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
             >
               {loading ? 'Verifying...' : 'Login'}
             </button>
@@ -92,9 +93,9 @@ export default function LoginPopup({ onClose }) {
               type="button"
               onClick={() => setStep(1)}
               disabled={loading}
-              className="mt-3 w-full rounded-2xl border border-line bg-panel-2 py-3 text-sm font-semibold text-mint transition hover:bg-canvas disabled:opacity-60"
+              className="mt-4 w-full rounded-2xl border border-line bg-panel-2 py-3 text-sm font-semibold text-mint transition hover:bg-canvas disabled:opacity-60"
             >
-              Back
+              Change number
             </button>
           </div>
         )}

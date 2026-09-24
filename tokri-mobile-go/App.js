@@ -5,15 +5,13 @@ import { AuthProvider } from './src/context/AuthContext'
 import { CartProvider } from './src/context/CartContext'
 import { AddressProvider } from './src/context/AddressContext'
 import { ThemeProvider, useTheme } from './src/context/ThemeContext'
-import { useSystemBottomInset } from './src/lib/safeArea'
 import RootNavigator from './src/navigation/RootNavigator'
 
 function AppShell() {
   const { colors, isDark } = useTheme()
-  const bottomInset = useSystemBottomInset()
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.panel, paddingBottom: bottomInset }}>
+    <View style={{ flex: 1, backgroundColor: colors.panel }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <RootNavigator />
     </View>

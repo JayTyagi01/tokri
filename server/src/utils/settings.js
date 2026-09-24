@@ -42,6 +42,7 @@ export function formatPublicSettings(settings) {
         enabled: Boolean(settings.razorpayEnabled),
         keyId: settings.razorpayKeyId || '',
       },
+      codEnabled: settings.codEnabled !== false,
     },
     messaging: {
       msg91: {

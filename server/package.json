@@ -16,7 +16,8 @@
     "db:apply-commerce": "node scripts/apply-commerce-settings.js",
     "db:apply-product-categories": "node scripts/apply-product-categories.js",
     "db:apply-msg91": "node scripts/apply-msg91-settings.js",
-    "db:apply-home": "node scripts/apply-home-settings.js"
+    "db:apply-home": "node scripts/apply-home-settings.js",
+    "db:apply-delivery": "node scripts/apply-delivery.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

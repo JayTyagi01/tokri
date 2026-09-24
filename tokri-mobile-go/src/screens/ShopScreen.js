@@ -368,8 +368,8 @@ export default function ShopScreen({ navigation }) {
     startFeedAt(slug)
   }
 
-  const openProduct = useCallback((slug) => {
-    navigation.navigate('Product', { slug })
+  const openProduct = useCallback((slug, origin) => {
+    navigation.navigate('Product', { slug, origin })
   }, [navigation])
 
   const renderProduct = useCallback(

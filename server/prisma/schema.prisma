@@ -34,6 +34,11 @@ enum PaymentStatus {
   refunded
 }
 
+enum PaymentMode {
+  online
+  cod
+}
+
 model User {
   id                  String               @id @default(cuid())
   name                String?
@@ -185,28 +190,40 @@ model CouponRedemption {
 }
 
 model Order {
-  id                String        @id @default(cuid())
-  orderNo           String        @unique
-  customerId        String?
-  customer          Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  status            OrderStatus   @default(pending)
-  paymentStatus     PaymentStatus @default(pending)
-  itemsTotal        Decimal       @db.Decimal(10, 2)
-  deliveryCharge    Decimal       @db.Decimal(10, 2) @default(25)
-  handlingCharge    Decimal       @db.Decimal(10, 2) @default(2)
-  smallCartCharge   Decimal       @db.Decimal(10, 2) @default(0)
-  discount          Decimal       @db.Decimal(10, 2) @default(0)
-  grandTotal        Decimal       @db.Decimal(10, 2)
-  couponCode        String?
-  address           Json?
-  razorpayOrderId   String?
-  razorpayPaymentId String?
-  items             OrderItem[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id                     String           @id @default(cuid())
+  orderNo                String           @unique
+  customerId             String?
+  customer               Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  status                 OrderStatus      @default(pending)
+  paymentStatus          PaymentStatus    @default(pending)
+  paymentMode            PaymentMode      @default(cod)
+  paymentCollectedAs     String?
+  itemsTotal             Decimal          @db.Decimal(10, 2)
+  deliveryCharge         Decimal          @db.Decimal(10, 2) @default(25)
+  handlingCharge         Decimal          @db.Decimal(10, 2) @default(2)
+  smallCartCharge        Decimal          @db.Decimal(10, 2) @default(0)
+  discount               Decimal          @db.Decimal(10, 2) @default(0)
+  grandTotal             Decimal          @db.Decimal(10, 2)
+  couponCode             String?
+  address                Json?
+  razorpayOrderId        String?
+  razorpayPaymentId      String?
+  razorpayPaymentLinkId  String?
+  razorpayQrUrl          String?          @db.Text
+  deliveryPartnerId      String?
+  deliveryPartner        DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+  deliveryPartnerName    String?
+  deliveryPartnerPhone   String?
+  deliveryPincode        String?
+  deliveryAssignedAt     DateTime?
+  items                  OrderItem[]
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   @@index([customerId])
   @@index([status])
+  @@index([deliveryPartnerId])
+  @@index([deliveryPincode])
 }
 
 model OrderItem {
@@ -263,6 +280,7 @@ model Setting {
   razorpayEnabled           Boolean  @default(false)
   razorpayKeyId             String?
   razorpayKeySecret         String?
+  codEnabled                Boolean  @default(true)
   msg91Enabled              Boolean  @default(false)
   msg91AuthKey              String?
   msg91SenderId             String?
@@ -337,4 +355,69 @@ model DeviceToken {
   updatedAt  DateTime @updatedAt
 
   @@index([customerId])
+}
+
+model DeliveryPartner {
+  id             String                  @id @default(cuid())
+  name           String
+  email          String                  @unique
+  phone          String                  @unique
+  password       String?
+  address        String?                 @db.Text
+  isActive       Boolean                 @default(false)
+  notes          String?                 @db.Text
+  pincodes       ServiceablePincode[]
+  orders         Order[]
+  devices        PartnerDeviceToken[]
+  passwordTokens PartnerPasswordToken[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model ServiceablePincode {
+  id         String           @id @default(cuid())
+  pincode    String           @unique
+  areaLabel  String?
+  city       String?
+  stateCode  String?
+  state      IndiaState?      @relation(fields: [stateCode], references: [code], onDelete: SetNull)
+  isActive   Boolean          @default(true)
+  partnerId  String?
+  partner    DeliveryPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([partnerId])
+  @@index([stateCode])
+}
+
+model IndiaState {
+  code     String               @id
+  name     String
+  pincodes ServiceablePincode[]
+}
+
+model PartnerPasswordToken {
+  id        String          @id @default(cuid())
+  partnerId String
+  partner   DeliveryPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([partnerId])
+}
+
+model PartnerDeviceToken {
+  id        String          @id @default(cuid())
+  partnerId String
+  partner   DeliveryPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  token     String          @unique
+  platform  String
+  provider  String          @default("expo")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([partnerId])
 }

@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { useMemo } from 'react'
 import { View } from 'react-native'
+import { useSystemBottomInset } from '../lib/safeArea'
 import Icon from '../components/Icon'
 import HomeScreen from '../screens/HomeScreen'
 import ShopScreen from '../screens/ShopScreen'
@@ -47,20 +48,20 @@ const styles = {
 function Tabs() {
   const { totalCount } = useCart()
   const { colors } = useTheme()
+  const bottom = useSystemBottomInset()
 
   const tabBarStyle = {
     backgroundColor: colors.panel,
     borderTopColor: colors.line,
-    height: 58,
+    height: 58 + bottom,
     paddingTop: 6,
-    paddingBottom: 6,
+    paddingBottom: 6 + bottom,
   }
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        safeAreaInsets: { bottom: 0 },
         tabBarStyle,
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.muted,
@@ -139,11 +140,27 @@ export default function RootNavigator() {
         }}
       >
         <Stack.Screen name="Main" component={Tabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Product" component={ProductScreen} />
+        <Stack.Screen
+          name="Product"
+          component={ProductScreen}
+          options={{
+            headerShown: false,
+            presentation: 'transparentModal',
+            animation: 'fade',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Otp" component={OtpScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
-        <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
+        <Stack.Screen
+          name="Search"
+          component={SearchScreen}
+          options={({ route }) => ({
+            headerShown: false,
+            animation: 'slide_from_right',
+          })}
+        />
         <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: false }} />
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ headerShown: false }} />
       </Stack.Navigator>

@@ -16,7 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tokriii.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Tokriii uses your location to fill your delivery address."
+        "NSLocationWhenInUseUsageDescription": "Tokriii uses your location to show where you are. Your saved delivery address is not changed unless you update it."
       }
     },
     "updates": {
@@ -28,8 +28,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#022c22"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,7 +44,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Tokriii uses your location to fill your delivery address."
+          "locationWhenInUsePermission": "Tokriii uses your location to show where you are. Your saved delivery address is not changed unless you update it."
         }
       ]
     ]

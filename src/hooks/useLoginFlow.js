@@ -36,12 +36,6 @@ export function useLoginFlow({ onSuccess }) {
       await postJson('/auth/send-otp', { phone: mobileNumber })
       setOtp('')
       setStep(2)
-      Swal.fire({
-        icon: 'success',
-        title: 'OTP Sent',
-        text: `An OTP has been sent to +91 ${mobileNumber}.`,
-        confirmButtonColor: '#047857',
-      })
     } catch (error) {
       Swal.fire({
         icon: 'error',

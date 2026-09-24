@@ -25,6 +25,8 @@ const resourceLabels = {
   Orders: 'Orders',
   Coupons: 'Coupons',
   General: 'General',
+  'Delivery partners': 'Delivery partners',
+  'Serviceable pincodes': 'Serviceable pincodes',
   Team: 'Team',
 }
 
@@ -68,6 +70,10 @@ export const adminLocale = {
           },
         },
         Setting: { labels: { General: 'General' } },
+        DeliveryPartner: { labels: { 'Delivery partners': 'Delivery partners' } },
+        ServiceablePincode: { labels: { 'Serviceable pincodes': 'Serviceable pincodes' } },
+        IndiaState: { labels: { 'Indian states': 'Indian states' } },
+        Customer: { labels: { Customers: 'Customers' } },
         User: { labels: { Team: 'Team' } },
       },
     },

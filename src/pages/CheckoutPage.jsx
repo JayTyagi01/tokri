@@ -27,6 +27,8 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState('')
   const [razorpayEnabled, setRazorpayEnabled] = useState(false)
+  const [codEnabled, setCodEnabled] = useState(true)
+  const [paymentMode, setPaymentMode] = useState('cod')
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
 
@@ -42,12 +44,17 @@ export default function CheckoutPage() {
         ])
         if (ignore) return
         setRazorpayEnabled(Boolean(config?.razorpay?.enabled))
+        const allowCod = config?.codEnabled !== false
+        setCodEnabled(allowCod)
+        if (config?.razorpay?.enabled && !allowCod) setPaymentMode('online')
+        else if (!config?.razorpay?.enabled && allowCod) setPaymentMode('cod')
         const list = addressData.addresses || []
         setAddresses(list)
-        const preferredId =
-          savedAddressId && list.some((item) => item.id === savedAddressId)
-            ? savedAddressId
-            : list[0]?.id || ''
+        const canDeliver = (item) => item && item.serviceable !== false
+        const preferred =
+          list.find((item) => item.id === savedAddressId && canDeliver(item)) ||
+          list.find(canDeliver)
+        const preferredId = preferred?.id || ''
         if (preferredId) setSelectedAddressId(preferredId)
       } finally {
         if (!ignore) setLoading(false)
@@ -125,7 +132,6 @@ export default function CheckoutPage() {
 
     setPaying(true)
     try {
-      const paymentMode = razorpayEnabled ? 'online' : 'cod'
       const checkout = await authPost('/checkout/create-order', user, {
         items: cartItems.map((item) => ({ id: item.id, quantity: item.quantity })),
         addressId: selectedAddressId,
@@ -193,10 +199,9 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {!loading && !razorpayEnabled && (
-          <div className="mb-6 rounded-xl border border-sky-700/40 bg-sky-950/40 px-4 py-3 text-sm text-sky-200">
-            Online payment (Razorpay) is not enabled yet. You can still place your order with{' '}
-            <strong>cash on delivery</strong>. Enable Razorpay in admin settings to accept online payments.
+        {!loading && !razorpayEnabled && !codEnabled && (
+          <div className="mb-6 rounded-xl border border-amber-700/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+            Checkout is temporarily unavailable. Enable Razorpay or cash on delivery in admin settings.
           </div>
         )}
 
@@ -304,15 +309,43 @@ export default function CheckoutPage() {
               <span>{formatPrice(grandTotal)}</span>
             </div>
 
+            {(razorpayEnabled || codEnabled) && (
+              <fieldset className="mt-4 space-y-2">
+                <legend className="text-sm font-semibold text-white">Payment</legend>
+                {razorpayEnabled && (
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm text-white">
+                    <input
+                      type="radio"
+                      name="paymentMode"
+                      checked={paymentMode === 'online'}
+                      onChange={() => setPaymentMode('online')}
+                    />
+                    Pay online
+                  </label>
+                )}
+                {codEnabled && (
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm text-white">
+                    <input
+                      type="radio"
+                      name="paymentMode"
+                      checked={paymentMode === 'cod'}
+                      onChange={() => setPaymentMode('cod')}
+                    />
+                    Cash on delivery
+                  </label>
+                )}
+              </fieldset>
+            )}
+
             <button
               type="button"
               onClick={handleCheckout}
-              disabled={paying || loading || !isLoggedIn || !addresses.length}
+              disabled={paying || loading || !isLoggedIn || !addresses.length || (!razorpayEnabled && !codEnabled)}
               className="mt-5 w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {paying
                 ? 'Processing...'
-                : razorpayEnabled
+                : paymentMode === 'online'
                   ? `Pay ${formatPrice(grandTotal)}`
                   : 'Place order (Cash on delivery)'}
             </button>

@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url'
 import { env } from './config/env.js'
 import { buildAdminRouter } from './admin/index.js'
 import adminAuthRouter from './admin/authRoutes.js'
+import partnerPagesRouter from './routes/partnerPages.js'
+import { handleRazorpayWebhook } from './routes/webhooks.js'
 import apiRouter from './routes/api.js'
 import mediaRouter from './routes/media.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -39,6 +41,10 @@ app.get('/', (_req, res) => {
 
 // Password reset pages (before AdminJS; no global body parser here)
 app.use(env.adminPath, adminAuthRouter)
+app.use(`${env.adminPath}/partner`, partnerPagesRouter)
+app.use('/partner', partnerPagesRouter)
+
+app.post('/api/v1/webhooks/razorpay', express.raw({ type: 'application/json' }), handleRazorpayWebhook)
 
 // CMS theme assets
 app.use(

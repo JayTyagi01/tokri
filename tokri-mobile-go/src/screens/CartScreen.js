@@ -10,6 +10,7 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { fetchJson, formatPrice, normalizeProduct } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useAddress } from '../context/AddressContext'
 
 function moneyValue(value) {
   if (value == null || value === '') return 0
@@ -27,6 +28,8 @@ export default function CartScreen({ navigation }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const { isLoggedIn } = useAuth()
+  const { selectedAddress, openPicker } = useAddress()
+  const canDeliver = Boolean(selectedAddress && selectedAddress.serviceable !== false)
   const { items, grandTotal, itemsTotal, deliveryCharge, handlingCharge, discount, hydrated, updateQuantity } = useCart()
   const [suggested, setSuggested] = useState([])
 
@@ -54,6 +57,10 @@ export default function CartScreen({ navigation }) {
   const onCheckout = () => {
     if (!isLoggedIn) {
       navigation.navigate('Login', { next: 'Checkout' })
+      return
+    }
+    if (!canDeliver) {
+      openPicker()
       return
     }
     navigation.navigate('Checkout')
@@ -139,7 +146,7 @@ export default function CartScreen({ navigation }) {
                       <ProductCard
                         product={product}
                         compact
-                        onPress={(slug) => navigation.navigate('Product', { slug })}
+                        onPress={(slug, origin) => navigation.navigate('Product', { slug, origin })}
                       />
                     </View>
                   ))}
@@ -192,7 +199,9 @@ export default function CartScreen({ navigation }) {
 
           <View style={styles.footer}>
             <Pressable style={styles.button} onPress={onCheckout}>
-              <Text style={styles.buttonText}>{isLoggedIn ? 'Proceed to checkout' : 'Login to proceed'}</Text>
+              <Text style={styles.buttonText}>
+                {!isLoggedIn ? 'Login to proceed' : canDeliver ? 'Proceed to checkout' : 'Add address to proceed'}
+              </Text>
             </Pressable>
           </View>
         </>

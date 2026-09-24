@@ -1,12 +1,13 @@
 import { prisma } from '../lib/prisma.js'
 import { createRazorpayOrder, verifyRazorpayPayment, getPublicPaymentConfig } from './razorpay.js'
-import { listAddresses } from './addresses.js'
+import { listAddresses, snapshotCurrentAddress } from './addresses.js'
 import { calcCartTotals, getChargeRates } from '../config/charges.js'
 import { clearCart, getCartCheckoutItems } from './cart.js'
 import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
 import { sendOrderConfirmation } from './msg91.js'
+import { assignmentForPincode } from './delivery.js'
 
 function parseAddresses(raw) {
   if (!raw) return []
@@ -60,7 +61,10 @@ async function resolveCartItems(rawItems) {
   return items
 }
 
-async function resolveAddress(user, addressId) {
+async function resolveAddress(user, addressId, addressSnapshot) {
+  if (String(addressId) === 'current') {
+    return await snapshotCurrentAddress(user, addressSnapshot)
+  }
   const addresses = await listAddresses(user.id)
   const address = addresses.find((item) => item.id === addressId)
   if (!address) {
@@ -73,13 +77,13 @@ export async function getCheckoutConfig() {
   return getPublicPaymentConfig()
 }
 
-export async function createCheckoutOrder(user, { items: rawItems, addressId, paymentMode = 'online', couponCode }) {
+export async function createCheckoutOrder(user, { items: rawItems, addressId, address: addressSnapshot, paymentMode = 'online', couponCode }) {
   const sourceItems =
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems
       : await getCartCheckoutItems(user.id)
   const cartItems = await resolveCartItems(sourceItems)
-  const address = await resolveAddress(user, addressId)
+  const address = await resolveAddress(user, addressId, addressSnapshot)
   const rates = await getChargeRates()
   let totals = calcCartTotals(cartItems, rates)
   let appliedCoupon = null
@@ -92,7 +96,27 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
   }
 
   const paymentConfig = await getPublicPaymentConfig()
-  const useRazorpay = paymentMode === 'online' && paymentConfig.razorpay.enabled
+  const requestedMode = String(paymentMode || '').toLowerCase() === 'cod' ? 'cod' : 'online'
+  const razorpayOn = Boolean(paymentConfig.razorpay?.enabled)
+  const codOn = paymentConfig.codEnabled !== false
+
+  if (requestedMode === 'online' && !razorpayOn) {
+    throw Object.assign(
+      new Error('Online payment is not available. Choose cash on delivery or enable Razorpay in admin.'),
+      { status: 400, code: 'RAZORPAY_NOT_CONFIGURED' },
+    )
+  }
+  if (requestedMode === 'cod' && !codOn) {
+    throw Object.assign(new Error('Cash on delivery is not available for this order.'), { status: 400 })
+  }
+  if (!razorpayOn && !codOn) {
+    throw Object.assign(new Error('Checkout is temporarily unavailable. Enable a payment method in admin.'), {
+      status: 400,
+    })
+  }
+
+  const useRazorpay = requestedMode === 'online'
+  const delivery = await assignmentForPincode(address.pincode)
 
   const orderNo = buildOrderNo()
   let razorpayOrderId = null
@@ -104,11 +128,6 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
       notes: { orderNo, customerId: user.id },
     })
     razorpayOrderId = razorpayOrder.id
-  } else if (paymentMode === 'online') {
-    throw Object.assign(
-      new Error('Online payment is not available yet. Enable Razorpay in admin or choose cash on delivery.'),
-      { status: 400, code: 'RAZORPAY_NOT_CONFIGURED' },
-    )
   }
 
   const order = await prisma.order.create({
@@ -116,7 +135,8 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
       orderNo,
       customerId: user.id,
       status: 'pending',
-      paymentStatus: useRazorpay ? 'pending' : 'pending',
+      paymentStatus: 'pending',
+      paymentMode: requestedMode,
       itemsTotal: totals.itemsTotal,
       deliveryCharge: totals.deliveryCharge,
       handlingCharge: totals.handlingCharge,
@@ -126,6 +146,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
       grandTotal: totals.grandTotal,
       address,
       razorpayOrderId,
+      ...delivery,
       items: {
         create: cartItems.map(({ product, quantity, priceValue }) => ({
           productId: product.id,
@@ -151,7 +172,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, pa
       id: order.id,
       orderNo: order.orderNo,
       grandTotal: Number(order.grandTotal),
-      paymentMode: useRazorpay ? 'online' : 'cod',
+      paymentMode: requestedMode,
     },
     razorpay: useRazorpay
       ? {
@@ -190,7 +211,8 @@ export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, r
     where: { id: order.id },
     data: {
       paymentStatus: 'paid',
-      status: 'paid',
+      status: order.status === 'pending' ? 'paid' : order.status,
+      paymentCollectedAs: 'online',
       razorpayPaymentId,
     },
   })

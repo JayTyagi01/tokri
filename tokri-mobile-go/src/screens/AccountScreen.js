@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSystemBottomInset } from '../lib/safeArea'
 import Icon from '../components/Icon'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -70,6 +71,7 @@ function formatDobFromDate(date) {
 
 export default function AccountScreen({ navigation }) {
   const insets = useSafeAreaInsets()
+  const bottomInset = useSystemBottomInset()
   const { user, isLoggedIn, logout, updateProfile } = useAuth()
   const { mode, setMode, colors, isDark } = useTheme()
   const styles = useThemedStyles(createStyles)
@@ -165,7 +167,7 @@ export default function AccountScreen({ navigation }) {
       </Pressable>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: 24 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 24 + bottomInset }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -312,7 +314,7 @@ export default function AccountScreen({ navigation }) {
           <View
             style={[
               styles.formFooter,
-              { paddingBottom: Math.max(insets.bottom, 12) + keyboardHeight },
+              { paddingBottom: bottomInset + 12 + keyboardHeight },
             ]}
           >
             <Pressable
@@ -329,7 +331,7 @@ export default function AccountScreen({ navigation }) {
       <Modal visible={appearanceOpen} transparent animationType="slide" onRequestClose={() => setAppearanceOpen(false)}>
         <View style={styles.sheetWrap}>
           <Pressable style={styles.overlay} onPress={() => setAppearanceOpen(false)} />
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={[styles.sheet, { paddingBottom: bottomInset + 20 }]}>
             <View style={styles.handle} />
             <View style={styles.formHead}>
               <Text style={styles.sheetTitle}>Appearance</Text>

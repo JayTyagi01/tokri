@@ -48,7 +48,7 @@ function formatDatetimeLabel(value) {
 
 function useAnchoredMenu(open) {
   const wrapRef = useRef(null)
-  const [coords, setCoords] = useState(null)
+  const [openUp, setOpenUp] = useState(false)
 
   useEffect(() => {
     if (!open) return undefined
@@ -58,13 +58,7 @@ function useAnchoredMenu(open) {
       if (!node) return
       const rect = node.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
-      const openUp = spaceBelow < 280 && rect.top > spaceBelow
-      setCoords({
-        top: openUp ? undefined : rect.bottom + 6,
-        bottom: openUp ? window.innerHeight - rect.top + 6 : undefined,
-        left: Math.max(12, rect.left),
-        width: rect.width,
-      })
+      setOpenUp(spaceBelow < 240 && rect.top > spaceBelow)
     }
 
     update()
@@ -76,7 +70,7 @@ function useAnchoredMenu(open) {
     }
   }, [open])
 
-  return { wrapRef, coords }
+  return { wrapRef, openUp }
 }
 
 function ChoiceCard({ selected, title, hint, onClick }) {
@@ -94,7 +88,7 @@ function ChoiceCard({ selected, title, hint, onClick }) {
 
 function AnchoredSelect({ value, options, onChange, placeholder }) {
   const [open, setOpen] = useState(false)
-  const { wrapRef, coords } = useAnchoredMenu(open)
+  const { wrapRef, openUp } = useAnchoredMenu(open)
   const selected = options.find((item) => item.value === value)
 
   useEffect(() => {
@@ -111,18 +105,8 @@ function AnchoredSelect({ value, options, onChange, placeholder }) {
         <span>{selected?.label || placeholder}</span>
         <span className="tokri-multiselect-caret">{open ? '▴' : '▾'}</span>
       </button>
-      {open && coords ? (
-        <div
-          className="tokri-multiselect-menu"
-          style={{
-            position: 'fixed',
-            top: coords.top,
-            bottom: coords.bottom,
-            left: coords.left,
-            width: Math.max(coords.width, 220),
-            zIndex: 1000,
-          }}
-        >
+      {open ? (
+        <div className={`tokri-multiselect-menu${openUp ? ' is-up' : ''}`}>
           {options.map((item) => (
             <button
               key={item.value}
@@ -145,7 +129,7 @@ function AnchoredSelect({ value, options, onChange, placeholder }) {
 function SearchableMultiSelect({ options, selected, onChange, placeholder, searchPlaceholder }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const { wrapRef, coords } = useAnchoredMenu(open)
+  const { wrapRef, openUp } = useAnchoredMenu(open)
 
   useEffect(() => {
     const onDocClick = (event) => {
@@ -192,18 +176,8 @@ function SearchableMultiSelect({ options, selected, onChange, placeholder, searc
         )}
         <span className="tokri-multiselect-caret">{open ? '▴' : '▾'}</span>
       </button>
-      {open && coords ? (
-        <div
-          className="tokri-multiselect-menu"
-          style={{
-            position: 'fixed',
-            top: coords.top,
-            bottom: coords.bottom,
-            left: coords.left,
-            width: Math.max(coords.width, 260),
-            zIndex: 1000,
-          }}
-        >
+      {open ? (
+        <div className={`tokri-multiselect-menu${openUp ? ' is-up' : ''}`}>
           <input
             className="tokri-coupon-input"
             value={query}
@@ -239,7 +213,7 @@ function DateTimePicker({ value, onChange, placeholder }) {
   const [monthDate, setMonthDate] = useState(valid || new Date())
   const [hours, setHours] = useState(valid ? pad(valid.getHours()) : '00')
   const [minutes, setMinutes] = useState(valid ? pad(valid.getMinutes()) : '00')
-  const { wrapRef, coords } = useAnchoredMenu(open)
+  const { wrapRef, openUp } = useAnchoredMenu(open)
 
   useEffect(() => {
     const onDocClick = (event) => {
@@ -278,18 +252,8 @@ function DateTimePicker({ value, onChange, placeholder }) {
         <span>{valid ? formatDatetimeLabel(valid) : placeholder}</span>
         <span>📅</span>
       </button>
-      {open && coords ? (
-        <div
-          className="tokri-datepicker-pop"
-          style={{
-            position: 'fixed',
-            top: coords.top,
-            bottom: coords.bottom,
-            left: coords.left,
-            width: 300,
-            zIndex: 1000,
-          }}
-        >
+      {open ? (
+        <div className={`tokri-datepicker-pop${openUp ? ' is-up' : ''}`}>
           <div className="tokri-datepicker-nav">
             <button type="button" onClick={() => setMonthDate(new Date(year, month - 1, 1))}>
               ‹

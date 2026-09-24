@@ -30,13 +30,15 @@ export function AddressProvider({ children }) {
 
       const key = storageKey(user.phone)
       const storedId = key ? localStorage.getItem(key) : null
-      const validStored = storedId && list.some((item) => item.id === storedId)
+      const canDeliver = (item) => item && item.serviceable !== false
+      const storedAddress = list.find((item) => item.id === storedId)
+      const fallback = list.find(canDeliver)
 
-      if (validStored) {
+      if (canDeliver(storedAddress)) {
         setSelectedAddressId(storedId)
-      } else if (list.length === 1) {
-        setSelectedAddressId(list[0].id)
-        if (key) localStorage.setItem(key, list[0].id)
+      } else if (fallback) {
+        setSelectedAddressId(fallback.id)
+        if (key) localStorage.setItem(key, fallback.id)
       } else {
         setSelectedAddressId(null)
         if (key) localStorage.removeItem(key)

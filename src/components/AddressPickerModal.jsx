@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useAddress } from '../context/AddressContext'
-import { authPost } from '../lib/api'
+import { authDelete, authPost } from '../lib/api'
 import AddressFormModal from './account/AddressFormModal'
 import { addressLabelIcon } from './account/AccountSidebar'
 
@@ -31,6 +31,16 @@ export default function AddressPickerModal({ onDesktopLogin }) {
       return
     }
     navigate('/login')
+  }
+
+  const handleDelete = async (addressId) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return
+    try {
+      await authDelete(`/account/addresses/${addressId}`, user)
+      await refreshAddresses()
+    } catch (err) {
+      window.alert(err.message || 'Could not delete address.')
+    }
   }
 
   const handleSave = async (payload) => {
@@ -114,13 +124,19 @@ export default function AddressPickerModal({ onDesktopLogin }) {
 
             return (
               <li key={address.id}>
-                <button
-                  type="button"
-                  onClick={() => selectAddress(address.id)}
+                <div
                   className={`flex w-full items-start gap-3 px-4 py-4 text-left transition ${
                     active ? 'bg-brand/10' : 'hover:bg-panel-2'
                   }`}
                 >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (address.serviceable === false) return
+                      selectAddress(address.id)
+                    }}
+                    className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                  >
                   <span
                     className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
                       active ? 'border-brand' : 'border-line'
@@ -134,8 +150,22 @@ export default function AddressPickerModal({ onDesktopLogin }) {
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-white">{address.label}</span>
                     <span className="mt-1 block text-sm leading-5 text-muted">{address.formatted}</span>
+                    {address.serviceable === false && (
+                      <span className="mt-1 block text-sm font-semibold text-red-400">
+                        We don't deliver to this pincode yet.
+                      </span>
+                    )}
                   </span>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(address.id)}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-400 hover:bg-red-950/40"
+                    aria-label="Delete address"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </li>
             )
           })}

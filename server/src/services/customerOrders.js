@@ -26,7 +26,14 @@ export function formatCustomerOrder(order) {
     orderNo: order.orderNo,
     status: order.status,
     paymentStatus: order.paymentStatus,
-    paymentMethod: order.razorpayPaymentId ? 'Razorpay' : 'Cash on delivery',
+    paymentMethod:
+      order.paymentCollectedAs === 'cash'
+        ? 'Cash on delivery'
+        : order.paymentCollectedAs === 'qr'
+          ? 'Razorpay QR'
+          : order.paymentMode === 'online' || order.razorpayPaymentId
+            ? 'Razorpay'
+            : 'Cash on delivery',
     createdAt: order.createdAt,
     itemsTotal: Number(order.itemsTotal),
     deliveryCharge: Number(order.deliveryCharge),

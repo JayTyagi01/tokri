@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 export function useAnchoredMenu(open) {
   const wrapRef = useRef(null)
-  const [coords, setCoords] = useState(null)
+  const [openUp, setOpenUp] = useState(false)
 
   useEffect(() => {
     if (!open) return undefined
@@ -12,13 +12,7 @@ export function useAnchoredMenu(open) {
       if (!node) return
       const rect = node.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
-      const openUp = spaceBelow < 280 && rect.top > spaceBelow
-      setCoords({
-        top: openUp ? undefined : rect.bottom + 6,
-        bottom: openUp ? window.innerHeight - rect.top + 6 : undefined,
-        left: Math.max(12, rect.left),
-        width: rect.width,
-      })
+      setOpenUp(spaceBelow < 240 && rect.top > spaceBelow)
     }
 
     update()
@@ -30,13 +24,13 @@ export function useAnchoredMenu(open) {
     }
   }, [open])
 
-  return { wrapRef, coords }
+  return { wrapRef, openUp }
 }
 
 export function SearchableMultiSelect({ options, selected, onChange, placeholder, searchPlaceholder }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const { wrapRef, coords } = useAnchoredMenu(open)
+  const { wrapRef, openUp } = useAnchoredMenu(open)
 
   useEffect(() => {
     const onDocClick = (event) => {
@@ -83,18 +77,8 @@ export function SearchableMultiSelect({ options, selected, onChange, placeholder
         )}
         <span className="tokri-multiselect-caret">{open ? '▴' : '▾'}</span>
       </button>
-      {open && coords ? (
-        <div
-          className="tokri-multiselect-menu"
-          style={{
-            position: 'fixed',
-            top: coords.top,
-            bottom: coords.bottom,
-            left: coords.left,
-            width: Math.max(coords.width, 260),
-            zIndex: 1000,
-          }}
-        >
+      {open ? (
+        <div className={`tokri-multiselect-menu${openUp ? ' is-up' : ''}`}>
           <input
             className="tokri-coupon-input"
             value={query}
@@ -133,5 +117,162 @@ export function FlagCard({ selected, title, hint, onClick }) {
       <strong>{title}</strong>
       <span>{hint}</span>
     </button>
+  )
+}
+
+export function isFlagOn(value) {
+  return value === true || value === 'true' || value === 'on' || value === 1 || value === '1'
+}
+
+export function StatusSwitch({
+  checked,
+  onChange,
+  disabled,
+  title,
+  hint,
+  compact = false,
+}) {
+  return (
+    <button
+      type="button"
+      className={`tokri-switch${checked ? ' is-on' : ''}${compact ? ' is-compact' : ''}`}
+      disabled={disabled}
+      aria-pressed={checked}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        if (!disabled) onChange(!checked)
+      }}
+    >
+      <span className="tokri-switch-track" aria-hidden="true">
+        <span className="tokri-switch-thumb" />
+      </span>
+      {title || hint ? (
+        <span className="tokri-switch-copy">
+          {title ? <strong>{title}</strong> : null}
+          {hint ? <span>{hint}</span> : null}
+        </span>
+      ) : (
+        <span className={`tokri-status-pill${checked ? ' is-on' : ''}`}>{checked ? 'Active' : 'Inactive'}</span>
+      )}
+    </button>
+  )
+}
+
+export function SearchableSelect({ value, options, onChange, placeholder, searchPlaceholder, disabled }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const { wrapRef, openUp } = useAnchoredMenu(open)
+  const selected = options.find((item) => item.value === value)
+
+  useEffect(() => {
+    const onDocClick = (event) => {
+      if (!wrapRef.current?.contains(event.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [wrapRef])
+
+  const filtered = options.filter((item) =>
+    `${item.label} ${item.value}`.toLowerCase().includes(query.trim().toLowerCase()),
+  )
+
+  return (
+    <div className="tokri-multiselect" ref={wrapRef}>
+      <button
+        type="button"
+        className="tokri-multiselect-control"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
+      >
+        <span className={selected ? '' : 'tokri-multiselect-placeholder'}>
+          {selected?.label || placeholder}
+        </span>
+        <span className="tokri-multiselect-caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open ? (
+        <div className={`tokri-multiselect-menu${openUp ? ' is-up' : ''}`}>
+          <input
+            className="tokri-coupon-input"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={searchPlaceholder}
+            autoFocus
+          />
+          <div className="tokri-multiselect-list">
+            {filtered.length ? (
+              filtered.map((item) => {
+                const active = item.value === value
+                return (
+                  <button
+                    type="button"
+                    key={item.value || 'empty'}
+                    className={`tokri-multiselect-option${active ? ' is-selected' : ''}`}
+                    onClick={() => {
+                      onChange(item.value)
+                      setOpen(false)
+                      setQuery('')
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="tokri-multiselect-empty">No matches</div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+export function LocalSelect({ value, options, onChange, disabled }) {
+  const [open, setOpen] = useState(false)
+  const { wrapRef, openUp } = useAnchoredMenu(open)
+  const selected = options.find((item) => String(item.value) === String(value))
+
+  useEffect(() => {
+    const onDocClick = (event) => {
+      if (!wrapRef.current?.contains(event.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [wrapRef])
+
+  return (
+    <div className="tokri-local-select" ref={wrapRef}>
+      <button
+        type="button"
+        className="tokri-local-select-control"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
+      >
+        <span>{selected?.label || value}</span>
+        <span className="tokri-multiselect-caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open ? (
+        <div className={`tokri-local-select-menu${openUp ? ' is-up' : ''}`}>
+          {options.map((item) => (
+            <button
+              type="button"
+              key={item.value}
+              className={`tokri-multiselect-option${String(item.value) === String(value) ? ' is-selected' : ''}`}
+              onClick={() => {
+                onChange(item.value)
+                setOpen(false)
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }

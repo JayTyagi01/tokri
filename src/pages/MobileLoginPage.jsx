@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import tokriLogo from '../assets/tokri-logo.png'
 import LoginImageMarquee from '../components/LoginImageMarquee'
 import { useLoginFlow } from '../hooks/useLoginFlow'
+import OtpInput from '../components/OtpInput'
 
 const DESKTOP_BREAKPOINT = 1024
 
@@ -94,25 +95,22 @@ export default function MobileLoginPage() {
           </div>
         ) : (
           <div className="mt-8">
-            <p className="text-center text-sm text-muted">
-              Enter the 4-digit OTP sent to +91 {mobileNumber}
+            <h2 className="text-center text-lg font-bold text-white">Enter OTP</h2>
+            <p className="mt-3 text-center text-sm leading-6 text-muted">
+              We sent a 4-digit code to
             </p>
-            <div className="mt-4 rounded-xl border border-line bg-panel px-4 py-3.5">
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full bg-transparent text-center text-lg tracking-[0.4em] text-white outline-none placeholder:text-muted"
-              />
+            <p className="mt-1 text-center text-sm font-semibold text-white">
+              +91 {mobileNumber}
+            </p>
+            <div className="mt-8">
+              <OtpInput value={otp} onChange={setOtp} disabled={loading} />
             </div>
 
             <button
               type="button"
               onClick={handleLogin}
-              disabled={loading}
-              className="mt-5 w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
+              disabled={loading || otp.length !== 4}
+              className="mt-8 w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-black transition hover:bg-brand-hover disabled:opacity-60"
             >
               {loading ? 'Verifying...' : 'Continue'}
             </button>
@@ -121,7 +119,7 @@ export default function MobileLoginPage() {
               type="button"
               onClick={() => setStep(1)}
               disabled={loading}
-              className="mt-3 w-full rounded-xl border border-line bg-panel py-3.5 text-base font-semibold text-white"
+              className="mt-4 w-full rounded-xl border border-line bg-panel py-3.5 text-base font-semibold text-white"
             >
               Change number
             </button>

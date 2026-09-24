@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -13,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { postJson } from '../lib/api'
+import { startOtpSmsListener, subscribeOtpSms } from '../lib/smsOtp'
 import { useAuth } from '../context/AuthContext'
 
 const OTP_LENGTH = 4
@@ -43,6 +43,15 @@ export default function OtpScreen({ navigation, route }) {
     const timer = setTimeout(() => setResendIn((value) => value - 1), 1000)
     return () => clearTimeout(timer)
   }, [resendIn])
+
+  useEffect(() => {
+    startOtpSmsListener()
+    const stop = subscribeOtpSms((code) => {
+      if (submitted.current) return
+      onChangeOtp(code)
+    })
+    return stop
+  }, [])
 
   const verifyOtp = async (code) => {
     if (!/^\d{4}$/.test(code) || loading) return
@@ -75,6 +84,7 @@ export default function OtpScreen({ navigation, route }) {
     if (resendIn > 0 || loading) return
     setLoading(true)
     try {
+      await startOtpSmsListener()
       const result = await postJson('/auth/send-otp', { phone })
       setOtp('')
       submitted.current = false
@@ -109,32 +119,35 @@ export default function OtpScreen({ navigation, route }) {
         </View>
 
         <Pressable style={styles.otpWrap} onPress={() => inputRef.current?.focus()}>
-          {Array.from({ length: OTP_LENGTH }).map((_, index) => {
-            const filled = Boolean(otp[index])
-            const active = otp.length === index
-            return (
-              <View
-                key={index}
-                style={[styles.otpBox, filled && styles.otpBoxFilled, active && styles.otpBoxActive]}
-              >
-                <Text style={styles.otpDigit}>{otp[index] || ''}</Text>
-              </View>
-            )
-          })}
+          <View style={styles.otpRow} pointerEvents="none">
+            {Array.from({ length: OTP_LENGTH }).map((_, index) => {
+              const filled = Boolean(otp[index])
+              const active = otp.length === index
+              return (
+                <View
+                  key={index}
+                  style={[styles.otpBox, filled && styles.otpBoxFilled, active && styles.otpBoxActive]}
+                >
+                  <Text style={styles.otpDigit}>{otp[index] || ''}</Text>
+                </View>
+              )
+            })}
+          </View>
           <TextInput
             ref={inputRef}
-            style={styles.hiddenInput}
+            style={styles.autofillInput}
             value={otp}
             onChangeText={onChangeOtp}
             keyboardType="number-pad"
             inputMode="numeric"
             maxLength={OTP_LENGTH}
             autoFocus
-            autoComplete="sms-otp"
+            autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
             textContentType="oneTimeCode"
             importantForAutofill="yes"
+            autoCorrect={false}
+            spellCheck={false}
             caretHidden
-            editable={!loading}
           />
         </Pressable>
 
@@ -187,13 +200,18 @@ const createStyles = (c) => ({
   title: { color: c.text, fontSize: 26, fontWeight: '800' },
   subtitle: { color: c.muted, fontSize: 14, marginTop: 6, textAlign: 'center', lineHeight: 20 },
   otpWrap: {
-    flexDirection: 'row',
     marginBottom: 22,
+    height: 64,
     position: 'relative',
+  },
+  otpRow: {
+    flexDirection: 'row',
     gap: 10,
+    height: 64,
   },
   otpBox: {
     flex: 1,
+    flexBasis: 0,
     height: 64,
     borderRadius: 14,
     backgroundColor: c.panel,
@@ -205,11 +223,17 @@ const createStyles = (c) => ({
   otpBoxFilled: { borderColor: c.brand },
   otpBoxActive: { borderColor: c.brand, borderWidth: 1.5 },
   otpDigit: { color: c.text, fontSize: 24, fontWeight: '800' },
-  hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
+  autofillInput: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: 64,
+    opacity: 0.02,
     color: 'transparent',
     backgroundColor: 'transparent',
-    fontSize: 24,
+    fontSize: 16,
+    padding: 0,
   },
   devHint: { color: c.brand, textAlign: 'center', marginBottom: 14, fontWeight: '600' },
   continueBtn: {

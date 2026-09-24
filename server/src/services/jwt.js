@@ -60,3 +60,27 @@ export function verifyCustomerToken(token) {
 export function formatAuthUser(customer) {
   return formatAuthCustomer(customer)
 }
+
+export function signPartnerToken(partner) {
+  const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const now = Math.floor(Date.now() / 1000)
+  const payload = toBase64Url(
+    JSON.stringify({
+      sub: partner.id,
+      email: partner.email,
+      role: 'partner',
+      iat: now,
+      exp: now + env.jwtExpiresInSeconds,
+    }),
+  )
+  const signingInput = `${header}.${payload}`
+  return `${signingInput}.${sign(signingInput, env.jwtSecret)}`
+}
+
+export function verifyPartnerToken(token) {
+  const data = verifyCustomerToken(token)
+  if (data.role !== 'partner') {
+    throw Object.assign(new Error('Invalid session. Please log in again.'), { status: 401 })
+  }
+  return data
+}

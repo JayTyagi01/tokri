@@ -45,8 +45,8 @@ export default function ReorderScreen({ navigation }) {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  const openProduct = (slug) => {
-    navigation.navigate('Product', { slug })
+  const openProduct = (slug, origin) => {
+    navigation.navigate('Product', { slug, origin })
   }
 
   const load = useCallback(async () => {

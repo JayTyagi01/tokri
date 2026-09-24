@@ -3,8 +3,8 @@
 :root {
   --tokri-sidebar: #1d2327;
   --tokri-sidebar-hover: #2c3338;
-  --tokri-sidebar-active: #2271b1;
-  --tokri-accent: #2271b1;
+  --tokri-sidebar-active: #047857;
+  --tokri-accent: #047857;
   --tokri-bg: #f0f0f1;
   --tokri-card: #ffffff;
   --tokri-border: #c3c4c7;
@@ -93,6 +93,7 @@ section[data-css="logged-in"] {
 [data-css="app-content"],
 .adminjs_Box[data-css="app-content"] {
   background: var(--tokri-bg) !important;
+  overflow-x: hidden !important;
 }
 
 [data-css="action-header"],
@@ -110,6 +111,343 @@ section[data-css="logged-in"] {
   color: #fff !important;
   border: none !important;
   border-radius: 4px !important;
+}
+
+.tokri-sidebar-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #f0f0f1 !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tokri-sidebar-dashboard svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tokri-sidebar-dashboard.is-active,
+.tokri-sidebar-dashboard:hover {
+  background: #047857;
+  color: #fff !important;
+}
+
+.tokri-analytics {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.tokri-analytics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tokri-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tokri-chart-card,
+.tokri-chart-card-wide,
+.tokri-split {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tokri-chart-frame {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.tokri-range-select .tokri-local-select,
+.tokri-range-select .tokri-local-select-control {
+  min-width: 168px;
+}
+
+.tokri-range-select .tokri-local-select-menu {
+  width: 180px;
+}
+
+.tokri-widget-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.tokri-chart-card-wide {
+  margin-bottom: 16px;
+}
+
+.tokri-split .tokri-chart-card {
+  margin-top: 0;
+  min-width: 0;
+}
+
+.tokri-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tokri-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tokri-data-table th {
+  text-align: left;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--tokri-border);
+}
+
+.tokri-data-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.tokri-data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tokri-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tokri-range {
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid var(--tokri-border);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tokri-range button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.tokri-range button.is-on {
+  background: #047857;
+  color: #fff;
+}
+
+.tokri-today {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  background: #022c22;
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.tokri-today span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a7d8b9;
+}
+
+.tokri-today strong {
+  font-size: 28px;
+}
+
+.tokri-today em {
+  font-style: normal;
+  color: #d1fae5;
+}
+
+.tokri-kpi-grid,
+.tokri-chart-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tokri-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tokri-chart-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tokri-kpi-grid article,
+.tokri-chart-card {
+  background: #fff;
+  border: 1px solid var(--tokri-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.tokri-kpi-grid p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tokri-kpi-grid strong {
+  display: block;
+  margin: 6px 0 4px;
+  font-size: 28px;
+  color: #0f172a;
+}
+
+.tokri-kpi-note,
+.tokri-change {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tokri-kpi-note,
+.tokri-change.is-flat {
+  color: #64748b;
+}
+
+.tokri-change.is-up {
+  color: #047857;
+}
+
+.tokri-change.is-down {
+  color: #b91c1c;
+}
+
+.tokri-chart-plot {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.tokri-chart {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1200 / 320;
+  margin-top: 8px;
+}
+
+.tokri-chart-label,
+.tokri-chart-axis {
+  font-size: 14px;
+  fill: #64748b;
+}
+
+.tokri-chart-gridline {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.tokri-chart-tip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: #022c22;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(2, 44, 34, 0.18);
+}
+
+.tokri-chart-tip.is-below {
+  transform: translate(-50%, 12px);
+}
+
+.tokri-chart-tip span {
+  display: block;
+  font-size: 12px;
+  color: #a7f3d0;
+}
+
+.tokri-chart-tip strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.tokri-hbar-list {
+  display: grid;
+  gap: 12px;
+}
+
+.tokri-hbar-meta,
+.tokri-pay-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.tokri-hbar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.tokri-hbar-track div {
+  height: 100%;
+  border-radius: inherit;
+  background: #047857;
+}
+
+.tokri-hbar-track.is-blue div {
+  background: #2271b1;
+}
+
+.tokri-pay-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .tokri-kpi-grid,
+  .tokri-chart-grid,
+  .tokri-pay-split,
+  .tokri-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 .tokri-stat-grid {
@@ -152,14 +490,475 @@ section[data-css="logged-in"] {
   border-bottom: 1px solid #e2e4e7;
 }
 
-.tokri-order-grid {
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+.tokri-order {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 8px 8px 32px;
+}
+
+.tokri-order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.tokri-order-title,
+.tokri-order-title-row,
+.tokri-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tokri-order-title {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.tokri-order-title-row {
+  flex-wrap: wrap;
+}
+
+.tokri-order-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: #0f172a;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.tokri-order-back:hover {
+  background: #e2e8f0;
+}
+
+.tokri-order-title h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.tokri-order-title p,
+.tokri-order-card-head span,
+.tokri-order-empty,
+.tokri-order-address p,
+.tokri-order-card p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.tokri-order-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tokri-order-pill.is-paid,
+.tokri-order-pill.is-delivered,
+.tokri-order-pill.is-packed,
+.tokri-order-pill.is-shipped,
+.tokri-order-mark.is-paid,
+.tokri-order-mark.is-delivered,
+.tokri-order-mark.is-packed,
+.tokri-order-mark.is-shipped {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.tokri-order-pill.is-pending,
+.tokri-order-mark.is-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tokri-order-pill.is-failed,
+.tokri-order-pill.is-cancelled,
+.tokri-order-pill.is-refunded,
+.tokri-order-mark.is-failed,
+.tokri-order-mark.is-cancelled,
+.tokri-order-mark.is-refunded {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.tokri-order-mark.is-paid,
+.tokri-order-mark.is-delivered,
+.tokri-order-mark.is-packed,
+.tokri-order-mark.is-shipped,
+.tokri-order-mark.is-pending,
+.tokri-order-mark.is-failed,
+.tokri-order-mark.is-cancelled,
+.tokri-order-mark.is-refunded {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  padding: 0;
+}
+
+.tokri-order-actions {
+  flex-shrink: 0;
+}
+
+.tokri-order-save,
+.tokri-order-more > button {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.tokri-order-save {
+  background: #047857;
+  border-color: #047857;
+  color: #fff;
+}
+
+.tokri-order-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tokri-order-more {
+  position: relative;
+}
+
+.tokri-order-more > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tokri-order-more-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 210px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+}
+
+.tokri-order-more-menu.is-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.tokri-order-more-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+.tokri-order-more-menu button:hover {
+  background: #f0fdf4;
+}
+
+.tokri-order-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.tokri-order-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tokri-order-card h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.tokri-order-card h4 {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.tokri-order-customer {
+  color: #047857;
+  font-size: 15px;
+}
+
+.tokri-order-card-head {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin: -4px -6px 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.tokri-order-card-head strong {
+  display: block;
+}
+
+.tokri-order-select {
+  min-width: 220px;
+}
+
+.tokri-order-select .tokri-local-select,
+.tokri-order-select .tokri-local-select-control,
+.tokri-order-select .tokri-local-select-menu {
+  width: 100%;
+  min-width: 220px;
+}
+
+.tokri-order-items {
+  display: grid;
+}
+
+.tokri-order-items article {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tokri-order-items article:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.tokri-order-thumb-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.tokri-order-items img,
+.tokri-order-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: block;
+}
+
+.tokri-order-thumb-wrap em {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #047857;
+  color: #fff;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.tokri-order-items strong,
+.tokri-order-items span,
+.tokri-order-items b {
+  display: block;
+}
+
+.tokri-order-items .tokri-order-qty,
+.tokri-order-items b {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tokri-order-totals {
+  margin: 8px 0 0;
+}
+
+.tokri-order-totals div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  padding: 6px 0;
+  color: #475569;
+}
+
+.tokri-order-totals dt,
+.tokri-order-totals dd {
+  margin: 0;
+}
+
+.tokri-order-totals dd:last-child,
+.tokri-order-collected b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tokri-order-totals .is-total {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.tokri-order-collected {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 700;
+}
+
+.tokri-order-qr {
+  width: 132px;
+  height: 132px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.tokri-order-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+  word-break: break-all;
+}
+
+.tokri-order-side .tokri-multiselect {
+  margin-top: 6px;
+}
+
+.tokri-order-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.tokri-order-section-head:first-child {
+  margin-top: 0;
+}
+
+.tokri-order-section-head h3,
+.tokri-order-section-head h4 {
+  margin: 0;
+}
+
+.tokri-order-edit {
+  border: 0;
+  background: transparent;
+  color: #047857;
+  font-weight: 700;
+  padding: 0;
+}
+
+.tokri-order-read strong {
+  display: block;
+  margin-top: 8px;
+  color: #047857;
+}
+
+.tokri-order-read p {
+  margin: 2px 0 0;
+  color: #334155;
+}
+
+.tokri-order-edit-fields,
+.tokri-order-address-grid,
+.tokri-order-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tokri-order-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tokri-order-input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 38px;
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0f172a;
+  background: #fff;
+  position: static;
+}
+
+.tokri-order-address-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 12px;
+  width: 100%;
 }
 
 @media (max-width: 960px) {
-  .tokri-order-grid {
+  .tokri-order-top,
+  .tokri-order-layout,
+  .tokri-order-card-head,
+  .tokri-order-items article {
+    display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .tokri-order-items article {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .tokri-order-qty,
+  .tokri-order-items b {
+    grid-column: 2;
   }
 }
 
@@ -385,6 +1184,106 @@ section[data-css="logged-in"] {
   font-weight: 600;
 }
 
+.tokri-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  min-height: 28px;
+}
+
+.tokri-switch:disabled {
+  opacity: 0.6;
+}
+
+.tokri-switch-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex: 0 0 44px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.16s ease;
+}
+
+.tokri-switch.is-on .tokri-switch-track {
+  background: #047857;
+}
+
+.tokri-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.16s ease;
+}
+
+.tokri-switch.is-on .tokri-switch-thumb {
+  transform: translateX(20px);
+}
+
+.tokri-switch-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tokri-switch-copy strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tokri-switch-copy span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.tokri-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.tokri-status-pill.is-on {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.tokri-optional {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.tokri-field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.tokri-textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
 .tokri-choice-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -471,12 +1370,25 @@ section[data-css="logged-in"] {
 }
 
 .tokri-multiselect-menu,
-.tokri-datepicker-pop {
+.tokri-datepicker-pop,
+.tokri-local-select-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 80;
   background: #fff;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
   padding: 10px;
+}
+
+.tokri-multiselect-menu.is-up,
+.tokri-datepicker-pop.is-up,
+.tokri-local-select-menu.is-up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 .tokri-multiselect-list {
@@ -511,6 +1423,67 @@ section[data-css="logged-in"] {
 
 .tokri-datepicker-pop {
   width: 300px;
+}
+
+.tokri-address-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.tokri-address-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 14px 16px;
+}
+
+.tokri-address-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #0f172a;
+}
+
+.tokri-address-card p {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tokri-address-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tokri-address-label,
+.tokri-address-pin {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tokri-address-label {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.tokri-address-pin {
+  background: #fff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.tokri-address-phone {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .tokri-datepicker-nav {
@@ -651,4 +1624,106 @@ table {
 .adminjs_Table:has(caption),
 table:has(caption.adminjs_TableCaption) {
   margin-top: 56px;
+}
+
+.tokri-list-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tokri-border);
+  overflow: visible;
+  z-index: 8;
+}
+
+.tokri-list-pagination-summary {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.tokri-list-pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.tokri-list-pagination-size select {
+  min-width: 72px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 8px;
+  font-weight: 600;
+}
+
+.tokri-local-select {
+  position: relative;
+  min-width: 72px;
+}
+
+.tokri-local-select-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 72px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 10px;
+  font-weight: 600;
+}
+
+.tokri-local-select-menu {
+  min-width: 100%;
+  right: 0;
+  left: auto;
+  width: 88px;
+  padding: 6px;
+}
+
+.tokri-list-pagination-pages {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tokri-list-pagination-pages button {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 600;
+  padding: 0 10px;
+}
+
+.tokri-list-pagination-pages button:hover:not(:disabled) {
+  border-color: #047857;
+  color: #047857;
+}
+
+.tokri-list-pagination-pages button.is-current {
+  background: #047857;
+  border-color: #047857;
+  color: #fff;
+}
+
+.tokri-list-pagination-pages button:disabled {
+  opacity: 0.45;
+}
+
+.tokri-widget-pages {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { postJson } from '../lib/api'
+import { startOtpSmsListener } from '../lib/smsOtp'
 
 export default function LoginScreen({ navigation, route }) {
   const { colors } = useTheme()
@@ -34,6 +35,7 @@ export default function LoginScreen({ navigation, route }) {
     }
     setLoading(true)
     try {
+      await startOtpSmsListener()
       const result = await postJson('/auth/send-otp', { phone })
       navigation.navigate('Otp', { phone, devOtp: result.devOtp || '', next })
     } catch (error) {

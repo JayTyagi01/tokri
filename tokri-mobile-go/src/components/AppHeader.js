@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { useAddress } from '../context/AddressContext'
-import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
 import SearchPlaceholderSlider from './SearchPlaceholderSlider'
 import { listenForSearch } from '../lib/voiceSearch'
@@ -18,8 +17,7 @@ export default function AppHeader({ navigation, onSearch }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
-  const { isLoggedIn } = useAuth()
-  const { selectedAddress, openPicker } = useAddress()
+  const { selectedAddress, detectedLabel, addressChosen, openPicker } = useAddress()
   const [query, setQuery] = useState('')
   const [listening, setListening] = useState(false)
   const [focused, setFocused] = useState(false)
@@ -52,11 +50,13 @@ export default function AppHeader({ navigation, onSearch }) {
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
       <View style={styles.topRow}>
         <Pressable style={styles.address} onPress={openPicker}>
-          <Text style={styles.eta}>Delivery to</Text>
+          <Text style={styles.eta}>Deliver to</Text>
           <View style={styles.addressLine}>
             <Icon name="location" size={14} color={colors.brand} />
             <Text style={styles.addressText} numberOfLines={1}>
-              {!isLoggedIn ? 'Select address' : shortAddress(selectedAddress)}
+              {addressChosen && selectedAddress
+                ? shortAddress(selectedAddress)
+                : detectedLabel || 'Select address'}
             </Text>
             <Icon name="chevron-down" size={14} color={colors.muted} />
           </View>

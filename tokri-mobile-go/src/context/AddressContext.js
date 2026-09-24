@@ -1,15 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { authGet } from '../lib/api'
+import { fetchAddressFromDevice } from '../lib/location'
 import { useAuth } from './AuthContext'
 
 const AddressContext = createContext(null)
+
+function detectedPlaceLabel(found) {
+  const line = [found?.line2 || found?.line1, found?.city].filter(Boolean).join(', ')
+  if (!line) return ''
+  return line.length > 36 ? `${line.slice(0, 36)}…` : line
+}
 
 export function AddressProvider({ children }) {
   const { token, isLoggedIn, user } = useAuth()
   const [addresses, setAddresses] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [detectedLabel, setDetectedLabel] = useState('')
+  const [addressChosen, setAddressChosen] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!isLoggedIn || !token) {
@@ -22,8 +31,9 @@ export function AddressProvider({ children }) {
     setAddresses(list)
     const key = user?.phone ? `tokri_address_${user.phone}` : null
     const stored = key ? await AsyncStorage.getItem(key) : null
-    const valid = stored && list.some((item) => item.id === stored)
-    const nextId = valid ? stored : list[0]?.id || null
+    const canDeliver = (item) => item && item.serviceable !== false
+    const storedAddress = list.find((item) => item.id === stored)
+    const nextId = canDeliver(storedAddress) ? stored : list.find(canDeliver)?.id || null
     setSelectedId(nextId)
     return list
   }, [isLoggedIn, token, user?.phone])
@@ -32,8 +42,22 @@ export function AddressProvider({ children }) {
     refresh().catch(() => {})
   }, [refresh])
 
+  useEffect(() => {
+    let ignore = false
+    fetchAddressFromDevice()
+      .then((found) => {
+        const label = detectedPlaceLabel(found)
+        if (!ignore && label) setDetectedLabel(label)
+      })
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const selectAddress = useCallback(
     async (id) => {
+      setAddressChosen(true)
       setSelectedId(id)
       if (user?.phone) await AsyncStorage.setItem(`tokri_address_${user.phone}`, id)
       setPickerOpen(false)
@@ -51,13 +75,15 @@ export function AddressProvider({ children }) {
       addresses,
       selectedAddress,
       selectedId,
+      detectedLabel,
+      addressChosen,
       pickerOpen,
       openPicker: () => setPickerOpen(true),
       closePicker: () => setPickerOpen(false),
       selectAddress,
       refresh,
     }),
-    [addresses, selectedAddress, selectedId, pickerOpen, selectAddress, refresh],
+    [addresses, selectedAddress, selectedId, detectedLabel, addressChosen, pickerOpen, selectAddress, refresh],
   )
 
   return <AddressContext.Provider value={value}>{children}</AddressContext.Provider>
