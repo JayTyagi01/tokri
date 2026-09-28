@@ -127,7 +127,7 @@ export default function Reviews() {
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-mint">
             What customers say
           </p>
-          <h2 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+          <h2 className="home-section-title">
             Verified, <span className="text-brand">Honest Reviews</span>
           </h2>
         </div>

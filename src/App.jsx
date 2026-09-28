@@ -66,9 +66,10 @@ function AppShell() {
     <div className={showStickyCart ? 'pb-24 lg:pb-0' : ''}>
       <ScrollToTop />
       {!hideChrome && (
-        <div className={isCartPage ? 'hidden lg:block' : ''}>
-          <Header onLoginClick={() => setShowLogin(true)} />
-        </div>
+        <Header
+          className={isCartPage ? 'hidden lg:block' : ''}
+          onLoginClick={() => setShowLogin(true)}
+        />
       )}
       <Routes>
         <Route path="/" element={<Home />} />

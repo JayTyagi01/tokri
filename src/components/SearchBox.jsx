@@ -213,8 +213,8 @@ export default function SearchBox({ variant = 'desktop' }) {
           placeholder={showAnimatedPlaceholder ? '' : isMobile ? 'Search fruits...' : 'Search fruits, categories...'}
           className={
             isMobile
-              ? 'h-12 w-full rounded-full border border-line bg-panel-2 px-12 text-sm text-white outline-none placeholder:text-muted'
-              : 'h-12 w-full rounded-full border border-line bg-panel-2 px-12 text-sm text-white outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/20'
+              ? 'h-12 w-full rounded-[12px] border border-line bg-panel-2 px-12 text-sm text-white outline-none placeholder:text-muted'
+              : 'h-12 w-full rounded-[12px] border border-line bg-panel-2 px-12 text-sm text-white outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/20'
           }
         />
         {showAnimatedPlaceholder && (

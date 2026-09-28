@@ -29,14 +29,14 @@ export default function Categories() {
   }, [])
 
   return (
-    <section className="my-8 bg-canvas lg:my-14">
+    <section className="mb-0 mt-8 bg-canvas lg:mb-0 lg:mt-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+        <h2 className="home-section-title">
           <span className="font-light">Shop By </span>Categories
         </h2>
 
         <div className="group relative mt-5 overflow-hidden">
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 scrollbar-hide sm:-mx-6 sm:gap-4 sm:px-6">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 scrollbar-hide sm:-mx-6 sm:gap-4 sm:px-6">
             {categories.map((category) => (
               <Link
                 key={category.id}

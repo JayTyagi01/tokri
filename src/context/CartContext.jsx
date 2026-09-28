@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext'
 import { authPost, fetchJson, PLACEHOLDER_IMAGE, postJson } from '../lib/api'
 
 const CartContext = createContext(null)
+const CART_STORAGE_KEY = 'tokri_cart_v1'
 
 const DEFAULT_CHARGES = {
   deliveryCharge: 25,
@@ -24,14 +25,52 @@ function categorySlugFrom(product) {
   return product.category?.slug || product.category?.id || product.categoryId || product.categorySlug || null
 }
 
+function readStoredCart() {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .map((item) => {
+        if (!item?.id || !item?.name) return null
+        const quantity = Math.max(1, Number(item.quantity) || 1)
+        const priceValue = Number(item.priceValue) || parsePrice(item.price)
+        return {
+          id: String(item.id),
+          name: String(item.name),
+          price: item.price || `₹${priceValue}`,
+          priceValue,
+          image: item.image || PLACEHOLDER_IMAGE,
+          weight: item.weight || '250 g',
+          quantity,
+          categorySlug: item.categorySlug || null,
+          categories: Array.isArray(item.categories) ? item.categories : [],
+        }
+      })
+      .filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
 export function CartProvider({ children }) {
   const { user, isLoggedIn } = useAuth()
-  const [cartItems, setCartItems] = useState([])
+  const [cartItems, setCartItems] = useState(readStoredCart)
   const [showDrawer, setShowDrawer] = useState(false)
   const [charges, setCharges] = useState(DEFAULT_CHARGES)
   const [coupon, setCoupon] = useState(null)
   const [couponError, setCouponError] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+
+  useEffect(() => {
+    try {
+      if (!cartItems.length) localStorage.removeItem(CART_STORAGE_KEY)
+      else localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+    } catch {
+      // Private mode / quota — cart still works for this session.
+    }
+  }, [cartItems])
 
   useEffect(() => {
     let ignore = false

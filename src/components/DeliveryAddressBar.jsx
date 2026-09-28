@@ -26,7 +26,7 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
           <MapPin size={18} />
         </span>
         <span className="min-w-0">
-          <span className="block text-xs font-medium text-white">Deliver To</span>
+          <span className="block text-[16px] font-medium leading-tight text-white">Deliver To</span>
           <span className="flex items-center gap-1.5">
             <span
               className={`block truncate text-sm font-medium ${
@@ -46,11 +46,11 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
 
   return (
     <div className={className}>
-      <p className="text-sm font-bold text-white">Delivery to</p>
+      <p className="text-[16px] font-bold leading-tight text-white">Delivery to</p>
       <button
         type="button"
         onClick={openPicker}
-        className="mt-0.5 flex max-w-full cursor-pointer items-center gap-1.5 text-left text-xs"
+        className="mt-0.5 flex max-w-full cursor-pointer items-center gap-1 text-left text-[11px] sm:gap-1.5 sm:text-xs"
       >
         <span
           className={`truncate ${!isLoggedIn || !selectedAddress ? 'font-semibold text-brand' : 'text-mint'}`}

@@ -7,7 +7,7 @@ import AccountMenu from './AccountMenu'
 import DeliveryAddressBar from './DeliveryAddressBar'
 import tokriLogo from '../assets/tokri-logo.png'
 
-export default function Header({ onLoginClick }) {
+export default function Header({ onLoginClick, className = '' }) {
   const navigate = useNavigate()
   const { totalCount, openDrawer } = useCart()
   const { isLoggedIn } = useAuth()
@@ -25,27 +25,14 @@ export default function Header({ onLoginClick }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-panel shadow-sm shadow-black/20">
-      <div className="hidden bg-canvas text-mint lg:block">
-        <div className="mx-auto px-4 py-2 text-center text-xs font-medium sm:text-sm sm:px-6 lg:px-8">
-          <p className="lg:text-base">
-            Get 10% OFF Your First Order - Use Code:{' '}
-            <span className="font-semibold text-white">WELCOME10</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Mobile header */}
-      <div className="border-b border-line lg:hidden">
+    <header
+      className={`sticky top-0 z-50 w-full border-b border-line bg-panel shadow-sm shadow-black/20 ${className}`}
+    >
+      {/* Mobile header — address left, profile right (no logo) */}
+      <div className="lg:hidden">
         <div className="px-4 pb-3 pt-3">
-          <div className="flex items-center justify-between gap-3">
-            <Link to="/" className="block shrink-0">
-              <img
-                src={tokriLogo}
-                alt="tokriii - Selling Premium / Exotic Fruits"
-                className="h-9 w-auto object-contain"
-              />
-            </Link>
+          <div className="flex items-center gap-3">
+            <DeliveryAddressBar className="min-w-0 flex-1" />
             <button
               type="button"
               onClick={handleProfileClick}
@@ -57,17 +44,13 @@ export default function Header({ onLoginClick }) {
           </div>
 
           <div className="mt-3">
-            <DeliveryAddressBar className="min-w-0 w-full" />
-          </div>
-
-          <div className="mt-3">
             <SearchBox variant="mobile" />
           </div>
         </div>
       </div>
 
       {/* Desktop header */}
-      <div className="hidden border-b border-line bg-panel lg:block">
+      <div className="hidden bg-panel lg:block">
         <div className="mx-auto flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex items-center justify-between lg:flex-col lg:items-start lg:gap-4">
             <Link to="/" className="block shrink-0">

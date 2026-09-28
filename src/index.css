@@ -135,12 +135,13 @@ code {
 }
 
 .cms-page-content {
-  line-height: 1.75;
+  line-height: 1.7;
   color: #d4d4d8;
+  font-size: 0.95rem;
 }
 
 .cms-page-content > * + * {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 .cms-page-content h1,
@@ -148,27 +149,32 @@ code {
 .cms-page-content h3 {
   color: #ffffff;
   font-weight: 700;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.25;
+}
+
+.cms-page-content h1 {
+  font-size: 1.35rem;
 }
 
 .cms-page-content h2 {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
 }
 
 .cms-page-content h3 {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
 }
 
 .cms-page-content p {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .cms-page-content ul,
 .cms-page-content ol {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
 }
 
 .cms-page-content a {
@@ -185,7 +191,7 @@ code {
 .cms-page-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1rem 0;
+  margin: 0.75rem 0;
 }
 
 .cms-page-content th,
@@ -195,15 +201,86 @@ code {
   text-align: left;
 }
 
+@media (min-width: 640px) {
+  .cms-page-content {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .cms-page-content h1 {
+    font-size: 1.75rem;
+  }
+
+  .cms-page-content h2 {
+    font-size: 1.35rem;
+  }
+
+  .cms-page-content h3 {
+    font-size: 1.15rem;
+  }
+
+  .cms-page-content h1,
+  .cms-page-content h2,
+  .cms-page-content h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.6rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .cms-page-content h1 {
+    font-size: 2rem;
+  }
+
+  .cms-page-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .cms-page-content h3 {
+    font-size: 1.25rem;
+  }
+}
+
 .product-detail h1,
 .product-detail h2,
-.account-detail h1,
 .account-detail h2 {
   margin: 0;
   font-size: unset;
   letter-spacing: normal;
   line-height: inherit;
   color: inherit;
+}
+
+.account-detail h1,
+.cms-static-page h1.cms-static-page__title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+@media (min-width: 768px) {
+  .account-detail h1,
+  .cms-static-page h1.cms-static-page__title {
+    font-size: 2.25rem;
+  }
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+@media (min-width: 768px) {
+  .home-section-title {
+    font-size: 28px;
+  }
 }
 
 .search-placeholder-line {
