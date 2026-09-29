@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tokriii.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Tokriii uses your location to show where you are. Your saved delivery address is not changed unless you update it."
+        "NSLocationWhenInUseUsageDescription": "Tokriii uses your location to show where you are. Your saved delivery address is not changed unless you update it.",
+        "LSApplicationQueriesSchemes": ["tez", "phonepe", "paytmmp", "credpay", "amazonpay", "upi", "gpay"]
       }
     },
     "updates": {
@@ -40,6 +41,7 @@
       }
     },
     "plugins": [
+      "./plugins/withUpiApps",
       "@react-native-community/datetimepicker",
       [
         "expo-location",

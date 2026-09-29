@@ -1,16 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { Image } from 'expo-image'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LoadingView from '../components/LoadingView'
-import AppHeader from '../components/AppHeader'
 import Icon from '../components/Icon'
 import CouponBox from '../components/CouponBox'
 import ProductCard from '../components/ProductCard'
+import CardPaySheet from '../components/CardPaySheet'
+import RazorpayCheckout from '../components/RazorpayCheckout'
+import PaymentSheet, { PaymentMark, paymentLabel } from '../components/PaymentSheet'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { fetchJson, formatPrice, normalizeProduct } from '../lib/api'
+import { authPost, fetchJson, formatPrice, normalizeProduct } from '../lib/api'
+import { detectInstalledUpiApps, upiAppById } from '../lib/upiApps'
+import { useSystemBottomInset } from '../lib/safeArea'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
+
+const PAY_CHOICE_KEY = 'tokri_pay_choice'
+const ONLINE_CHOICES = ['gpay', 'phonepe', 'paytm', 'cred', 'amazon', 'bhim', 'card', 'netbanking', 'wallet']
 
 function moneyValue(value) {
   if (value == null || value === '') return 0
@@ -27,11 +36,127 @@ function cutoffPrice(item) {
 export default function CartScreen({ navigation }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
-  const { isLoggedIn } = useAuth()
-  const { selectedAddress, openPicker } = useAddress()
+  const insets = useSafeAreaInsets()
+  const bottomInset = useSystemBottomInset()
+  const { isLoggedIn, token } = useAuth()
+  const { selectedAddress, selectedId, openPicker, refresh } = useAddress()
   const canDeliver = Boolean(selectedAddress && selectedAddress.serviceable !== false)
-  const { items, grandTotal, itemsTotal, deliveryCharge, handlingCharge, discount, hydrated, updateQuantity } = useCart()
+  const {
+    items,
+    grandTotal,
+    itemsTotal,
+    deliveryCharge,
+    handlingCharge,
+    discount,
+    coupon,
+    hydrated,
+    updateQuantity,
+    clearCart,
+    refreshCart,
+  } = useCart()
   const [suggested, setSuggested] = useState([])
+  const [onlineEnabled, setOnlineEnabled] = useState(false)
+  const [codEnabled, setCodEnabled] = useState(true)
+  const [payChoice, setPayChoice] = useState(null)
+  const [paySheet, setPaySheet] = useState(false)
+  const [paying, setPaying] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [cardForm, setCardForm] = useState(false)
+  const [bank, setBank] = useState(null)
+  const [razorpayConfig, setRazorpayConfig] = useState(null)
+  const [installedUpiIds, setInstalledUpiIds] = useState([])
+  const cardWait = useRef(null)
+  const bankWait = useRef(null)
+  const paymentWait = useRef(null)
+
+  useEffect(() => {
+    let ignore = false
+    Promise.all([
+      fetchJson('/checkout/config'),
+      AsyncStorage.getItem(PAY_CHOICE_KEY).catch(() => null),
+      detectInstalledUpiApps().catch(() => []),
+    ])
+      .then(([config, saved, upiApps]) => {
+        if (ignore) return
+        const online = Boolean(config?.razorpay?.enabled)
+        const cod = config?.codEnabled !== false
+        const upiIds = (upiApps || []).map((app) => app.id)
+        setOnlineEnabled(online)
+        setCodEnabled(cod)
+        setInstalledUpiIds(upiIds)
+        const savedOk =
+          (saved === 'cod' && cod) ||
+          (online && ONLINE_CHOICES.includes(saved) && (!upiAppById(saved) || upiIds.includes(saved)))
+        const defaultUpi = upiIds[0] || 'gpay'
+        setPayChoice(savedOk ? saved : online ? defaultUpi : cod ? 'cod' : null)
+      })
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isLoggedIn) refresh().catch(() => {})
+  }, [isLoggedIn, token, refresh])
+
+  const choosePayment = (choice) => {
+    setPayChoice(choice)
+    setPaySheet(false)
+    setNotice('')
+    AsyncStorage.setItem(PAY_CHOICE_KEY, choice).catch(() => {})
+  }
+
+  const openRazorpay = (config) => new Promise((resolve, reject) => {
+    paymentWait.current = { resolve, reject }
+    setRazorpayConfig(config)
+  })
+
+  const finishRazorpay = (result) => {
+    const wait = paymentWait.current
+    paymentWait.current = null
+    setRazorpayConfig(null)
+    if (!wait) return
+    if (result?.ok && result.response) wait.resolve(result.response)
+    else if (result?.ok && result.intentStarted) wait.resolve(result)
+    else if (result?.cancelled) wait.reject(new Error('Payment cancelled.'))
+    else wait.reject(new Error(result?.message || 'Payment failed. Please try again.'))
+  }
+
+  const requestCard = () => new Promise((resolve) => {
+    cardWait.current = resolve
+    setCardForm(true)
+  })
+
+  const finishCardForm = (card) => {
+    const wait = cardWait.current
+    cardWait.current = null
+    setCardForm(false)
+    if (wait) wait(card || null)
+  }
+
+  const requestBank = (config) => new Promise((resolve, reject) => {
+    bankWait.current = { resolve, reject }
+    setBank(config)
+  })
+
+  const finishBank = (result) => {
+    const wait = bankWait.current
+    bankWait.current = null
+    setBank(null)
+    if (!wait) return
+    if (result?.ok && result.response) wait.resolve(result.response)
+    else if (result?.cancelled) wait.reject(new Error('Payment cancelled.'))
+    else wait.reject(new Error(result?.message || 'Card payment failed. Please try again.'))
+  }
+
+  const verifyPayment = (orderNo, payment) =>
+    authPost('/checkout/verify-payment', token, {
+      orderNo,
+      razorpayOrderId: payment.razorpay_order_id,
+      razorpayPaymentId: payment.razorpay_payment_id,
+      razorpaySignature: payment.razorpay_signature,
+    })
 
   const itemSavings = useMemo(
     () =>
@@ -54,17 +179,121 @@ export default function CartScreen({ navigation }) {
     }
   }
 
-  const onCheckout = () => {
+  const placeOrder = async () => {
+    if (paying) return
     if (!isLoggedIn) {
       navigation.navigate('Login', { next: 'Checkout' })
       return
     }
     if (!canDeliver) {
+      if (selectedAddress?.serviceable === false) setNotice("We don't deliver to this pincode yet.")
       openPicker()
       return
     }
-    navigation.navigate('Checkout')
+    if (!payChoice) {
+      setPaySheet(true)
+      return
+    }
+
+    let card = null
+    if (payChoice === 'card') {
+      card = await requestCard()
+      if (!card) return
+    }
+
+    setNotice('')
+    setPaying(true)
+    try {
+      const isUpi = Boolean(upiAppById(payChoice))
+      const checkout = await authPost('/checkout/create-order', token, {
+        addressId: selectedId,
+        paymentMode: payChoice === 'cod' ? 'cod' : 'online',
+        upiApp: isUpi ? payChoice : undefined,
+        items: items.map((item) => ({ slug: item.slug, quantity: item.quantity })),
+        couponCode: coupon?.code || undefined,
+      })
+      const orderNo = checkout.order.orderNo
+
+      if (payChoice === 'cod') {
+        await authPost('/checkout/confirm-cod', token, { orderNo })
+      } else if (payChoice === 'card') {
+        const contact = String(checkout.razorpay?.prefill?.contact || '').replace(/\D/g, '').slice(-10)
+        const payment = await requestBank({
+          keyId: checkout.razorpay.keyId,
+          payment: {
+            amount: checkout.razorpay.amount,
+            currency: checkout.razorpay.currency || 'INR',
+            email: `pay.${contact || 'customer'}@tokriii.com`,
+            contact,
+            order_id: checkout.razorpay.orderId,
+            method: 'card',
+            card,
+          },
+        })
+        await verifyPayment(orderNo, payment)
+      } else if (isUpi) {
+        let intent = checkout.intent
+        let intentError = checkout.intentError || ''
+        if (!intent?.intentUrl) {
+          try {
+            intent = await authPost('/checkout/upi-intent', token, { orderNo })
+          } catch (error) {
+            intent = null
+            intentError = error.message || intentError
+          }
+        }
+
+        if (intent?.intentUrl) {
+          navigation.navigate('UpiPayment', {
+            appId: payChoice,
+            intentUrl: intent.intentUrl,
+            paymentId: intent.paymentId,
+            orderNo,
+            amount: checkout.order.grandTotal,
+          })
+          return
+        }
+
+        throw new Error(
+          intentError ||
+            'UPI Intent link was not returned by Razorpay. Ask Razorpay support to enable S2S UPI Intent on this account.',
+        )
+      } else {
+        const payment = await openRazorpay({
+          ...checkout.razorpay,
+          onlyMethod: payChoice,
+        })
+        await verifyPayment(orderNo, payment)
+      }
+
+      await clearCart()
+      await refreshCart()
+      navigation.navigate('Orders')
+    } catch (error) {
+      setNotice(error.message || 'Could not complete checkout.')
+    } finally {
+      setPaying(false)
+    }
   }
+
+  const goBack = () => {
+    if (navigation.canGoBack()) navigation.goBack()
+    else navigation.navigate('Home')
+  }
+
+  const addressTitle = !isLoggedIn
+    ? 'Login to continue'
+    : selectedAddress
+      ? selectedAddress.label || 'Saved address'
+      : 'Add a delivery address'
+  const addressLine = !isLoggedIn
+    ? 'Log in to pick a delivery address'
+    : selectedAddress
+      ? selectedAddress.serviceable === false
+        ? "We don't deliver to this pincode yet"
+        : selectedAddress.formatted
+      : 'Tap Change to select or add an address'
+  const actionLabel = !isLoggedIn ? 'Login to proceed' : !canDeliver ? 'Add address' : 'Place Order'
 
   useEffect(() => {
     if (!items.length) {
@@ -92,7 +321,12 @@ export default function CartScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      <AppHeader navigation={navigation} />
+      <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+        <Pressable onPress={goBack} hitSlop={12} style={styles.topBack}>
+          <Icon name="arrow-back" size={22} color={colors.text} />
+        </Pressable>
+        <Text style={styles.topTitle}>Checkout</Text>
+      </View>
       {!hydrated ? (
         <LoadingView />
       ) : !items.length ? (
@@ -197,13 +431,82 @@ export default function CartScreen({ navigation }) {
             </View>
           </ScrollView>
 
-          <View style={styles.footer}>
-            <Pressable style={styles.button} onPress={onCheckout}>
-              <Text style={styles.buttonText}>
-                {!isLoggedIn ? 'Login to proceed' : canDeliver ? 'Proceed to checkout' : 'Add address to proceed'}
-              </Text>
-            </Pressable>
+          <View style={styles.sticky}>
+            <View style={styles.deliverBar}>
+              <Icon name="location" size={24} color="#eab308" />
+              <View style={styles.deliverCopy}>
+                <Text style={styles.deliverTitle} numberOfLines={1}>
+                  {isLoggedIn && selectedAddress ? 'Delivering to ' : ''}
+                  <Text style={styles.deliverStrong}>{addressTitle}</Text>
+                </Text>
+                <Text
+                  style={[styles.deliverLine, selectedAddress?.serviceable === false && styles.deliverBad]}
+                  numberOfLines={1}
+                >
+                  {addressLine}
+                </Text>
+              </View>
+              <Pressable
+                hitSlop={10}
+                onPress={() => (isLoggedIn ? openPicker() : navigation.navigate('Login', { next: 'Checkout' }))}
+              >
+                <Text style={styles.changeText}>{isLoggedIn ? 'Change' : 'Login'}</Text>
+              </Pressable>
+            </View>
+
+            {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+
+            <View style={[styles.payBar, { paddingBottom: bottomInset + 10 }]}>
+              <Pressable style={styles.payUsing} onPress={() => setPaySheet(true)} disabled={paying}>
+                <View style={styles.payUsingTop}>
+                  {payChoice ? <PaymentMark choice={payChoice} size={20} /> : null}
+                  <Text style={styles.payUsingLabel}>PAY USING</Text>
+                  <Icon name="caret-up" size={12} color={colors.muted} />
+                </View>
+                <Text style={styles.payUsingValue} numberOfLines={1}>
+                  {payChoice ? paymentLabel(payChoice) : 'Select'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.placeBtn, paying && styles.placeBtnBusy]}
+                onPress={placeOrder}
+                disabled={paying}
+              >
+                <View>
+                  <Text style={styles.placeAmount}>{formatPrice(grandTotal)}</Text>
+                  <Text style={styles.placeTotal}>TOTAL</Text>
+                </View>
+                {paying ? (
+                  <ActivityIndicator color={colors.onBrand} />
+                ) : (
+                  <View style={styles.placeRight}>
+                    <Text style={styles.placeText} numberOfLines={1}>{actionLabel}</Text>
+                    <Icon name="caret-forward" size={14} color={colors.onBrand} />
+                  </View>
+                )}
+              </Pressable>
+            </View>
           </View>
+
+          <PaymentSheet
+            visible={paySheet}
+            total={grandTotal}
+            choice={payChoice}
+            onlineEnabled={onlineEnabled}
+            codEnabled={codEnabled}
+            installedUpiIds={installedUpiIds}
+            onSelect={choosePayment}
+            onClose={() => setPaySheet(false)}
+          />
+          <RazorpayCheckout config={razorpayConfig} onResult={finishRazorpay} />
+          <CardPaySheet
+            formVisible={cardForm}
+            bank={bank}
+            onClose={() => finishCardForm(null)}
+            onSubmit={finishCardForm}
+            onBankResult={finishBank}
+          />
         </>
       )}
     </View>
@@ -261,7 +564,7 @@ function Zigzag({ color }) {
 const createStyles = (c) => ({
   screen: { flex: 1, backgroundColor: c.canvas },
   scroller: { flex: 1 },
-  content: { padding: 16, paddingBottom: 8, gap: 12 },
+  content: { padding: 16, paddingBottom: 20, gap: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   empty: { color: c.muted, marginTop: 12, marginBottom: 16 },
   row: {
@@ -350,14 +653,77 @@ const createStyles = (c) => ({
   },
   savingsLabel: { color: c.savingsText, fontWeight: '700' },
   savingsValue: { color: c.savingsText, fontWeight: '800' },
-  footer: {
-    borderTopWidth: 1,
-    borderColor: c.line,
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingBottom: 12,
     backgroundColor: c.panel,
+    borderBottomWidth: 1,
+    borderColor: c.line,
   },
+  topBack: { padding: 2 },
+  topTitle: { color: c.text, fontSize: 18, fontWeight: '800' },
+  sticky: {
+    backgroundColor: c.panel,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -3 },
+    elevation: 12,
+    overflow: 'hidden',
+  },
+  deliverBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: c.panel2,
+  },
+  deliverCopy: { flex: 1, minWidth: 0 },
+  deliverTitle: { color: c.text, fontSize: 15 },
+  deliverStrong: { fontWeight: '800' },
+  deliverLine: { color: c.muted, fontSize: 13, marginTop: 2 },
+  deliverBad: { color: c.danger, fontWeight: '700' },
+  changeText: { color: c.brand, fontWeight: '800', fontSize: 15 },
+  notice: {
+    color: c.danger,
+    fontWeight: '700',
+    fontSize: 13,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  payBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  payUsing: { flex: 1, minWidth: 0 },
+  payUsingTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  payUsingLabel: { color: c.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+  payUsingValue: { color: c.text, fontSize: 15, fontWeight: '700', marginTop: 4 },
+  placeBtn: {
+    flex: 1.35,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: c.brandDeep,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 54,
+  },
+  placeBtnBusy: { opacity: 0.8 },
+  placeAmount: { color: c.onBrand, fontSize: 16, fontWeight: '800' },
+  placeTotal: { color: c.onBrand, fontSize: 10, fontWeight: '700', opacity: 0.85, letterSpacing: 0.5 },
+  placeRight: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, marginLeft: 8 },
+  placeText: { color: c.onBrand, fontSize: 15, fontWeight: '800' },
   button: {
     backgroundColor: c.brand,
     borderRadius: 14,

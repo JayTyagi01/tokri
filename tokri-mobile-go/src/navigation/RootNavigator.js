@@ -13,10 +13,10 @@ import AccountScreen from '../screens/AccountScreen'
 import ProductScreen from '../screens/ProductScreen'
 import LoginScreen from '../screens/LoginScreen'
 import OtpScreen from '../screens/OtpScreen'
-import CheckoutScreen from '../screens/CheckoutScreen'
 import SearchScreen from '../screens/SearchScreen'
 import OrdersScreen from '../screens/OrdersScreen'
 import OrderDetailScreen from '../screens/OrderDetailScreen'
+import UpiPaymentScreen from '../screens/UpiPaymentScreen'
 import { useCart } from '../context/CartContext'
 import { useTheme } from '../context/ThemeContext'
 import AddressPicker from '../components/AddressPicker'
@@ -101,7 +101,8 @@ function Tabs() {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarLabel: totalCount ? `Cart (${totalCount})` : 'Cart',
+          tabBarStyle: { display: 'none' },
+          tabBarLabel: totalCount ? `Checkout (${totalCount})` : 'Checkout',
           tabBarIcon: ({ focused }) => <TabIcon name="cart" focused={focused} badge={totalCount > 0} />,
         }}
       />
@@ -152,7 +153,6 @@ export default function RootNavigator() {
         />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Otp" component={OtpScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Checkout" component={CheckoutScreen} />
         <Stack.Screen
           name="Search"
           component={SearchScreen}
@@ -163,6 +163,15 @@ export default function RootNavigator() {
         />
         <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: false }} />
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen
+          name="UpiPayment"
+          component={UpiPaymentScreen}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            gestureEnabled: false,
+          }}
+        />
       </Stack.Navigator>
       <AddressPicker />
     </NavigationContainer>

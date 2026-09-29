@@ -1,5 +1,12 @@
 import { prisma } from '../lib/prisma.js'
-import { createRazorpayOrder, verifyRazorpayPayment, getPublicPaymentConfig } from './razorpay.js'
+import {
+  captureRazorpayPayment,
+  createRazorpayOrder,
+  createUpiIntentPayment,
+  fetchRazorpayPayment,
+  getPublicPaymentConfig,
+  verifyRazorpayPayment,
+} from './razorpay.js'
 import { listAddresses, snapshotCurrentAddress } from './addresses.js'
 import { calcCartTotals, getChargeRates } from '../config/charges.js'
 import { clearCart, getCartCheckoutItems } from './cart.js'
@@ -77,7 +84,7 @@ export async function getCheckoutConfig() {
   return getPublicPaymentConfig()
 }
 
-export async function createCheckoutOrder(user, { items: rawItems, addressId, address: addressSnapshot, paymentMode = 'online', couponCode }) {
+export async function createCheckoutOrder(user, { items: rawItems, addressId, address: addressSnapshot, paymentMode = 'online', couponCode, upiApp }, meta = {}) {
   const sourceItems =
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems
@@ -167,6 +174,37 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
     })
   }
 
+  let intent = null
+  let intentError = null
+  const directUpi = useRazorpay && ['gpay', 'phonepe', 'paytm', 'cred', 'amazon', 'bhim', 'upi'].includes(upiApp)
+  if (directUpi) {
+    const contact = paymentPhone(user, address)
+    if (contact.length !== 10) {
+      intentError = 'A 10-digit phone number is required for UPI.'
+    } else {
+      try {
+        intent = await createUpiIntentPayment({
+          orderId: razorpayOrderId,
+          amountPaise: Math.round(totals.grandTotal * 100),
+          contact,
+          email: `pay.${contact}@tokriii.com`,
+          description: `Order ${orderNo}`,
+          orderNo,
+          ip: meta.ip,
+          userAgent: meta.userAgent,
+        })
+      } catch (error) {
+        intentError = error.message || 'UPI could not be started.'
+        console.error('UPI intent was not created:', {
+          orderNo,
+          message: intentError,
+          razorpayStatus: error.razorpayStatus,
+          razorpayCode: error.razorpayCode,
+        })
+      }
+    }
+  }
+
   return {
     order: {
       id: order.id,
@@ -186,9 +224,57 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
             name: address.name,
             contact: address.phone,
           },
+          upiApp: directUpi ? upiApp : undefined,
         }
       : null,
+    intent,
+    intentError,
   }
+}
+
+function paymentPhone(user, address) {
+  const raw = address?.phone || user?.phone || ''
+  return String(raw).replace(/\D/g, '').slice(-10)
+}
+
+async function markOnlineOrderPaid(user, order, razorpayPaymentId) {
+  const updated = await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      paymentStatus: 'paid',
+      status: order.status === 'pending' ? 'paid' : order.status,
+      paymentCollectedAs: 'online',
+      razorpayPaymentId,
+    },
+  })
+
+  await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
+  notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
+  sendOrderConfirmation(updated, { phone: user.phone, name: user.name }).catch((error) =>
+    console.error('Failed to send order confirmation:', error),
+  )
+
+  return updated
+}
+
+export async function markOnlineOrderPaidFromWebhook({ orderNo, razorpayOrderId, paymentId }) {
+  let order = null
+  if (orderNo) order = await prisma.order.findUnique({ where: { orderNo } })
+  if (!order && razorpayOrderId) {
+    order = await prisma.order.findFirst({ where: { razorpayOrderId } })
+  }
+  if (!order || order.paymentMode !== 'online') return null
+  if (order.paymentStatus === 'paid') return order
+
+  const customer = order.customerId
+    ? await prisma.customer.findUnique({ where: { id: order.customerId } })
+    : null
+
+  return markOnlineOrderPaid(
+    { id: order.customerId, phone: customer?.phone || '', name: customer?.name || '' },
+    order,
+    paymentId,
+  )
 }
 
 export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
@@ -206,24 +292,75 @@ export async function confirmCheckoutPayment(user, { orderNo, razorpayOrderId, r
   }
 
   await verifyRazorpayPayment({ razorpayOrderId, razorpayPaymentId, razorpaySignature })
+  const updated = await markOnlineOrderPaid(user, order, razorpayPaymentId)
+  return { orderNo: updated.orderNo, paymentStatus: updated.paymentStatus }
+}
 
-  const updated = await prisma.order.update({
-    where: { id: order.id },
-    data: {
-      paymentStatus: 'paid',
-      status: order.status === 'pending' ? 'paid' : order.status,
-      paymentCollectedAs: 'online',
-      razorpayPaymentId,
-    },
+export async function startUpiIntent(user, { orderNo }, meta = {}) {
+  const order = await prisma.order.findFirst({
+    where: { orderNo, customerId: user.id },
+  })
+  if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
+  if (order.paymentStatus === 'paid') {
+    throw Object.assign(new Error('This order is already paid.'), { status: 400 })
+  }
+  if (order.paymentMode !== 'online' || !order.razorpayOrderId) {
+    throw Object.assign(new Error('This order is not waiting for an online payment.'), { status: 400 })
+  }
+
+  const address = order.address && typeof order.address === 'object' ? order.address : {}
+  const contact = paymentPhone(user, address)
+  if (contact.length !== 10) {
+    throw Object.assign(new Error('A 10-digit phone number is required for UPI.'), { status: 400 })
+  }
+
+  const intent = await createUpiIntentPayment({
+    orderId: order.razorpayOrderId,
+    amountPaise: Math.round(Number(order.grandTotal) * 100),
+    contact,
+    email: `pay.${contact}@tokriii.com`,
+    description: `Order ${order.orderNo}`,
+    orderNo: order.orderNo,
+    ip: meta.ip,
+    userAgent: meta.userAgent,
   })
 
-  await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
-  notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
-  sendOrderConfirmation(updated, { phone: user.phone, name: user.name }).catch((error) =>
-    console.error('Failed to send order confirmation:', error),
-  )
+  return { orderNo: order.orderNo, paymentId: intent.paymentId, intentUrl: intent.intentUrl }
+}
 
-  return { orderNo: updated.orderNo, paymentStatus: updated.paymentStatus }
+export async function syncIntentPayment(user, { orderNo, razorpayPaymentId }) {
+  const order = await prisma.order.findFirst({
+    where: { orderNo, customerId: user.id },
+  })
+  if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
+  if (order.paymentStatus === 'paid') return { status: 'paid', orderNo: order.orderNo }
+  if (!razorpayPaymentId) {
+    throw Object.assign(new Error('Payment details do not match this order.'), { status: 400 })
+  }
+
+  let payment = await fetchRazorpayPayment(razorpayPaymentId)
+  const expected = Math.round(Number(order.grandTotal) * 100)
+  if (payment.order_id !== order.razorpayOrderId || Number(payment.amount) !== expected) {
+    throw Object.assign(new Error('Payment details do not match this order.'), { status: 400 })
+  }
+
+  if (payment.status === 'authorized') {
+    payment = await captureRazorpayPayment(payment.id, expected, payment.currency || 'INR')
+  }
+
+  if (payment.status === 'captured') {
+    await markOnlineOrderPaid(user, order, payment.id)
+    return { status: 'paid', orderNo: order.orderNo }
+  }
+
+  if (payment.status === 'failed') {
+    return {
+      status: 'failed',
+      message: payment.error_description || payment.error_reason || 'Payment failed. Please try again.',
+    }
+  }
+
+  return { status: 'pending', orderNo: order.orderNo }
 }
 
 export async function confirmCodOrder(user, { orderNo }) {

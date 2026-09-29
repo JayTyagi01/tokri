@@ -17,7 +17,8 @@ export function resolveAssetUrl(value) {
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {
-    throw new Error(data.message || `Request failed (${response.status})`)
+    const detail = data.message || data.error?.description || data.error || ''
+    throw new Error(detail || `Request failed (${response.status})`)
   }
   return data
 }

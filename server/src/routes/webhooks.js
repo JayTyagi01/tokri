@@ -1,5 +1,6 @@
 import { verifyRazorpayWebhook } from '../services/razorpay.js'
 import { markOrderPaidByQr } from '../services/partnerOrders.js'
+import { markOnlineOrderPaidFromWebhook } from '../services/checkout.js'
 
 function extractOrderNo(payload) {
   const entity = payload?.payload?.payment_link?.entity || payload?.payload?.qr_code?.entity || {}
@@ -33,10 +34,17 @@ export async function handleRazorpayWebhook(req, res, next) {
     }
 
     const orderNo = extractOrderNo(payload)
-    await markOrderPaidByQr({
-      orderNo,
-      paymentId: extractPaymentId(payload),
-    })
+    const paymentId = extractPaymentId(payload)
+    const razorpayOrderId = payload?.payload?.payment?.entity?.order_id || null
+
+    if (event === 'payment.captured') {
+      const marked = await markOnlineOrderPaidFromWebhook({ orderNo, razorpayOrderId, paymentId })
+      if (!marked && orderNo) {
+        await markOrderPaidByQr({ orderNo, paymentId })
+      }
+    } else {
+      await markOrderPaidByQr({ orderNo, paymentId })
+    }
 
     res.json({ ok: true })
   } catch (error) {

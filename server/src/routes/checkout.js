@@ -6,6 +6,8 @@ import {
   confirmCodOrder,
   createCheckoutOrder,
   getCheckoutConfig,
+  startUpiIntent,
+  syncIntentPayment,
 } from '../services/checkout.js'
 import { previewCoupon } from '../services/coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
@@ -75,8 +77,32 @@ router.use(requireCustomer)
 
 router.post('/create-order', async (req, res, next) => {
   try {
-    const result = await createCheckoutOrder(req.customer, req.body)
+    const result = await createCheckoutOrder(req.customer, req.body, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    })
     res.status(201).json(result)
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.post('/upi-intent', async (req, res, next) => {
+  try {
+    const result = await startUpiIntent(req.customer, req.body, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    })
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.post('/confirm-intent', async (req, res, next) => {
+  try {
+    const result = await syncIntentPayment(req.customer, req.body)
+    res.json(result)
   } catch (error) {
     next(error)
   }
