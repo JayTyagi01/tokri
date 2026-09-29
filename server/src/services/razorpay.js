@@ -79,6 +79,21 @@ export async function createOrderPaymentLink({ amountInr, orderNo, customer = {}
   }
 }
 
+function formatRazorpayError(path, status, payload) {
+  const rzp = payload?.error || {}
+  const detail =
+    rzp.description ||
+    rzp.reason ||
+    rzp.code ||
+    (typeof payload?.message === 'string' ? payload.message : '') ||
+    `HTTP ${status}`
+  const code = rzp.code || rzp.reason || ''
+  return {
+    message: code ? `Razorpay UPI Intent failed (${status}): ${detail} [${code}]` : `Razorpay UPI Intent failed (${status}): ${detail}`,
+    code: rzp.code || null,
+  }
+}
+
 async function razorpayFetch(path, { method = 'GET', body } = {}) {
   const { config } = await getClient()
   const response = await fetch(`https://api.razorpay.com/v1${path}`, {
@@ -91,26 +106,16 @@ async function razorpayFetch(path, { method = 'GET', body } = {}) {
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
-    const rzp = payload?.error || {}
-    const message =
-      rzp.description ||
-      rzp.reason ||
-      rzp.code ||
-      `Razorpay ${path} failed (${response.status}).`
+    const formatted = formatRazorpayError(path, response.status, payload)
     console.error('Razorpay API error:', {
       path,
       status: response.status,
-      code: rzp.code,
-      description: rzp.description,
-      reason: rzp.reason,
-      field: rzp.field,
-      source: rzp.source,
-      step: rzp.step,
+      error: payload?.error || payload,
     })
-    throw Object.assign(new Error(message), {
+    throw Object.assign(new Error(formatted.message), {
       status: 400,
       razorpayStatus: response.status,
-      razorpayCode: rzp.code || null,
+      razorpayCode: formatted.code,
     })
   }
   return payload
@@ -124,17 +129,22 @@ function extractIntentUrl(payload) {
   push(payload?.link)
   push(payload?.intent_url)
   push(payload?.intent_uri)
+  push(payload?.upi_intent_url)
+  push(payload?.short_url)
   push(payload?.data?.intent_url)
   push(payload?.data?.link)
+  push(payload?.data?.intent_uri)
   if (Array.isArray(payload?.next)) {
     for (const step of payload.next) {
       push(step?.url)
       push(step?.intent_url)
+      push(step?.intent_uri)
       push(step?.link)
+      if (step?.action === 'intent' || step?.action === 'upi_intent') push(step?.url)
     }
   }
   return (
-    urls.find((url) => /^(upi:|intent:|tez:|phonepe:|paytmmp:|gpay:|credpay:|amazonpay:)/i.test(url)) ||
+    urls.find((url) => /^(upi:|intent:|tez:|phonepe:|paytmmp:|gpay:|credpay:|amazonpay:|bhim:)/i.test(url)) ||
     ''
   )
 }
@@ -156,23 +166,16 @@ async function razorpayForm(path, fields) {
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
-    const rzp = payload?.error || {}
-    const message =
-      rzp.description ||
-      rzp.reason ||
-      rzp.code ||
-      `Razorpay ${path} failed (${response.status}).`
+    const formatted = formatRazorpayError(path, response.status, payload)
     console.error('Razorpay form API error:', {
       path,
       status: response.status,
-      code: rzp.code,
-      description: rzp.description,
-      reason: rzp.reason,
+      error: payload?.error || payload,
     })
-    throw Object.assign(new Error(message), {
+    throw Object.assign(new Error(formatted.message), {
       status: 400,
       razorpayStatus: response.status,
-      razorpayCode: rzp.code || null,
+      razorpayCode: formatted.code,
     })
   }
   return payload
@@ -203,14 +206,10 @@ export async function createUpiIntentPayment({
     ...(orderNo ? { notes: { orderNo } } : {}),
   }
 
-  let payload
-  let lastError = null
-  try {
-    payload = await razorpayFetch('/payments/create/json', { method: 'POST', body: jsonBody })
-  } catch (error) {
-    lastError = error
-    try {
-      payload = await razorpayForm('/payments/create/upi', {
+  const attempts = [
+    () => razorpayFetch('/payments/create/upi', { method: 'POST', body: jsonBody }),
+    () =>
+      razorpayForm('/payments/create/upi', {
         amount: amountPaise,
         currency: 'INR',
         order_id: orderId,
@@ -219,36 +218,44 @@ export async function createUpiIntentPayment({
         method: 'upi',
         description,
         'upi[flow]': 'intent',
+      }),
+    () => razorpayFetch('/payments/create/json', { method: 'POST', body: jsonBody }),
+  ]
+
+  let payload = null
+  let lastError = null
+  for (const run of attempts) {
+    try {
+      payload = await run()
+      const intentUrl = extractIntentUrl(payload)
+      const paymentId = payload.razorpay_payment_id || payload.id || ''
+      if (intentUrl && paymentId) return { paymentId, intentUrl }
+      lastError = Object.assign(
+        new Error('Razorpay response did not include a UPI intent link.'),
+        { status: 400 },
+      )
+      console.error('Razorpay UPI intent response missing link:', {
+        paymentId,
+        keys: Object.keys(payload || {}),
+        next: payload?.next,
+        link: payload?.link,
       })
-    } catch (formError) {
-      lastError = formError
-      try {
-        payload = await razorpayFetch('/payments/create/upi', { method: 'POST', body: jsonBody })
-      } catch (thirdError) {
-        throw lastError || thirdError
-      }
+    } catch (error) {
+      lastError = error
     }
   }
 
-  const intentUrl = extractIntentUrl(payload)
-  const paymentId = payload.razorpay_payment_id || payload.id || ''
-  if (!intentUrl || !paymentId) {
-    console.error('Razorpay UPI intent response missing link:', {
-      paymentId,
-      keys: Object.keys(payload || {}),
-      next: payload?.next,
-      link: payload?.link,
-      error: lastError?.message,
-    })
-    throw Object.assign(
-      new Error(
-        lastError?.message ||
-          'UPI Intent is not enabled on this Razorpay account. Ask Razorpay support to enable S2S UPI Intent (POST /v1/payments/create/upi with upi.flow=intent).',
-      ),
-      { status: 400, razorpayStatus: lastError?.razorpayStatus, razorpayCode: lastError?.razorpayCode },
-    )
-  }
-  return { paymentId, intentUrl }
+  throw Object.assign(
+    new Error(
+      lastError?.message ||
+        'UPI Intent is not enabled on this Razorpay account. Ask Razorpay support to enable S2S UPI Intent (POST /v1/payments/create/upi with upi.flow=intent).',
+    ),
+    {
+      status: 400,
+      razorpayStatus: lastError?.razorpayStatus,
+      razorpayCode: lastError?.razorpayCode,
+    },
+  )
 }
 
 export async function fetchRazorpayPayment(paymentId) {
