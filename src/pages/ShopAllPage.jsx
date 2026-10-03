@@ -142,6 +142,10 @@ export default function ShopAllPage() {
   const prependAnchor = useRef(null)
   // Bumped whenever the feed is rebuilt, so in-flight responses can be discarded.
   const feedToken = useRef(0)
+  // While jumping to a category (tap or deep link), ignore scroll-based selection
+  // so the rail does not flash back to whatever section is still on screen.
+  const selectingRef = useRef(null)
+  const selectingTimer = useRef(null)
 
   useEffect(() => {
     categoriesRef.current = categories
@@ -268,6 +272,8 @@ export default function ShopAllPage() {
 
     const start = categories.find((item) => item.slug === requestedSlug) || categories[0]
     if (!start || sectionsRef.current.some((section) => section.slug === start.slug)) return
+    // Mobile category tap already loads this slug via jumpToCategory.
+    if (selectingRef.current === start.slug) return
 
     const token = feedToken.current + 1
     feedToken.current = token
@@ -531,6 +537,7 @@ export default function ShopAllPage() {
 
     const update = () => {
       frame = 0
+      if (selectingRef.current) return
 
       if (!canLoadPrevRef.current && root.scrollTop > 24) {
         canLoadPrevRef.current = true
@@ -567,6 +574,8 @@ export default function ShopAllPage() {
 
   useEffect(() => {
     if (!activeSlug) return
+    // Do not overwrite a category the shopper just tapped before its feed lands.
+    if (selectingRef.current && selectingRef.current !== activeSlug) return
 
     if (searchParams.get('category') !== activeSlug) {
       setSearchParams({ category: activeSlug }, { replace: true })
@@ -587,19 +596,95 @@ export default function ShopAllPage() {
     }
   }, [activeSlug, searchParams, setSearchParams])
 
-  const selectCategory = (slug) => {
-    const node = sectionRefs.current.get(slug)
-    const root = productsScrollRef.current
+  const jumpToCategory = useCallback(
+    async (slug) => {
+      const category = categoriesRef.current.find((item) => item.slug === slug)
+      if (!category) return
 
-    if (node && root) {
-      const top =
-        node.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
-      root.scrollTo({ top: Math.max(0, top - 4), behavior: 'smooth' })
-      setActiveSlug(slug)
+      const token = feedToken.current + 1
+      feedToken.current = token
+
+      reachedEndRef.current = false
+      setReachedEnd(false)
+      reachedStartRef.current = false
+      setReachedStart(false)
+      canLoadPrevRef.current = false
+      setCanLoadPrev(false)
+      prependAnchor.current = null
+
+      try {
+        const page = await fetchCategoryPage(slug, 1)
+        if (token !== feedToken.current) return
+
+        sectionRefs.current.clear()
+        setSections([
+          {
+            slug: category.slug,
+            label: category.label,
+            products: page.products,
+            firstPage: 1,
+            lastPage: 1,
+            hasMore: page.hasMore,
+          },
+        ])
+        setActiveSlug(category.slug)
+        if (productsScrollRef.current) productsScrollRef.current.scrollTop = 0
+      } catch {
+        if (token !== feedToken.current) return
+        setSections([
+          {
+            slug: category.slug,
+            label: category.label,
+            products: [],
+            firstPage: 1,
+            lastPage: 1,
+            hasMore: false,
+          },
+        ])
+        setActiveSlug(category.slug)
+        reachedEndRef.current = true
+        setReachedEnd(true)
+      }
+    },
+    [fetchCategoryPage],
+  )
+
+  const selectCategory = (slug) => {
+    if (!slug || slug === activeSlugRef.current) {
+      const node = sectionRefs.current.get(slug)
+      const root = productsScrollRef.current
+      if (node && root) {
+        const top =
+          node.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+        root.scrollTo({ top: Math.max(0, top - 4), behavior: 'auto' })
+      }
       return
     }
 
-    setSearchParams({ category: slug })
+    selectingRef.current = slug
+    setActiveSlug(slug)
+    setSearchParams({ category: slug }, { replace: true })
+
+    const node = sectionRefs.current.get(slug)
+    const root = productsScrollRef.current
+
+    // Already in the stacked feed — jump without smooth scroll (avoids rail blink).
+    if (node && root) {
+      const top =
+        node.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+      root.scrollTo({ top: Math.max(0, top - 4), behavior: 'auto' })
+      clearTimeout(selectingTimer.current)
+      selectingTimer.current = setTimeout(() => {
+        if (selectingRef.current === slug) selectingRef.current = null
+      }, 400)
+      return
+    }
+
+    // Not loaded yet (common on mobile before any scroll) — rebuild feed here.
+    clearTimeout(selectingTimer.current)
+    jumpToCategory(slug).finally(() => {
+      if (selectingRef.current === slug) selectingRef.current = null
+    })
   }
 
   if (loadingCategories && !categories.length) {
