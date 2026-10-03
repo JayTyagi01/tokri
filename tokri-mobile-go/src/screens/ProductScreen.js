@@ -6,7 +6,7 @@ import LoadingView from '../components/LoadingView'
 import ProductCard from '../components/ProductCard'
 import Icon from '../components/Icon'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { fetchJson, formatPrice, normalizeProduct } from '../lib/api'
+import { fetchJson, formatPrice, normalizeProduct, resolveAssetUrl } from '../lib/api'
 import { useSystemBottomInset } from '../lib/safeArea'
 import { useCart } from '../context/CartContext'
 
@@ -201,7 +201,7 @@ export default function ProductScreen({ route, navigation }) {
           {previewItems.map((item, index) => (
             <Image
               key={item.slug || item.id || index}
-              source={{ uri: item.image }}
+              source={{ uri: resolveAssetUrl(item.image) || item.image }}
               style={[styles.previewImage, index > 0 && { marginLeft: -14 }]}
               contentFit="cover"
             />

@@ -43,6 +43,7 @@ async function main() {
   }
 
   await addColumn('Setting', 'homeBannerImage', 'TEXT NULL')
+  await addColumn('Setting', 'homeMobileBannerImage', 'TEXT NULL')
   await addColumn('Setting', 'homeHighlightImage', 'TEXT NULL')
   await addColumn('Setting', 'homeFeaturedCategorySlugs', 'TEXT NULL')
 

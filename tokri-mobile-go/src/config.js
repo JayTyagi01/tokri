@@ -1,4 +1,17 @@
-export const API_BASE_URL = 'https://tokriii.com/api/v1'
+const LIVE_API = 'https://tokriii.com/api/v1'
+const STAGING_API = 'https://server.tokriii.com/api/v1'
+
+function stripTrailingSlash(value) {
+  return String(value || '').replace(/\/+$/, '')
+}
+
+/** Staging server = https://server.tokriii.com (API /api/v1). Live = tokriii.com. */
+export const API_BASE_URL = (() => {
+  const fromEnv = stripTrailingSlash(process.env.EXPO_PUBLIC_API_BASE_URL)
+  if (fromEnv) return fromEnv
+  if (process.env.EAS_BUILD_PROFILE === 'staging') return STAGING_API
+  return LIVE_API
+})()
 
 export const THEMES = {
   dark: {

@@ -1,3 +1,5 @@
+import { resolveAssetUrl } from './api'
+
 export function formatOrderWhen(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
@@ -38,7 +40,7 @@ export function uniqueOrderedProducts(orders) {
         id: item.slug || item.id,
         slug: item.slug,
         name: item.name,
-        image: item.image,
+        image: resolveAssetUrl(item.image),
         priceValue: item.priceValue,
         oldPriceValue: item.oldPriceValue,
         price: item.price,

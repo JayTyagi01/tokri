@@ -7,11 +7,10 @@ import LoadingView from '../components/LoadingView'
 import Icon from '../components/Icon'
 import CouponBox from '../components/CouponBox'
 import ProductCard from '../components/ProductCard'
-import CardPaySheet from '../components/CardPaySheet'
 import RazorpayCheckout from '../components/RazorpayCheckout'
 import PaymentSheet, { PaymentMark, paymentLabel } from '../components/PaymentSheet'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { authPost, fetchJson, formatPrice, normalizeProduct } from '../lib/api'
+import { authPost, fetchJson, formatPrice, normalizeProduct, resolveAssetUrl } from '../lib/api'
 import { detectInstalledUpiApps, upiAppById } from '../lib/upiApps'
 import { useSystemBottomInset } from '../lib/safeArea'
 import { useAuth } from '../context/AuthContext'
@@ -61,12 +60,8 @@ export default function CartScreen({ navigation }) {
   const [paySheet, setPaySheet] = useState(false)
   const [paying, setPaying] = useState(false)
   const [notice, setNotice] = useState('')
-  const [cardForm, setCardForm] = useState(false)
-  const [bank, setBank] = useState(null)
   const [razorpayConfig, setRazorpayConfig] = useState(null)
   const [installedUpiIds, setInstalledUpiIds] = useState([])
-  const cardWait = useRef(null)
-  const bankWait = useRef(null)
   const paymentWait = useRef(null)
 
   useEffect(() => {
@@ -123,33 +118,6 @@ export default function CartScreen({ navigation }) {
     else wait.reject(new Error(result?.message || 'Payment failed. Please try again.'))
   }
 
-  const requestCard = () => new Promise((resolve) => {
-    cardWait.current = resolve
-    setCardForm(true)
-  })
-
-  const finishCardForm = (card) => {
-    const wait = cardWait.current
-    cardWait.current = null
-    setCardForm(false)
-    if (wait) wait(card || null)
-  }
-
-  const requestBank = (config) => new Promise((resolve, reject) => {
-    bankWait.current = { resolve, reject }
-    setBank(config)
-  })
-
-  const finishBank = (result) => {
-    const wait = bankWait.current
-    bankWait.current = null
-    setBank(null)
-    if (!wait) return
-    if (result?.ok && result.response) wait.resolve(result.response)
-    else if (result?.cancelled) wait.reject(new Error('Payment cancelled.'))
-    else wait.reject(new Error(result?.message || 'Card payment failed. Please try again.'))
-  }
-
   const verifyPayment = (orderNo, payment) =>
     authPost('/checkout/verify-payment', token, {
       orderNo,
@@ -195,12 +163,6 @@ export default function CartScreen({ navigation }) {
       return
     }
 
-    let card = null
-    if (payChoice === 'card') {
-      card = await requestCard()
-      if (!card) return
-    }
-
     setNotice('')
     setPaying(true)
     try {
@@ -216,21 +178,6 @@ export default function CartScreen({ navigation }) {
 
       if (payChoice === 'cod') {
         await authPost('/checkout/confirm-cod', token, { orderNo })
-      } else if (payChoice === 'card') {
-        const contact = String(checkout.razorpay?.prefill?.contact || '').replace(/\D/g, '').slice(-10)
-        const payment = await requestBank({
-          keyId: checkout.razorpay.keyId,
-          payment: {
-            amount: checkout.razorpay.amount,
-            currency: checkout.razorpay.currency || 'INR',
-            email: `pay.${contact || 'customer'}@tokriii.com`,
-            contact,
-            order_id: checkout.razorpay.orderId,
-            method: 'card',
-            card,
-          },
-        })
-        await verifyPayment(orderNo, payment)
       } else if (isUpi) {
         let intent = checkout.intent
         let intentError = checkout.intentError || ''
@@ -259,9 +206,11 @@ export default function CartScreen({ navigation }) {
             'UPI Intent link was not returned by Razorpay. Ask Razorpay support to enable S2S UPI Intent on this account.',
         )
       } else {
+        // Cards / netbanking / wallets: standard Razorpay Checkout (not S2S).
+        // S2S intent is UPI-only on this account.
         const payment = await openRazorpay({
           ...checkout.razorpay,
-          onlyMethod: payChoice,
+          onlyMethod: payChoice === 'card' ? 'card' : payChoice,
         })
         await verifyPayment(orderNo, payment)
       }
@@ -346,7 +295,7 @@ export default function CartScreen({ navigation }) {
           >
             {items.map((item) => (
               <View key={item.slug} style={styles.row}>
-                <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
+                <Image source={{ uri: resolveAssetUrl(item.image) || item.image }} style={styles.image} contentFit="cover" />
                 <View style={styles.info}>
                   <Text style={styles.name}>{item.name}</Text>
                   {item.weight ? <Text style={styles.weight}>{item.weight}</Text> : null}
@@ -500,13 +449,6 @@ export default function CartScreen({ navigation }) {
             onClose={() => setPaySheet(false)}
           />
           <RazorpayCheckout config={razorpayConfig} onResult={finishRazorpay} />
-          <CardPaySheet
-            formVisible={cardForm}
-            bank={bank}
-            onClose={() => finishCardForm(null)}
-            onSubmit={finishCardForm}
-            onBankResult={finishBank}
-          />
         </>
       )}
     </View>

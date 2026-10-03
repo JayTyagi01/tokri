@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { authDelete, authGet, authPatch, authPost, authPut, fetchJson, formatPrice, normalizeProduct, postJson } from '../lib/api'
+import { authDelete, authGet, authPatch, authPost, authPut, fetchJson, formatPrice, normalizeLineItem, normalizeProduct, postJson, resolveAssetUrl } from '../lib/api'
 import { useAuth } from './AuthContext'
 
 const CartContext = createContext(null)
@@ -44,18 +44,21 @@ function lineOldPriceValue(item) {
 function withItemPricing(item, source) {
   if (!item) return item
   const oldPriceValue = lineOldPriceValue(item) || lineOldPriceValue(source)
-  return {
+  return normalizeLineItem({
     ...item,
     oldPrice: item.oldPrice || source?.oldPrice || (oldPriceValue ? formatPrice(oldPriceValue) : null),
     oldPriceValue,
-  }
+  })
 }
 
 function mergeCartItems(incoming, previous = [], product) {
   const prev = new Map((previous || []).map((item) => [item.slug, item]))
   return (incoming || []).map((item) => {
     const extra = product && (product.slug === item.slug || product.id === item.slug) ? product : null
-    return withItemPricing(withItemPricing(item, prev.get(item.slug)), extra)
+    const merged = withItemPricing(withItemPricing(normalizeLineItem(item), prev.get(item.slug)), extra)
+    // Prefer a resolved product image when server still sends staging upload host
+    if (extra?.image) merged.image = resolveAssetUrl(extra.image) || merged.image
+    return merged
   })
 }
 
@@ -139,7 +142,9 @@ export function CartProvider({ children }) {
         if (ignore) return
         if (raw) {
           const stored = JSON.parse(raw)
-          if (Array.isArray(stored?.items)) setCart(withTotals(stored.items, rates, coupon?.discount || 0))
+          if (Array.isArray(stored?.items)) {
+            setCart(withTotals(stored.items.map(normalizeLineItem), rates, coupon?.discount || 0))
+          }
         }
       })
       .catch(() => {})

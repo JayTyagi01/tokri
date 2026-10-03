@@ -6,7 +6,7 @@ import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
 import AppHeader from '../components/AppHeader'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { fetchJson, normalizeProduct } from '../lib/api'
+import { fetchJson, normalizeCategory, normalizeProduct } from '../lib/api'
 
 const PAGE_SIZE = 24
 const RAIL_WIDTH = 82
@@ -108,7 +108,7 @@ export default function ShopScreen({ navigation }) {
     fetchJson('/categories')
       .then((items) => {
         if (ignore || !Array.isArray(items)) return
-        setCategories(items)
+        setCategories(items.map(normalizeCategory))
       })
       .catch(() => {
         if (!ignore) setCategories([])

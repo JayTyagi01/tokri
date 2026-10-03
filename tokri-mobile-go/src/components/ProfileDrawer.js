@@ -48,7 +48,7 @@ export default function ProfileDrawer({ visible, onClose, navigation }) {
 
           <MenuItem icon="receipt-outline" label="My orders" onPress={() => go('Orders')} />
           <MenuItem icon="location-outline" label="Saved addresses" onPress={() => go('Account')} />
-          <MenuItem icon="cart-outline" label="Cart" onPress={() => go('Cart')} />
+          <MenuItem icon="cart-outline" label="Checkout" onPress={() => go('Cart')} />
           {isLoggedIn ? (
             <Pressable style={styles.logout} onPress={handleLogout}>
               <Icon name="log-out-outline" color={colors.danger} />

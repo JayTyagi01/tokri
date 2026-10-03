@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ProductCard from '../components/ProductCard'
 import Icon from '../components/Icon'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { fetchJson, normalizeProduct } from '../lib/api'
+import { fetchJson, normalizeProduct, resolveAssetUrl } from '../lib/api'
 import { listenForSearch } from '../lib/voiceSearch'
 
 const RECENT_KEY = 'tokri_recent_searches'
@@ -70,7 +70,13 @@ export default function SearchScreen({ navigation, route }) {
     AsyncStorage.getItem(RECENT_KEY)
       .then((raw) => {
         const parsed = raw ? JSON.parse(raw) : []
-        if (Array.isArray(parsed)) setRecent(parsed.filter((item) => item?.q))
+        if (Array.isArray(parsed)) {
+          setRecent(
+            parsed
+              .filter((item) => item?.q)
+              .map((item) => ({ ...item, image: resolveAssetUrl(item.image) || item.image || '' })),
+          )
+        }
       })
       .catch(() => {})
     fetchJson('/app/bootstrap')

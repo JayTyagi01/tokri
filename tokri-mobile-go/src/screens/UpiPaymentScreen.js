@@ -9,7 +9,7 @@ import { useCart } from '../context/CartContext'
 import { authPost, formatPrice } from '../lib/api'
 import { openUpiApp, upiAppById } from '../lib/upiApps'
 
-const OPEN_DELAY_MS = 1400
+const OPEN_DELAY_MS = 450
 const POLL_MS = 2000
 const POLL_LIMIT = 45
 const SUCCESS_HOLD_MS = 1700
@@ -27,7 +27,17 @@ export default function UpiPaymentScreen({ navigation, route }) {
   const [message, setMessage] = useState('')
   const spin = useRef(new Animated.Value(0)).current
   const pop = useRef(new Animated.Value(0)).current
+  const fade = useRef(new Animated.Value(0)).current
   const finished = useRef(false)
+
+  useEffect(() => {
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start()
+  }, [fade])
 
   useEffect(() => {
     const rotate = Animated.loop(
@@ -120,7 +130,9 @@ export default function UpiPaymentScreen({ navigation, route }) {
           await new Promise((resolve) => setTimeout(resolve, POLL_MS))
         }
         if (!stopped && !finished.current && !closed) {
-          fail('Payment was not completed. If money was deducted, the order updates once the bank confirms it.')
+          fail(
+            'Payment was not completed. If money was deducted, the order updates once the bank confirms it.',
+          )
         }
       } finally {
         running = false
@@ -156,51 +168,69 @@ export default function UpiPaymentScreen({ navigation, route }) {
       : phase === 'failed'
         ? message || 'You can go back and try again.'
         : phase === 'waiting'
-          ? 'Finish the payment, then come back here. This page updates on its own.'
-          : 'Please wait…'
+          ? 'Finish the payment, then return here. This screen updates automatically.'
+          : `Launching ${app?.label || 'UPI'} securely…`
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom + 16 }]}>
-      <View style={styles.center}>
+      <Animated.View style={[styles.center, { opacity: fade }]}>
+        <View style={styles.brandRow}>
+          <View style={styles.brandMark}>
+            <Text style={styles.brandMarkText}>T</Text>
+          </View>
+          <Text style={styles.brandName}>Tokriii</Text>
+        </View>
+
         {phase === 'success' ? (
           <Animated.View style={[styles.checkCircle, { transform: [{ scale: pop }] }]}>
             <Icon name="checkmark" size={46} color={colors.onBrand} />
           </Animated.View>
         ) : (
-          <>
-            {app?.icon ? (
-              <Image source={app.icon} style={styles.icon} contentFit="cover" />
-            ) : (
-              <View style={[styles.icon, { backgroundColor: app?.color || colors.brand }]} />
-            )}
-            {waiting ? (
-              <View style={styles.loaderWrap}>
-                <Animated.View style={[styles.ring, { borderColor: colors.line, borderTopColor: colors.brand, transform: [{ rotate }] }]} />
-                <ActivityIndicator color={colors.brand} style={styles.spinner} />
+          <View style={styles.card}>
+            <View style={styles.appRow}>
+              {app?.icon ? (
+                <Image source={app.icon} style={styles.appIcon} contentFit="cover" />
+              ) : (
+                <View style={[styles.appIcon, { backgroundColor: app?.color || colors.brand }]} />
+              )}
+              <View style={styles.appMeta}>
+                <Text style={styles.appLabel}>{app?.label || 'UPI'}</Text>
+                <Text style={styles.appHint}>
+                  {waiting ? 'Secure UPI checkout' : 'Could not open app'}
+                </Text>
               </View>
-            ) : (
-              <View style={styles.failMark}>
-                <Icon name="close" size={28} color={colors.danger} />
-              </View>
-            )}
-          </>
+              {waiting ? (
+                <Animated.View
+                  style={[
+                    styles.ring,
+                    {
+                      borderColor: colors.line,
+                      borderTopColor: colors.brand,
+                      transform: [{ rotate }],
+                    },
+                  ]}
+                />
+              ) : (
+                <View style={styles.failMark}>
+                  <Icon name="close" size={18} color={colors.danger} />
+                </View>
+              )}
+            </View>
+            {amount ? <Text style={styles.payAmount}>{formatPrice(amount)}</Text> : null}
+            {waiting ? <ActivityIndicator color={colors.brand} style={styles.inlineSpinner} /> : null}
+          </View>
         )}
 
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.body}>{body}</Text>
-        {phase === 'success' && amount ? <Text style={styles.amount}>{formatPrice(amount)}</Text> : null}
         {phase === 'success' ? <Text style={styles.hint}>Taking you to your order…</Text> : null}
 
         {phase !== 'success' ? (
-          <Pressable
-            onPress={() => navigation.goBack()}
-            hitSlop={12}
-            style={styles.cancelBtn}
-          >
+          <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.cancelBtn}>
             <Text style={styles.cancel}>{phase === 'failed' ? 'Back to checkout' : 'Cancel'}</Text>
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
     </View>
   )
 }
@@ -208,17 +238,57 @@ export default function UpiPaymentScreen({ navigation, route }) {
 function createStyles(colors) {
   return {
     screen: { flex: 1, backgroundColor: colors.canvas },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-    icon: { width: 76, height: 76, borderRadius: 20 },
-    loaderWrap: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center', marginTop: 22 },
-    ring: {
-      position: 'absolute',
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      borderWidth: 3,
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 24,
     },
-    spinner: { opacity: 0 },
+    brandRow: {
+      position: 'absolute',
+      top: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    brandMark: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      backgroundColor: colors.brand,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    brandMarkText: { color: colors.onBrand, fontWeight: '900', fontSize: 16 },
+    brandName: { color: colors.text, fontWeight: '800', fontSize: 18 },
+    card: {
+      width: '100%',
+      maxWidth: 360,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.line,
+      backgroundColor: colors.panel,
+      paddingHorizontal: 16,
+      paddingVertical: 18,
+    },
+    appRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    appIcon: { width: 44, height: 44, borderRadius: 12 },
+    appMeta: { flex: 1, minWidth: 0 },
+    appLabel: { color: colors.text, fontWeight: '800', fontSize: 16 },
+    appHint: { marginTop: 2, color: colors.muted, fontSize: 12, fontWeight: '600' },
+    ring: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      borderWidth: 2.5,
+    },
+    inlineSpinner: { marginTop: 14 },
+    payAmount: {
+      marginTop: 14,
+      fontSize: 22,
+      fontWeight: '800',
+      color: colors.text,
+    },
     checkCircle: {
       width: 96,
       height: 96,
@@ -228,10 +298,9 @@ function createStyles(colors) {
       justifyContent: 'center',
     },
     failMark: {
-      marginTop: 22,
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
       borderWidth: 2,
       borderColor: colors.danger,
       alignItems: 'center',
@@ -250,12 +319,7 @@ function createStyles(colors) {
       lineHeight: 22,
       color: colors.muted,
       textAlign: 'center',
-    },
-    amount: {
-      marginTop: 14,
-      fontSize: 18,
-      fontWeight: '800',
-      color: colors.text,
+      maxWidth: 320,
     },
     hint: {
       marginTop: 18,

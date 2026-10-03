@@ -38,11 +38,17 @@ function checkoutHtml(config) {
   }
 
   if (config.onlyMethod) {
+    const labels = {
+      card: 'Cards',
+      netbanking: 'Netbanking',
+      wallet: 'Wallets',
+    }
+    options.method = config.onlyMethod
     options.config = {
       display: {
         blocks: {
           only: {
-            name: config.onlyMethod === 'netbanking' ? 'Netbanking' : 'Wallets',
+            name: labels[config.onlyMethod] || 'Pay',
             instruments: [{ method: config.onlyMethod }],
           },
         },
@@ -286,7 +292,9 @@ export default function RazorpayCheckout({ config, onResult }) {
           javaScriptEnabled
           domStorageEnabled
           thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           setSupportMultipleWindows={false}
+          mixedContentMode="always"
           onShouldStartLoadWithRequest={(request) => {
             const url = request?.url || ''
             if (UPI_URL.test(url)) {

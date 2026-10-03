@@ -34,6 +34,7 @@ export function formatPublicSettings(settings) {
     },
     home: {
       bannerImage: toPublicAssetUrl(settings.homeBannerImage),
+      mobileBannerImage: toPublicAssetUrl(settings.homeMobileBannerImage),
       highlightImage: toPublicAssetUrl(settings.homeHighlightImage),
       featuredCategorySlugs: parseFeaturedCategorySlugs(settings.homeFeaturedCategorySlugs),
     },

@@ -9,6 +9,24 @@ function digits(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+/** Most cards are 16 digits; Amex 15; some networks up to 19. */
+const CARD_MAX_DIGITS = 19
+
+function formatCardNumber(value) {
+  const raw = digits(value).slice(0, CARD_MAX_DIGITS)
+  return raw.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
+}
+
+function formatExpiry(value) {
+  const raw = digits(value).slice(0, 4)
+  if (raw.length <= 2) return raw
+  return `${raw.slice(0, 2)}/${raw.slice(2)}`
+}
+
+function formatCvv(value) {
+  return digits(value).slice(0, 4)
+}
+
 function cardHtml({ keyId, payment }) {
   const options = JSON.stringify(payment)
   return `<!DOCTYPE html>
@@ -67,8 +85,8 @@ export default function CardPaySheet({ formVisible, bank, onClose, onSubmit, onB
     const month = digits(monthRaw)
     const year = digits(yearRaw)
     const code = digits(cvv)
-    if (cardNumber.length < 12 || cardNumber.length > 19) {
-      setError('Enter the card number.')
+    if (cardNumber.length < 13 || cardNumber.length > CARD_MAX_DIGITS) {
+      setError('Enter a valid card number (13–19 digits).')
       return
     }
     if (!name.trim()) {
@@ -76,12 +94,12 @@ export default function CardPaySheet({ formVisible, bank, onClose, onSubmit, onB
       return
     }
     const monthNumber = Number(month)
-    if (month.length !== 2 || monthNumber < 1 || monthNumber > 12 || year.length < 2) {
+    if (month.length !== 2 || monthNumber < 1 || monthNumber > 12 || year.length !== 2) {
       setError('Enter the expiry as MM/YY.')
       return
     }
-    if (code.length < 3) {
-      setError('Enter the CVV.')
+    if (code.length < 3 || code.length > 4) {
+      setError('Enter a valid CVV.')
       return
     }
     setNumber('')
@@ -105,10 +123,11 @@ export default function CardPaySheet({ formVisible, bank, onClose, onSubmit, onB
           <Text style={styles.title}>Debit / credit card</Text>
           <TextInput
             value={number}
-            onChangeText={setNumber}
+            onChangeText={(text) => setNumber(formatCardNumber(text))}
             keyboardType="number-pad"
             placeholder="Card number"
             placeholderTextColor={colors.muted}
+            maxLength={CARD_MAX_DIGITS + 4}
             style={styles.input}
           />
           <TextInput
@@ -122,19 +141,21 @@ export default function CardPaySheet({ formVisible, bank, onClose, onSubmit, onB
           <View style={styles.row}>
             <TextInput
               value={expiry}
-              onChangeText={setExpiry}
+              onChangeText={(text) => setExpiry(formatExpiry(text))}
               keyboardType="number-pad"
               placeholder="MM/YY"
               placeholderTextColor={colors.muted}
+              maxLength={5}
               style={[styles.input, styles.half]}
             />
             <TextInput
               value={cvv}
-              onChangeText={setCvv}
+              onChangeText={(text) => setCvv(formatCvv(text))}
               keyboardType="number-pad"
               placeholder="CVV"
               placeholderTextColor={colors.muted}
               secureTextEntry
+              maxLength={4}
               style={[styles.input, styles.half]}
             />
           </View>

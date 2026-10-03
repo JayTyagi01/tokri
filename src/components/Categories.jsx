@@ -30,13 +30,14 @@ export default function Categories() {
 
   return (
     <section className="mb-0 mt-8 bg-canvas lg:mb-0 lg:mt-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <h2 className="home-section-title">
+      <div className="mx-auto max-w-7xl">
+        <h2 className="home-section-title px-4 sm:px-6">
           <span className="font-light">Shop By </span>Categories
         </h2>
 
-        <div className="group relative mt-5 overflow-hidden">
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 scrollbar-hide sm:-mx-6 sm:gap-4 sm:px-6">
+        {/* Padding lives on the scroller (not a clipped parent) so the first card is not cut off on mobile */}
+        <div className="group relative mt-5">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 scroll-pl-4 scroll-pr-4 scrollbar-hide sm:gap-4 sm:px-6 sm:scroll-pl-6 sm:scroll-pr-6">
             {categories.map((category) => (
               <Link
                 key={category.id}

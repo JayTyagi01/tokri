@@ -919,6 +919,9 @@ export async function buildAdminRouter() {
       authenticate: async (identifier, password) => {
         const login = String(identifier || '').trim()
         const pass = String(password || '')
+        // #region agent log
+        fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin login attempt',data:{hasIdentifier:!!login,passLen:pass.length,adminRoot:env.adminPath},timestamp:Date.now()})}).catch(()=>{})
+        // #endregion
         if (!login || !pass) return null
 
         const user = await prisma.user.findFirst({
@@ -930,11 +933,24 @@ export async function buildAdminRouter() {
           include: { permissions: true },
         })
 
-        if (!user?.password) return null
+        if (!user?.password) {
+          // #region agent log
+          fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin user missing or no password',data:{found:!!user,hasPassword:!!user?.password,role:user?.role||null,isActive:user?.isActive??null},timestamp:Date.now()})}).catch(()=>{})
+          // #endregion
+          return null
+        }
 
         const valid = await bcrypt.compare(pass, user.password)
-        if (!valid) return null
+        if (!valid) {
+          // #region agent log
+          fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin password mismatch',data:{userId:user.id,role:user.role},timestamp:Date.now()})}).catch(()=>{})
+          // #endregion
+          return null
+        }
 
+        // #region agent log
+        fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'B',location:'admin/index.js:authenticate',message:'admin auth success',data:{userId:user.id,role:user.role,redirectRoot:env.adminPath,cookieSecure:env.nodeEnv==='production'},timestamp:Date.now()})}).catch(()=>{})
+        // #endregion
         return serializeAdminUser(user)
       },
       cookieName: 'tokri_admin',

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import LoadingView from '../components/LoadingView'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { authGet, formatPrice } from '../lib/api'
+import { authGet, formatPrice, normalizeOrder } from '../lib/api'
 import { formatOrderWhen, paymentLabel } from '../lib/orders'
 import { useAuth } from '../context/AuthContext'
 
@@ -66,7 +66,7 @@ export default function OrdersScreen({ navigation }) {
       return
     }
     const data = await authGet('/account/orders?perPage=20', token)
-    setOrders(data.orders || [])
+    setOrders((data.orders || []).map(normalizeOrder))
   }, [isLoggedIn, token])
 
   useEffect(() => {

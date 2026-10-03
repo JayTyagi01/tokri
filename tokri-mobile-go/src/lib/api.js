@@ -1,6 +1,8 @@
 import { API_BASE_URL } from '../config'
 
 const ASSET_BASE = API_BASE_URL.replace(/\/api\/v1$/, '')
+/** Live host that actually serves /uploads (staging Node does not). */
+const UPLOADS_HOST = 'https://tokriii.com'
 
 export function resolveAssetUrl(value) {
   if (!value) return null
@@ -8,8 +10,10 @@ export function resolveAssetUrl(value) {
     return value
       .replace('http://localhost:5223', ASSET_BASE)
       .replace('http://127.0.0.1:5223', ASSET_BASE)
-      .replace('https://server.tokriii.com/uploads/', `${ASSET_BASE}/uploads/`)
+      // Staging API often emits server.tokriii.com/uploads → 404/502; live host has the files.
+      .replace('https://server.tokriii.com/uploads/', `${UPLOADS_HOST}/uploads/`)
   }
+  if (value.startsWith('/uploads/')) return `${UPLOADS_HOST}${value}`
   if (value.startsWith('/')) return `${ASSET_BASE}${value}`
   return value
 }
@@ -84,10 +88,37 @@ export async function postJson(path, body) {
 }
 
 export function normalizeProduct(product) {
+  if (!product) return product
   return {
     ...product,
     id: product.slug || product.id,
     image: resolveAssetUrl(product.image),
+  }
+}
+
+export function normalizeCategory(category) {
+  if (!category) return category
+  return {
+    ...category,
+    image: resolveAssetUrl(category.image),
+    bannerImage: resolveAssetUrl(category.bannerImage),
+  }
+}
+
+/** Cart / order line items from API or storage */
+export function normalizeLineItem(item) {
+  if (!item) return item
+  return {
+    ...item,
+    image: resolveAssetUrl(item.image),
+  }
+}
+
+export function normalizeOrder(order) {
+  if (!order) return order
+  return {
+    ...order,
+    items: Array.isArray(order.items) ? order.items.map(normalizeLineItem) : order.items,
   }
 }
 

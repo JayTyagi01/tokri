@@ -18,11 +18,11 @@ function RelatedProductCard({ product, onNavigate }) {
   return (
     <article
       onClick={() => onNavigate(target)}
-      className="group flex h-full cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md"
+      className="group flex h-full cursor-pointer flex-col rounded-lg border border-line bg-panel-2 p-1 transition hover:border-brand/40 sm:p-1.5"
     >
-      <div className="relative mb-2 h-36 overflow-hidden rounded-lg bg-slate-50">
+      <div className="relative mb-1 h-24 overflow-hidden rounded-md bg-panel sm:h-28">
         {off > 0 && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-bold leading-none text-white shadow">
+          <span className="absolute left-1 top-1 z-10 rounded bg-emerald-600 px-1 py-0.5 text-[9px] font-bold leading-none text-white shadow">
             {off}% OFF
           </span>
         )}
@@ -33,22 +33,22 @@ function RelatedProductCard({ product, onNavigate }) {
           loading="lazy"
         />
       </div>
-      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight text-slate-900">
+      <h3 className="line-clamp-2 min-h-[2rem] text-xs font-medium leading-tight text-white">
         {product.name}
       </h3>
-      {product.weight && <p className="mt-1 text-xs text-slate-500">{product.weight}</p>}
-      <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-        <div className="leading-tight">
-          <span className="block text-sm font-semibold text-slate-900 whitespace-nowrap">
+      {product.weight && <p className="mt-0.5 text-[10px] text-muted">{product.weight}</p>}
+      <div className="mt-auto flex items-end justify-between gap-1 pt-1">
+        <div className="min-w-0 flex-1 overflow-hidden leading-tight">
+          <span className="block truncate text-[11px] font-semibold text-white">
             {product.price}
           </span>
           {off > 0 && product.oldPrice && (
-            <span className="block text-xs text-slate-400 line-through whitespace-nowrap">
+            <span className="block truncate text-[10px] text-muted line-through">
               {product.oldPrice}
             </span>
           )}
         </div>
-        <span onClick={(event) => event.stopPropagation()}>
+        <span className="shrink-0" onClick={(event) => event.stopPropagation()}>
           <CartControl product={product} />
         </span>
       </div>
@@ -249,7 +249,7 @@ export default function ProductDetail() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8">
               {relatedProducts.map((item) => (
                 <RelatedProductCard key={item.id} product={item} onNavigate={navigate} />
               ))}

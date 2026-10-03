@@ -54,9 +54,9 @@ function ProductCard({ product, onNavigate }) {
   return (
     <article
       onClick={() => onNavigate(target)}
-      className="flex h-full cursor-pointer flex-col rounded-lg border border-slate-200/80 bg-white p-1.5 sm:p-2"
+      className="flex h-full cursor-pointer flex-col rounded-lg border border-line bg-panel-2 p-1.5 sm:p-2"
     >
-      <div className="relative mb-1 aspect-square overflow-hidden rounded-md bg-white">
+      <div className="relative mb-1 aspect-square overflow-hidden rounded-md bg-panel">
         {off > 0 && (
           <span className="absolute left-0 top-1.5 rounded-r bg-[#2563eb] px-1.5 py-0.5 text-[9px] font-bold leading-none text-white sm:text-[10px]">
             {off}% OFF
@@ -70,18 +70,18 @@ function ProductCard({ product, onNavigate }) {
         />
       </div>
 
-      <h3 className="line-clamp-2 text-[12px] font-bold leading-tight text-slate-900 sm:text-[13px]">
+      <h3 className="line-clamp-2 text-[12px] font-bold leading-tight text-white sm:text-[13px]">
         {product.name}
       </h3>
-      {product.weight && <p className="mt-0.5 text-[11px] text-slate-500">{product.weight}</p>}
+      {product.weight && <p className="mt-0.5 text-[11px] text-muted">{product.weight}</p>}
 
       <div className="mt-auto flex items-end justify-between gap-1 pt-1.5">
         <div className="min-w-0 leading-tight">
-          <span className="block whitespace-nowrap text-[13px] font-bold text-slate-900 sm:text-sm">
+          <span className="block whitespace-nowrap text-[13px] font-bold text-white sm:text-sm">
             {product.price}
           </span>
           {off > 0 && product.oldPrice && (
-            <span className="block whitespace-nowrap text-[11px] text-slate-400 line-through">
+            <span className="block whitespace-nowrap text-[11px] text-muted line-through">
               {product.oldPrice}
             </span>
           )}
@@ -709,11 +709,11 @@ export default function ShopAllPage() {
             >
               <div className="px-1.5 pb-3 pt-1 sm:px-2 sm:pb-4">
                 {loadingFeed || !sections.length ? (
-                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8">
                     {Array.from({ length: 12 }).map((_, index) => (
                       <div
                         key={index}
-                        className="aspect-[3/4] animate-pulse rounded-lg border border-slate-200 bg-white"
+                        className="aspect-[3/4] animate-pulse rounded-lg border border-line bg-panel-2"
                       />
                     ))}
                   </div>
@@ -727,11 +727,12 @@ export default function ShopAllPage() {
                 ) : (
                   <>
                     {isMobile && (
-                      <div ref={loadPrevRef} className="flex h-6 items-center justify-center">
-                        {prepending && (
-                          <span className="text-sm font-medium text-muted">Loading…</span>
-                        )}
-                      </div>
+                      <>
+                        <div ref={loadPrevRef} className="h-0 w-full overflow-hidden" aria-hidden />
+                        {prepending ? (
+                          <p className="py-1 text-center text-sm font-medium text-muted">Loading…</p>
+                        ) : null}
+                      </>
                     )}
 
                     {sections.map((section) => (
@@ -743,7 +744,7 @@ export default function ShopAllPage() {
                         }}
                         className="pt-2 first:pt-0"
                       >
-                        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8">
                           {section.products.map((product) => (
                             <ProductCard
                               key={`${section.slug}-${product.id}`}
@@ -755,11 +756,10 @@ export default function ShopAllPage() {
                       </div>
                     ))}
 
-                    <div ref={loadMoreRef} className="flex h-8 items-center justify-center py-3">
-                      {appending && (
-                        <span className="text-sm font-medium text-muted">Loading more…</span>
-                      )}
-                    </div>
+                    <div ref={loadMoreRef} className="h-0 w-full overflow-hidden" aria-hidden />
+                    {appending ? (
+                      <p className="py-1 text-center text-sm font-medium text-muted">Loading more…</p>
+                    ) : null}
                   </>
                 )}
               </div>

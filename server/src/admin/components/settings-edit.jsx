@@ -34,7 +34,12 @@ const TABS = [
   {
     id: 'homepage',
     label: 'Homepage',
-    fields: ['homeBannerImage', 'homeHighlightImage', 'homeFeaturedCategorySlugs'],
+    fields: [
+      'homeBannerImage',
+      'homeMobileBannerImage',
+      'homeHighlightImage',
+      'homeFeaturedCategorySlugs',
+    ],
   },
   {
     id: 'payments',
@@ -124,10 +129,13 @@ const SettingsEdit = (props) => {
     resource.id,
   )
   const bannerFileRef = useRef(null)
+  const mobileBannerFileRef = useRef(null)
   const highlightFileRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState('')
+  const [mobileBannerPreview, setMobileBannerPreview] = useState('')
   const [highlightPreview, setHighlightPreview] = useState('')
   const [bannerUploading, setBannerUploading] = useState(false)
+  const [mobileBannerUploading, setMobileBannerUploading] = useState(false)
   const [highlightUploading, setHighlightUploading] = useState(false)
   const [categories, setCategories] = useState([])
 
@@ -140,6 +148,10 @@ const SettingsEdit = (props) => {
   const bannerImageUrl = useMemo(
     () => resolveImageUrl(params.homeBannerImage, appUrl),
     [appUrl, params.homeBannerImage],
+  )
+  const mobileBannerImageUrl = useMemo(
+    () => resolveImageUrl(params.homeMobileBannerImage, appUrl),
+    [appUrl, params.homeMobileBannerImage],
   )
   const highlightImageUrl = useMemo(
     () => resolveImageUrl(params.homeHighlightImage, appUrl),
@@ -166,6 +178,12 @@ const SettingsEdit = (props) => {
       if (bannerPreview?.startsWith('blob:')) URL.revokeObjectURL(bannerPreview)
     }
   }, [bannerPreview])
+
+  useEffect(() => {
+    return () => {
+      if (mobileBannerPreview?.startsWith('blob:')) URL.revokeObjectURL(mobileBannerPreview)
+    }
+  }, [mobileBannerPreview])
 
   useEffect(() => {
     return () => {
@@ -315,7 +333,7 @@ const SettingsEdit = (props) => {
                 <div className="tokri-homepage-fields">
                   <ImageUploader
                     label="Home banner image"
-                    hint="Shown as the website hero banner. JPG, PNG, GIF, or WebP up to 5MB."
+                    hint="Desktop / large-screen hero banner. JPG, PNG, GIF, or WebP up to 5MB."
                     value={bannerImageUrl}
                     previewUrl={bannerPreview}
                     uploading={bannerUploading}
@@ -329,6 +347,24 @@ const SettingsEdit = (props) => {
                         setBannerUploading,
                         bannerFileRef,
                         'Banner image uploaded',
+                      )
+                    }
+                  />
+                  <ImageUploader
+                    label="Home mobile banner image"
+                    hint="Shown on phones. If empty, the desktop banner is used instead."
+                    value={mobileBannerImageUrl}
+                    previewUrl={mobileBannerPreview}
+                    uploading={mobileBannerUploading}
+                    fileRef={mobileBannerFileRef}
+                    onUpload={(event) =>
+                      uploadImage(
+                        event,
+                        'homeMobileBannerImage',
+                        setMobileBannerPreview,
+                        setMobileBannerUploading,
+                        mobileBannerFileRef,
+                        'Mobile banner image uploaded',
                       )
                     }
                   />

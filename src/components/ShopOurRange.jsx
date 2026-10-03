@@ -60,11 +60,11 @@ function ProductCard({ product, onNavigate }) {
   return (
     <article
       onClick={() => onNavigate(target)}
-      className="group flex h-full cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md"
+      className="group flex h-full cursor-pointer flex-col rounded-lg border border-line bg-panel-2 p-1 transition hover:border-brand/40 sm:p-1.5"
     >
-      <div className="relative mb-2 h-32 overflow-hidden rounded-lg bg-slate-50 sm:h-36">
+      <div className="relative mb-1 h-24 overflow-hidden rounded-md bg-panel sm:h-28">
         {off > 0 && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-bold leading-none text-white shadow">
+          <span className="absolute left-1 top-1 z-10 rounded bg-emerald-600 px-1 py-0.5 text-[9px] font-bold leading-none text-white shadow">
             {off}% OFF
           </span>
         )}
@@ -75,24 +75,24 @@ function ProductCard({ product, onNavigate }) {
           loading="lazy"
         />
       </div>
-      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight text-slate-900">
+      <h3 className="line-clamp-2 min-h-[2rem] text-xs font-medium leading-tight text-white">
         {product.name}
       </h3>
       {product.weight && (
-        <p className="mt-1 text-xs text-slate-500">{product.weight}</p>
+        <p className="mt-0.5 text-[10px] text-muted">{product.weight}</p>
       )}
-      <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-        <div className="leading-tight">
-          <span className="block text-sm font-semibold text-slate-900 whitespace-nowrap">
+      <div className="mt-auto flex items-end justify-between gap-1 pt-1">
+        <div className="min-w-0 flex-1 overflow-hidden leading-tight">
+          <span className="block truncate text-[11px] font-semibold text-white">
             {product.price}
           </span>
           {off > 0 && product.oldPrice && (
-            <span className="block text-xs text-slate-400 line-through whitespace-nowrap">
+            <span className="block truncate text-[10px] text-muted line-through">
               {product.oldPrice}
             </span>
           )}
         </div>
-        <span onClick={(event) => event.stopPropagation()}>
+        <span className="shrink-0" onClick={(event) => event.stopPropagation()}>
           <CartControl product={product} />
         </span>
       </div>
@@ -239,8 +239,8 @@ export default function ShopOurRange() {
                   ref={trackRef}
                   className={
                     isSlider
-                      ? 'flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-hide'
-                      : 'grid gap-4 grid-cols-2 sm:grid-cols-3'
+                      ? 'flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth pb-2 scrollbar-hide'
+                      : 'grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8'
                   }
                 >
                   {products.map((product) => (
@@ -248,7 +248,7 @@ export default function ShopOurRange() {
                       key={product.id}
                       className={
                         isSlider
-                          ? 'w-[72%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
+                          ? 'w-[calc((100%-1rem)/3)] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/4)] md:w-[calc((100%-2rem)/5)] lg:w-[calc((100%-3rem)/7)] xl:w-[calc((100%-3.5rem)/8)]'
                           : ''
                       }
                     >

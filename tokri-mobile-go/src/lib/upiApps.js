@@ -11,6 +11,7 @@ export const UPI_APPS = [
     packageName: 'com.google.android.apps.nbu.paisa.user',
     schemes: ['tez://', 'gpay://'],
     iosScheme: 'tez://upi/pay',
+    androidPayPath: 'tez://upi/pay',
   },
   {
     id: 'phonepe',
@@ -21,6 +22,7 @@ export const UPI_APPS = [
     packageName: 'com.phonepe.app',
     schemes: ['phonepe://'],
     iosScheme: 'phonepe://pay',
+    androidPayPath: 'phonepe://pay',
   },
   {
     id: 'paytm',
@@ -31,6 +33,7 @@ export const UPI_APPS = [
     packageName: 'net.one97.paytm',
     schemes: ['paytmmp://', 'paytm://'],
     iosScheme: 'paytmmp://pay',
+    androidPayPath: 'paytmmp://pay',
   },
   {
     id: 'cred',
@@ -41,6 +44,7 @@ export const UPI_APPS = [
     packageName: 'com.dreamplug.androidapp',
     schemes: ['credpay://'],
     iosScheme: 'credpay://upi/pay',
+    androidPayPath: 'credpay://upi/pay',
   },
   {
     id: 'amazon',
@@ -51,6 +55,7 @@ export const UPI_APPS = [
     packageName: 'in.amazon.mShop.android.shopping',
     schemes: ['amazonpay://'],
     iosScheme: 'amazonpay://upi/pay',
+    androidPayPath: 'amazonpay://upi/pay',
   },
   {
     id: 'bhim',
@@ -61,8 +66,11 @@ export const UPI_APPS = [
     packageName: 'in.org.npci.upiapp',
     schemes: ['bhim://'],
     iosScheme: 'bhim://upi/pay',
+    androidPayPath: 'bhim://upi/pay',
   },
 ]
+
+const FLAG_ACTIVITY_NEW_TASK = 0x10000000
 
 export function upiAppById(id) {
   return UPI_APPS.find((app) => app.id === id) || null
@@ -100,17 +108,11 @@ export async function detectInstalledUpiApps() {
   return UPI_APPS
 }
 
-function iosUrl(app, intentUrl) {
-  const query = String(intentUrl).split('?')[1] || ''
-  if (app?.iosScheme && query) return `${app.iosScheme}?${query}`
-  return intentUrl
-}
+function normalizeIntentUrl(raw) {
+  let url = String(raw || '').trim()
+  if (!url) return ''
 
-export async function openUpiApp(appId, intentUrl) {
-  const app = upiAppById(appId)
-  let url = String(intentUrl || '').trim()
-  if (!url) throw new Error('Could not start this payment.')
-
+  // intent://pay?...#Intent;scheme=upi;package=...;end
   if (/^intent:/i.test(url)) {
     const schemeMatch = url.match(/;scheme=([^;]+)/i)
     const dataMatch = url.match(/^intent:\/\/([^#]+)/i)
@@ -119,34 +121,87 @@ export async function openUpiApp(appId, intentUrl) {
     }
   }
 
+  return url
+}
+
+function upiQuery(url) {
+  const trimmed = String(url || '')
+  const qIndex = trimmed.indexOf('?')
+  if (qIndex === -1) return ''
+  return trimmed.slice(qIndex + 1)
+}
+
+/** Build an app-specific deep link so Android opens that app, not the system chooser. */
+function appSpecificPayUrl(app, upiUrl) {
+  const query = upiQuery(upiUrl)
+  if (!app || !query) return upiUrl
+
+  if (app.androidPayPath) return `${app.androidPayPath}?${query}`
+  return upiUrl
+}
+
+function androidIntentWithPackage(upiUrl, packageName) {
+  const query = upiQuery(upiUrl)
+  if (!query || !packageName) return ''
+  // Standard Android intent URI that pins the target package.
+  return `intent://pay?${query}#Intent;scheme=upi;package=${packageName};end`
+}
+
+async function tryOpenAndroid(url, packageName) {
+  if (packageName) {
+    try {
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: url,
+        packageName,
+        flags: FLAG_ACTIVITY_NEW_TASK,
+      })
+      return true
+    } catch {
+      // Try next strategy.
+    }
+  }
+
+  try {
+    await Linking.openURL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function iosUrl(app, intentUrl) {
+  const query = upiQuery(intentUrl)
+  if (app?.iosScheme && query) return `${app.iosScheme}?${query}`
+  return intentUrl
+}
+
+export async function openUpiApp(appId, intentUrl) {
+  const app = upiAppById(appId)
+  let url = normalizeIntentUrl(intentUrl)
+  if (!url) throw new Error('Could not start this payment.')
+
   if (!/^(upi:|tez:|phonepe:|paytmmp:|gpay:|credpay:|amazonpay:|bhim:)/i.test(url)) {
     throw new Error('Could not start this payment.')
   }
 
   if (Platform.OS === 'android') {
-    if (app?.packageName) {
-      try {
-        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-          data: url,
-          packageName: app.packageName,
-        })
-        return
-      } catch {
-        // Fall through.
-      }
-    }
-    try {
-      await Linking.openURL(url)
-      return
-    } catch {
-      // Fall through.
-    }
-    try {
-      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', { data: url })
-      return
-    } catch {
-      throw new Error(`${app?.label || 'This UPI app'} is not installed on this phone.`)
-    }
+    const packageName = app?.packageName || ''
+    const specific = app ? appSpecificPayUrl(app, url) : url
+    const pinnedIntent = packageName ? androidIntentWithPackage(url, packageName) : ''
+
+    // 1) App deep link + package (best chance to skip chooser)
+    if (await tryOpenAndroid(specific, packageName)) return
+
+    // 2) Generic upi:// pinned to package via IntentLauncher
+    if (packageName && (await tryOpenAndroid(url, packageName))) return
+
+    // 3) intent://…;package=… URI (works even when IntentLauncher fails)
+    if (pinnedIntent && (await tryOpenAndroid(pinnedIntent, null))) return
+
+    // 4) App deep link without package
+    if (specific !== url && (await tryOpenAndroid(specific, null))) return
+
+    throw new Error(`${app?.label || 'This UPI app'} is not installed on this phone.`)
   }
 
   const target = iosUrl(app, url)

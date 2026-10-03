@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { env } from './config/env.js'
@@ -14,6 +15,8 @@ import { prisma } from './lib/prisma.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const uploadsPath = path.join(__dirname, '../uploads')
+const distPath = path.join(__dirname, '../../dist')
+const hasDist = fs.existsSync(path.join(distPath, 'index.html'))
 
 const app = express()
 
@@ -31,13 +34,27 @@ app.use(
 
 app.use('/uploads', express.static(uploadsPath))
 
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'Tokriii API',
-    api: '/api/v1',
-    health: '/api/v1/health',
-  })
+// #region agent log
+app.use((req, _res, next) => {
+  if (req.path === '/' || req.path.startsWith(env.adminPath) || req.path.startsWith('/admin')) {
+    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:req.path.startsWith('/admin')&&!req.path.startsWith(env.adminPath)?'A':'E',location:'server.js:request',message:'incoming request',data:{method:req.method,path:req.path,hasDist,host:req.headers.host||null,secure:!!req.secure,xfp:req.headers['x-forwarded-proto']||null},timestamp:Date.now()})}).catch(()=>{})
+  }
+  next()
 })
+// #endregion
+
+// Serve storefront from dist/ when present (staging/single-host). Live often uses nginx for this.
+if (hasDist) {
+  app.use(express.static(distPath, { index: false, maxAge: '1h' }))
+} else {
+  app.get('/', (_req, res) => {
+    res.json({
+      name: 'Tokriii API',
+      api: '/api/v1',
+      health: '/api/v1/health',
+    })
+  })
+}
 
 // Password reset pages (before AdminJS; no global body parser here)
 app.use(env.adminPath, adminAuthRouter)
@@ -64,6 +81,24 @@ api.use('/', apiRouter)
 api.use('/media', mediaRouter)
 app.use('/api/v1', api)
 
+// SPA fallback for storefront routes (must be after API + admin)
+if (hasDist) {
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith(env.adminPath) ||
+      req.path.startsWith('/uploads') ||
+      req.path.startsWith('/partner')
+    ) {
+      return next()
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'F',location:'server.js:spa-fallback',message:'serving storefront index',data:{path:req.path},timestamp:Date.now()})}).catch(()=>{})
+    // #endregion
+    return res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
+
 app.use(errorHandler)
 
 async function start() {
@@ -74,6 +109,7 @@ async function start() {
       console.log(`Public site: ${env.clientUrl}`)
       console.log(`Admin panel: ${env.appUrl}${env.adminPath}`)
       console.log(`API: ${env.apiUrl}/api/v1`)
+      console.log(`Storefront dist: ${hasDist ? distPath : 'not found (API-only root)'}`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)

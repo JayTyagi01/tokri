@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "EXPO_UNSTABLE_HEADLESS=1 expo start --tunnel --clear",
-    "start:lan": "EXPO_UNSTABLE_HEADLESS=1 expo start --lan --clear",
+    "start": "TMPDIR=\"$PWD/.metro-tmp\" EXPO_UNSTABLE_HEADLESS=1 expo start --tunnel --clear",
+    "start:lan": "TMPDIR=\"$PWD/.metro-tmp\" EXPO_UNSTABLE_HEADLESS=1 expo start --lan --clear",
+    "start:tunnel": "TMPDIR=\"$PWD/.metro-tmp\" expo start --tunnel --clear",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web"

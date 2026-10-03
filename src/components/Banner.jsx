@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom'
 import { resolveAssetUrl } from '../lib/api'
 
-export default function Banner({ image }) {
-  if (!image) return null
+export default function Banner({ image, mobileImage }) {
+  const desktopSrc = image ? resolveAssetUrl(image) : null
+  const mobileSrc = mobileImage ? resolveAssetUrl(mobileImage) : null
+  const src = mobileSrc || desktopSrc
+
+  if (!src) return null
 
   return (
     <section className="mt-6">
@@ -12,12 +16,24 @@ export default function Banner({ image }) {
           aria-label="Shop all"
           className="group block cursor-pointer overflow-hidden rounded-xl"
         >
-          <img
-            src={resolveAssetUrl(image)}
-            alt="Home banner"
-            className="block w-full object-cover transition duration-300 group-hover:scale-[1.015] group-hover:brightness-95"
-            decoding="async"
-          />
+          {desktopSrc && mobileSrc ? (
+            <picture>
+              <source media="(min-width: 768px)" srcSet={desktopSrc} />
+              <img
+                src={mobileSrc}
+                alt="Home banner"
+                className="block w-full object-cover transition duration-300 group-hover:scale-[1.015] group-hover:brightness-95"
+                decoding="async"
+              />
+            </picture>
+          ) : (
+            <img
+              src={src}
+              alt="Home banner"
+              className="block w-full object-cover transition duration-300 group-hover:scale-[1.015] group-hover:brightness-95"
+              decoding="async"
+            />
+          )}
         </Link>
       </div>
     </section>

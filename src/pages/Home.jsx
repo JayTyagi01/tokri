@@ -11,6 +11,7 @@ import { fetchJson } from '../lib/api'
 export default function Home() {
   const [home, setHome] = useState({
     bannerImage: null,
+    mobileBannerImage: null,
     highlightImage: null,
     featuredCategorySlugs: [],
   })
@@ -24,6 +25,7 @@ export default function Home() {
         const next = data?.home || {}
         setHome({
           bannerImage: next.bannerImage || null,
+          mobileBannerImage: next.mobileBannerImage || null,
           highlightImage: next.highlightImage || null,
           featuredCategorySlugs: Array.isArray(next.featuredCategorySlugs)
             ? next.featuredCategorySlugs
@@ -39,7 +41,7 @@ export default function Home() {
 
   return (
     <main>
-      <Banner image={home.bannerImage} />
+      <Banner image={home.bannerImage} mobileImage={home.mobileBannerImage} />
       <Categories />
       <BestSellers />
       <SeasonalFruits />

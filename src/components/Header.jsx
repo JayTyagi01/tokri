@@ -1,5 +1,5 @@
-import { useNavigate, Link } from 'react-router-dom'
-import { UserRound, ShoppingBag as ShoppingBagIcon } from 'lucide-react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { ArrowLeft, UserRound, ShoppingBag as ShoppingBagIcon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import SearchBox from './SearchBox'
@@ -9,8 +9,10 @@ import tokriLogo from '../assets/tokri-logo.png'
 
 export default function Header({ onLoginClick, className = '' }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { totalCount, openDrawer } = useCart()
   const { isLoggedIn } = useAuth()
+  const showMobileBack = location.pathname !== '/'
 
   const handleProfileClick = () => {
     if (isLoggedIn) {
@@ -24,6 +26,19 @@ export default function Header({ onLoginClick, className = '' }) {
     onLoginClick()
   }
 
+  const handleMobileBack = () => {
+    // Shop is a primary browse surface; back should return home, not prior category query.
+    if (location.pathname === '/shop') {
+      navigate('/')
+      return
+    }
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate('/')
+  }
+
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b border-line bg-panel shadow-sm shadow-black/20 ${className}`}
@@ -32,6 +47,16 @@ export default function Header({ onLoginClick, className = '' }) {
       <div className="lg:hidden">
         <div className="px-4 pb-3 pt-3">
           <div className="flex items-center gap-3">
+            {showMobileBack ? (
+              <button
+                type="button"
+                onClick={handleMobileBack}
+                className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center text-white"
+                aria-label="Go back"
+              >
+                <ArrowLeft size={22} strokeWidth={2.25} />
+              </button>
+            ) : null}
             <DeliveryAddressBar className="min-w-0 flex-1" />
             <button
               type="button"

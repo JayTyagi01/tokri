@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import LoadingView from '../components/LoadingView'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { authGet, formatPrice } from '../lib/api'
+import { authGet, formatPrice, normalizeOrder } from '../lib/api'
 import { formatOrderWhen, paymentLabel, statusLabel } from '../lib/orders'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -42,7 +42,7 @@ export default function OrderDetailScreen({ navigation, route }) {
 
   const load = useCallback(async () => {
     const data = await authGet(`/account/orders/${encodeURIComponent(orderNo)}`, token)
-    setOrder(data.order)
+    setOrder(normalizeOrder(data.order))
   }, [orderNo, token])
 
   useEffect(() => {

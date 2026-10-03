@@ -77,7 +77,7 @@ export default function CartControl({
         <button
           type="button"
           onClick={handleAdd}
-          className="min-w-[52px] rounded-md border-2 border-brand bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand transition hover:bg-emerald-50"
+          className="min-w-[52px] rounded-md border-2 border-brand bg-[#163322] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand transition hover:bg-brand hover:text-white"
         >
           {addLabel}
         </button>
@@ -85,11 +85,11 @@ export default function CartControl({
     }
 
     return (
-      <div className="inline-flex min-w-[52px] items-center rounded-md border-2 border-brand bg-white text-brand">
+      <div className="inline-flex min-w-[52px] items-center rounded-md bg-brand text-white">
         <button
           type="button"
           onClick={handleDecrease}
-          className="flex h-7 w-7 items-center justify-center transition hover:bg-emerald-50"
+          className="flex h-7 w-7 items-center justify-center transition hover:bg-brand-hover"
           aria-label="Decrease quantity"
         >
           <Minus size={12} />
@@ -98,7 +98,7 @@ export default function CartControl({
         <button
           type="button"
           onClick={handleIncrease}
-          className="flex h-7 w-7 items-center justify-center transition hover:bg-emerald-50"
+          className="flex h-7 w-7 items-center justify-center transition hover:bg-brand-hover"
           aria-label="Increase quantity"
         >
           <Plus size={12} />
@@ -112,7 +112,7 @@ export default function CartControl({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-md border border-brand px-3 py-1.5 text-xs font-bold text-brand transition hover:bg-brand hover:text-black"
+        className="rounded border border-brand bg-[#163322] px-1.5 py-0.5 text-[10px] font-bold leading-none text-brand transition hover:bg-brand hover:text-white"
       >
         {addLabel}
       </button>
@@ -120,23 +120,25 @@ export default function CartControl({
   }
 
   return (
-    <div className="inline-flex items-center rounded-md bg-brand text-black">
+    <div className="inline-flex items-center rounded bg-brand text-white">
       <button
         type="button"
         onClick={handleDecrease}
-        className="flex h-8 w-8 items-center justify-center rounded-l-md transition hover:bg-brand-hover"
+        className="flex h-6 w-5 items-center justify-center rounded-l transition hover:bg-brand-hover"
         aria-label="Decrease quantity"
       >
-        <Minus size={14} />
+        <Minus size={10} />
       </button>
-      <span className="min-w-[1.25rem] text-center text-xs font-bold">{quantity}</span>
+      <span className="min-w-[0.9rem] text-center text-[10px] font-bold leading-none">
+        {quantity}
+      </span>
       <button
         type="button"
         onClick={handleIncrease}
-        className="flex h-8 w-8 items-center justify-center rounded-r-md transition hover:bg-brand-hover"
+        className="flex h-6 w-5 items-center justify-center rounded-r transition hover:bg-brand-hover"
         aria-label="Increase quantity"
       >
-        <Plus size={14} />
+        <Plus size={10} />
       </button>
     </div>
   )

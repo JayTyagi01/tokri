@@ -15,6 +15,7 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'shippingFee',
   'handlingFee',
   'homeBannerImage',
+  'homeMobileBannerImage',
   'homeHighlightImage',
   'homeFeaturedCategorySlugs',
   'razorpayEnabled',

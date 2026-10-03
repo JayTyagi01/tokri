@@ -60,7 +60,7 @@ export default function OtpScreen({ navigation, route }) {
       const result = await postJson('/auth/verify-otp', { phone, otp: code })
       await login({ ...result.user, token: result.token })
       navigation.popToTop()
-      if (next === 'Checkout') navigation.navigate('Checkout')
+      if (next === 'Checkout') navigation.navigate('Main', { screen: 'Cart' })
     } catch (error) {
       submitted.current = false
       setOtp('')

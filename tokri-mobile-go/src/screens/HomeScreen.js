@@ -12,7 +12,7 @@ import AppHeader from '../components/AppHeader'
 import ProductCard from '../components/ProductCard'
 import LoadingView from '../components/LoadingView'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
-import { fetchJson, normalizeProduct } from '../lib/api'
+import { fetchJson, normalizeCategory, normalizeProduct } from '../lib/api'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 const CAT_GAP = 10
@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }) {
   const load = useCallback(async () => {
     const bootstrap = await fetchJson('/app/bootstrap')
 
-    const categories = bootstrap.categories || []
+    const categories = (bootstrap.categories || []).map(normalizeCategory)
     const bestSellers = (bootstrap.bestSellers || []).map(normalizeProduct)
 
     setData({ categories, bestSellers })
