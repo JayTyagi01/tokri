@@ -1,11 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { authGet } from '../lib/api'
+import { fetchAddressFromBrowser } from '../lib/geolocation'
 
 const AddressContext = createContext(null)
 
 function storageKey(phone) {
   return phone ? `tokri_selected_address_${phone}` : null
+}
+
+function detectedPlaceLabel(found) {
+  const line = [found?.line2 || found?.line1, found?.city].filter(Boolean).join(', ')
+  if (!line) return ''
+  return line.length > 42 ? `${line.slice(0, 42)}…` : line
 }
 
 export function AddressProvider({ children }) {
@@ -14,6 +21,8 @@ export function AddressProvider({ children }) {
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [detectedLabel, setDetectedLabel] = useState('')
+  const [locating, setLocating] = useState(false)
 
   const refreshAddresses = useCallback(async () => {
     if (!isLoggedIn || !user?.phone) {
@@ -54,6 +63,30 @@ export function AddressProvider({ children }) {
     refreshAddresses()
   }, [refreshAddresses])
 
+  // Prompt the browser for location on first load (same idea as the app).
+  useEffect(() => {
+    let ignore = false
+    if (typeof window === 'undefined' || !navigator.geolocation) return undefined
+
+    setLocating(true)
+    fetchAddressFromBrowser()
+      .then((found) => {
+        if (ignore) return
+        const label = detectedPlaceLabel(found)
+        if (label) setDetectedLabel(label)
+      })
+      .catch(() => {
+        // Permission denied or unavailable — keep "Select address".
+      })
+      .finally(() => {
+        if (!ignore) setLocating(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const selectedAddress = useMemo(
     () => addresses.find((item) => item.id === selectedAddressId) || null,
     [addresses, selectedAddressId],
@@ -88,6 +121,8 @@ export function AddressProvider({ children }) {
       selectedAddress,
       selectedAddressId,
       hasDeliveryAddress,
+      detectedLabel,
+      locating,
       loading,
       pickerOpen,
       refreshAddresses,
@@ -100,6 +135,8 @@ export function AddressProvider({ children }) {
       selectedAddress,
       selectedAddressId,
       hasDeliveryAddress,
+      detectedLabel,
+      locating,
       loading,
       pickerOpen,
       refreshAddresses,

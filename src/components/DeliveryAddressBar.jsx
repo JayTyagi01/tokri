@@ -10,10 +10,15 @@ function shortAddress(address) {
 
 export default function DeliveryAddressBar({ className = '', variant = 'mobile' }) {
   const { isLoggedIn } = useAuth()
-  const { selectedAddress, addresses, openPicker } = useAddress()
+  const { selectedAddress, addresses, openPicker, detectedLabel, locating } = useAddress()
 
-  const label = !isLoggedIn || !selectedAddress ? 'Select address' : shortAddress(selectedAddress)
+  const label = selectedAddress
+    ? shortAddress(selectedAddress)
+    : locating
+      ? 'Detecting location…'
+      : detectedLabel || 'Select address'
   const canChangeAddress = isLoggedIn && addresses.length > 1 && selectedAddress
+  const needsAddress = !selectedAddress
 
   if (variant === 'desktop') {
     return (
@@ -30,7 +35,7 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
           <span className="flex items-center gap-1.5">
             <span
               className={`block truncate text-sm font-medium ${
-                !isLoggedIn || !selectedAddress ? 'text-brand' : 'text-mint'
+                needsAddress && !detectedLabel && !locating ? 'text-brand' : 'text-mint'
               }`}
             >
               {label}
@@ -53,7 +58,9 @@ export default function DeliveryAddressBar({ className = '', variant = 'mobile' 
         className="mt-0.5 flex max-w-full cursor-pointer items-center gap-1 text-left text-[11px] sm:gap-1.5 sm:text-xs"
       >
         <span
-          className={`truncate ${!isLoggedIn || !selectedAddress ? 'font-semibold text-brand' : 'text-mint'}`}
+          className={`truncate ${
+            needsAddress && !detectedLabel && !locating ? 'font-semibold text-brand' : 'text-mint'
+          }`}
         >
           {label}
         </span>
