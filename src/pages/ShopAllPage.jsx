@@ -54,7 +54,7 @@ function ProductCard({ product, onNavigate }) {
   return (
     <article
       onClick={() => onNavigate(target)}
-      className="flex h-full cursor-pointer flex-col rounded-lg border border-line bg-panel-2 p-1.5 sm:p-2"
+      className="flex h-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-line bg-panel-2 p-1.5 sm:p-2"
     >
       <div className="relative mb-1 aspect-square overflow-hidden rounded-md bg-panel">
         {off > 0 && (
@@ -73,15 +73,15 @@ function ProductCard({ product, onNavigate }) {
       <h3 className="line-clamp-2 text-[12px] font-bold leading-tight text-white sm:text-[13px]">
         {product.name}
       </h3>
-      {product.weight && <p className="mt-0.5 text-[11px] text-muted">{product.weight}</p>}
+      {product.weight && <p className="mt-0.5 truncate text-[11px] text-muted">{product.weight}</p>}
 
-      <div className="mt-auto flex items-end justify-between gap-1 pt-1.5">
-        <div className="min-w-0 leading-tight">
-          <span className="block whitespace-nowrap text-[13px] font-bold text-white sm:text-sm">
+      <div className="mt-auto flex min-w-0 items-end justify-between gap-1 pt-1.5">
+        <div className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-[13px] font-bold text-white sm:text-sm">
             {product.price}
           </span>
           {off > 0 && product.oldPrice && (
-            <span className="block whitespace-nowrap text-[11px] text-muted line-through">
+            <span className="block truncate text-[11px] text-muted line-through">
               {product.oldPrice}
             </span>
           )}
@@ -714,10 +714,10 @@ export default function ShopAllPage() {
   return (
     <main
       ref={mainRef}
-      className={`flex flex-col bg-canvas ${isMobile ? 'overflow-hidden' : ''}`}
+      className={`flex flex-col bg-canvas ${isMobile ? 'overflow-hidden' : 'overflow-x-clip'}`}
       style={lockedHeight ? { height: `${lockedHeight}px` } : undefined}
     >
-      <div className="mx-auto flex w-full min-h-0 max-w-7xl flex-1 flex-col px-2 pt-5 sm:px-3 sm:pt-6 lg:px-4 lg:pt-8">
+      <div className="mx-auto flex w-full min-h-0 max-w-7xl flex-1 flex-col overflow-x-clip px-2 pt-5 sm:px-3 sm:pt-6 lg:px-4 lg:pt-8">
         <p className="mx-2.5 mb-5 shrink-0 text-xl capitalize text-white">Shop all</p>
 
         {/* Mobile scrolls this whole block — the shop box, then the footer — so the
@@ -725,10 +725,10 @@ export default function ShopAllPage() {
             overflow-clip (not hidden) keeps the box from becoming the scrollport. */}
         <div
           ref={isMobile ? productsScrollRef : null}
-          className={isMobile ? 'min-h-0 flex-1 overflow-y-auto' : ''}
+          className={isMobile ? 'min-h-0 flex-1 overflow-x-clip overflow-y-auto' : ''}
         >
           <div
-            className={`mb-5 flex rounded-lg border border-line bg-panel ${
+            className={`mb-5 flex max-w-full rounded-lg border border-line bg-panel ${
               isMobile
                 ? 'overflow-clip'
                 : 'min-h-[calc(100dvh-14rem)] overflow-hidden lg:min-h-[calc(100dvh-12rem)]'
@@ -792,13 +792,13 @@ export default function ShopAllPage() {
                 isMobile ? '' : 'min-h-0 overflow-y-auto overscroll-contain'
               }`}
             >
-              <div className="px-1.5 pb-3 pt-1 sm:px-2 sm:pb-4">
+              <div className="min-w-0 px-1.5 pb-3 pt-1 sm:px-2 sm:pb-4">
                 {loadingFeed || !sections.length ? (
                   <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8">
                     {Array.from({ length: 12 }).map((_, index) => (
                       <div
                         key={index}
-                        className="aspect-[3/4] animate-pulse rounded-lg border border-line bg-panel-2"
+                        className="aspect-[3/4] min-w-0 animate-pulse rounded-lg border border-line bg-panel-2"
                       />
                     ))}
                   </div>
@@ -827,7 +827,7 @@ export default function ShopAllPage() {
                           if (node) sectionRefs.current.set(section.slug, node)
                           else sectionRefs.current.delete(section.slug)
                         }}
-                        className="pt-2 first:pt-0"
+                        className="min-w-0 pt-2 first:pt-0"
                       >
                         <div className="grid grid-cols-2 gap-2 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8">
                           {section.products.map((product) => (
@@ -852,7 +852,7 @@ export default function ShopAllPage() {
           </div>
 
           {isMobile && (
-            <div className="-mx-2 sm:-mx-3">
+            <div className="max-w-full overflow-x-clip">
               <Footer />
             </div>
           )}
