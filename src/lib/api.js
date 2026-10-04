@@ -20,9 +20,12 @@ function resolveApiBaseUrl() {
       return 'https://tokriii.com/api/v1'
     }
 
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Staging and any other deployed host share API on the same origin.
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
       return `${origin}/api/v1`
     }
+
+    return `${origin}/api/v1`
   }
 
   return 'http://localhost:5223/api/v1'
