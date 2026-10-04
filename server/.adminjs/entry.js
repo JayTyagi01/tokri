@@ -33,3 +33,7 @@ import DefaultRichtextEditProperty from '../src/admin/components/richtext-edit'
 AdminJS.UserComponents.DefaultRichtextEditProperty = DefaultRichtextEditProperty
 import SidebarResourceSection from '../src/admin/components/sidebar-dashboard'
 AdminJS.UserComponents.SidebarResourceSection = SidebarResourceSection
+import RecordsTable from '../src/admin/components/records-table'
+AdminJS.UserComponents.RecordsTable = RecordsTable
+import RecordsTableHeader from '../src/admin/components/records-table-header'
+AdminJS.UserComponents.RecordsTableHeader = RecordsTableHeader

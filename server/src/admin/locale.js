@@ -42,6 +42,10 @@ export const adminLocale = {
         ...navLabels,
         ...resourceLabels,
       },
+      properties: {
+        ...en.properties,
+        productDisplayLimit: 'Products',
+      },
       components: {
         ...en.components,
         Login: {
@@ -56,7 +60,12 @@ export const adminLocale = {
       },
       resources: {
         Product: { labels: { Products: 'Products' } },
-        Category: { labels: { Categories: 'Categories' } },
+        Category: {
+          labels: { Categories: 'Categories' },
+          properties: {
+            productDisplayLimit: 'Products',
+          },
+        },
         Media: { labels: { 'Media Library': 'Media Library' } },
         Page: { labels: { Pages: 'Pages' } },
         Review: { labels: { Reviews: 'Reviews' } },

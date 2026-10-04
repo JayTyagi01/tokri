@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Calendar } from 'lucide-react'
 import Swal from 'sweetalert2'
 import { useAuth } from '../../context/AuthContext'
@@ -32,6 +32,11 @@ export default function ProfileForm() {
   const [name, setName] = useState(user?.name || '')
   const [dateOfBirth, setDateOfBirth] = useState(toDisplayDate(user?.dateOfBirth))
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setName(user?.name || '')
+    setDateOfBirth(toDisplayDate(user?.dateOfBirth))
+  }, [user?.name, user?.dateOfBirth])
 
   const openPicker = () => {
     const input = pickerRef.current

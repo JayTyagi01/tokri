@@ -61,6 +61,10 @@ export function formatCategory(category, { includeProducts = false } = {}) {
     image: toPublicAssetUrl(category.image),
     bannerImage: toPublicAssetUrl(category.bannerImage),
     sortOrder: category.sortOrder,
+    productDisplayLimit: Math.min(
+      Math.max(Number(category.productDisplayLimit) || 12, 1),
+      100,
+    ),
     productCount:
       category._count?.productLinks ??
       category._count?.products ??

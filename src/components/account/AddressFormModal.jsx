@@ -5,9 +5,9 @@ import { scrollFieldAboveKeyboard, useMobileKeyboardPad } from '../../lib/useMob
 
 const LABELS = ['Home', 'Work', 'Other']
 
-const emptyForm = (defaultPhone = '') => ({
+const emptyForm = (defaultPhone = '', defaultName = '') => ({
   label: 'Home',
-  name: '',
+  name: defaultName || '',
   phone: defaultPhone,
   line1: '',
   line2: '',
@@ -17,8 +17,19 @@ const emptyForm = (defaultPhone = '') => ({
   landmark: '',
 })
 
-export default function AddressFormModal({ initial, defaultPhone, saving, onClose, onSave }) {
-  const [form, setForm] = useState(initial ? { ...emptyForm(defaultPhone), ...initial } : emptyForm(defaultPhone))
+export default function AddressFormModal({
+  initial,
+  defaultPhone,
+  defaultName,
+  saving,
+  onClose,
+  onSave,
+}) {
+  const [form, setForm] = useState(
+    initial
+      ? { ...emptyForm(defaultPhone, defaultName), ...initial }
+      : emptyForm(defaultPhone, defaultName),
+  )
   const [error, setError] = useState('')
   const [locating, setLocating] = useState(false)
   const autoTried = useRef(false)

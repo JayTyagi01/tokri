@@ -1619,6 +1619,55 @@ table {
   background: var(--tokri-card);
 }
 
+/* Select-all checkbox: unchecked / indeterminate (−) / checked (✓) */
+.tokri-select-all {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.tokri-select-all input {
+  position: absolute;
+  opacity: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.tokri-select-all-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #C0C1CE;
+  border-radius: 2px;
+  background: transparent;
+  box-sizing: border-box;
+  transition: background 150ms, border-color 150ms;
+}
+
+.tokri-select-all.is-checked .tokri-select-all-box,
+.tokri-select-all.is-indeterminate .tokri-select-all-box {
+  background: var(--tokri-accent);
+  border-color: var(--tokri-accent);
+}
+
+.tokri-select-all-icon {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* Selected-records bar is position:absolute above the table (translateY(-100%)).
    Leave room so it does not cover the custom search input. */
 .adminjs_Table:has(caption),

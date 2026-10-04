@@ -78,7 +78,7 @@ function ProductCard({ product, onNavigate }) {
   )
 }
 
-function CategoryProductRow({ slug, title, onSettled }) {
+function CategoryProductRow({ slug, title, limit = 12, onSettled }) {
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -87,13 +87,14 @@ function CategoryProductRow({ slug, title, onSettled }) {
   const slidesPerView = useSlidesPerView()
   const showArrows = products.length > slidesPerView
   const heading = title || slug.replace(/-/g, ' ')
+  const pageSize = Math.min(Math.max(Number(limit) || 12, 1), 100)
 
   useEffect(() => {
     let ignore = false
     settledRef.current = false
     setLoading(true)
 
-    fetchJson(`/products?category=${encodeURIComponent(slug)}&limit=12`)
+    fetchJson(`/products?category=${encodeURIComponent(slug)}&limit=${pageSize}`)
       .then((items) => {
         if (!ignore) setProducts(normalizeProducts(Array.isArray(items) ? items : items.products || []))
       })
@@ -112,7 +113,7 @@ function CategoryProductRow({ slug, title, onSettled }) {
     return () => {
       ignore = true
     }
-  }, [slug, onSettled])
+  }, [slug, pageSize, onSettled])
 
   const scrollByCard = (direction) => {
     const track = trackRef.current

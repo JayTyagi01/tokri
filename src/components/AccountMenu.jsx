@@ -56,6 +56,13 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
             </div>
             <nav className="py-1">
               <Link
+                to="/account?section=profile"
+                onClick={closeMenu}
+                className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
+              >
+                Profile
+              </Link>
+              <Link
                 to="/account?section=orders"
                 onClick={closeMenu}
                 className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
@@ -101,6 +108,13 @@ export default function AccountMenu({ variant = 'desktop', onNavigate }) {
             <p className="text-sm text-muted">{formattedMobile}</p>
           </div>
           <nav className="py-1">
+            <Link
+              to="/account?section=profile"
+              onClick={closeMenu}
+              className="block px-4 py-2.5 text-sm text-mint transition hover:bg-panel-2"
+            >
+              Profile
+            </Link>
             <Link
               to="/account?section=orders"
               onClick={closeMenu}

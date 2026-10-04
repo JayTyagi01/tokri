@@ -89,6 +89,7 @@ export default function AddressPickerModal({ onDesktopLogin }) {
     return (
       <AddressFormModal
         defaultPhone={user?.phone || ''}
+        defaultName={user?.name || ''}
         saving={saving}
         onClose={() => {
           if (addresses.length === 0) closePicker()

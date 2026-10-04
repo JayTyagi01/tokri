@@ -21,7 +21,7 @@ const CAT_ITEM_WIDTH = (SCREEN_WIDTH - CAT_PAD - CAT_GAP * 3) / 3.5
 
 function ProductSection({ title, products, onSeeAll, onProduct }) {
   const styles = useThemedStyles(createStyles)
-  const list = products.slice(0, 6)
+  const list = products
   if (!list.length) return null
 
   return (

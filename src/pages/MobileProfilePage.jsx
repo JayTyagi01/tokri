@@ -1,10 +1,16 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileClock, LogOut, MapPinned, Search } from 'lucide-react'
+import { ArrowLeft, FileClock, LogOut, MapPinned, Search, UserRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import DeliveryAddressBar from '../components/DeliveryAddressBar'
 
 const menuItems = [
+  {
+    key: 'profile',
+    label: 'Profile',
+    icon: UserRound,
+    href: '/account?section=profile',
+  },
   {
     key: 'orders',
     label: 'Order History',

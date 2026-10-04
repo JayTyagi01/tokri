@@ -9,6 +9,30 @@ function toBoolean(value, fallback = false) {
   return value === true || value === 'true' || value === 'on' || value === 1 || value === '1'
 }
 
+function cleanText(value) {
+  const text = String(value ?? '').trim()
+  return text || null
+}
+
+function parseDateOnly(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  // Accept YYYY-MM-DD from <input type="date">
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(`${raw}T00:00:00.000Z`)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatDateInput(value) {
+  if (!value) return ''
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 10)
+}
+
 export function normalizePartnerPhone(value) {
   const digits = String(value || '').replace(/\D/g, '')
   if (digits.length === 10) return digits
@@ -16,35 +40,106 @@ export function normalizePartnerPhone(value) {
   return ''
 }
 
+function normalizePan(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+}
+
+function normalizeAadhaar(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, 12)
+}
+
+function normalizeIfsc(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 11)
+}
+
+const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
+const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
+
 export async function preparePartnerPayload(request) {
   if (request.method !== 'post') return request
   const payload = { ...(request.payload || {}) }
-  payload.email = String(payload.email || '').trim().toLowerCase()
-  payload.name = String(payload.name || '').trim()
-  payload.phone = normalizePartnerPhone(payload.phone)
-  payload.address = String(payload.address || '').trim() || null
-  payload.notes = String(payload.notes || '').trim() || null
-  payload.isActive = toBoolean(payload.isActive, false)
+  const errors = {}
 
-  if (!payload.name) {
-    throw new ValidationError({ name: { message: 'Name is required.' } })
+  const name = String(payload.name || '').trim()
+  const email = String(payload.email || '').trim().toLowerCase()
+  const phone = normalizePartnerPhone(payload.phone)
+  const panNumber = normalizePan(payload.panNumber)
+  const aadhaarNumber = normalizeAadhaar(payload.aadhaarNumber)
+  const emergencyPhoneRaw = String(payload.emergencyPhone || '').trim()
+  const emergencyPhone = emergencyPhoneRaw ? normalizePartnerPhone(payload.emergencyPhone) : ''
+  const pincode = String(payload.pincode || '').replace(/\D/g, '').slice(0, 6)
+  const ifscCode = normalizeIfsc(payload.ifscCode)
+  const dateOfBirth = parseDateOnly(payload.dateOfBirth)
+
+  if (!name) errors.name = { message: 'Name is required.' }
+  if (!email || !email.includes('@')) {
+    errors.email = { message: 'A valid email is required so the partner can set a password.' }
   }
-  if (!payload.email || !payload.email.includes('@')) {
-    throw new ValidationError({ email: { message: 'A valid email is required so the partner can set a password.' } })
+  if (phone.length !== 10) errors.phone = { message: 'Enter a 10-digit mobile number.' }
+
+  if (!panNumber) errors.panNumber = { message: 'PAN number is required.' }
+  else if (!PAN_RE.test(panNumber)) errors.panNumber = { message: 'Enter a valid PAN (e.g. ABCDE1234F).' }
+
+  if (!aadhaarNumber) errors.aadhaarNumber = { message: 'Aadhaar number is required.' }
+  else if (aadhaarNumber.length !== 12) {
+    errors.aadhaarNumber = { message: 'Enter a valid 12-digit Aadhaar number.' }
   }
-  if (payload.phone.length !== 10) {
-    throw new ValidationError({ phone: { message: 'Enter a 10-digit mobile number.' } })
+
+  const addressLine1 = cleanText(payload.addressLine1) || cleanText(payload.address)
+  if (!addressLine1) errors.addressLine1 = { message: 'Address line 1 is required.' }
+
+  const city = cleanText(payload.city)
+  if (!city) errors.city = { message: 'City is required.' }
+
+  const state = cleanText(payload.state)
+  if (!state) errors.state = { message: 'State is required.' }
+
+  if (!pincode) errors.pincode = { message: 'Pincode is required.' }
+  else if (pincode.length !== 6) errors.pincode = { message: 'Enter a 6-digit pincode.' }
+
+  if (emergencyPhoneRaw && emergencyPhone.length !== 10) {
+    errors.emergencyPhone = { message: 'Enter a valid 10-digit emergency mobile number.' }
   }
+
+  if (ifscCode && !IFSC_RE.test(ifscCode)) {
+    errors.ifscCode = { message: 'Enter a valid IFSC code (e.g. SBIN0001234).' }
+  }
+
+  if (Object.keys(errors).length) throw new ValidationError(errors)
 
   delete payload.password
   delete payload.hasPassword
+
   request.payload = {
-    name: payload.name,
-    email: payload.email,
-    phone: payload.phone,
-    address: payload.address,
-    notes: payload.notes,
-    isActive: payload.isActive,
+    name,
+    email,
+    phone,
+    dateOfBirth,
+    fatherName: cleanText(payload.fatherName),
+    panNumber,
+    aadhaarNumber,
+    addressLine1,
+    addressLine2: cleanText(payload.addressLine2),
+    city,
+    state,
+    pincode,
+    permanentAddress: cleanText(payload.permanentAddress),
+    emergencyName: cleanText(payload.emergencyName),
+    emergencyPhone: emergencyPhone || null,
+    vehicleType: cleanText(payload.vehicleType),
+    vehicleNumber: cleanText(payload.vehicleNumber)?.toUpperCase() || null,
+    accountHolderName: cleanText(payload.accountHolderName),
+    accountNumber: cleanText(payload.accountNumber)?.replace(/\s+/g, '') || null,
+    ifscCode: ifscCode || null,
+    notes: cleanText(payload.notes),
+    isActive: toBoolean(payload.isActive, false),
   }
   return request
 }
@@ -69,6 +164,9 @@ export function sanitizePartnerRecord(response) {
     if (!record?.params) return
     record.params.hasPassword = Boolean(record.params.password || record.params.hasPassword)
     delete record.params.password
+    if (record.params.dateOfBirth) {
+      record.params.dateOfBirth = formatDateInput(record.params.dateOfBirth)
+    }
   }
   hidePassword(response?.record)
   if (Array.isArray(response?.records)) response.records.forEach(hidePassword)

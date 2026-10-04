@@ -32,7 +32,10 @@ export default function AccountSidebar({ activeSection }) {
   return (
     <aside className="w-full shrink-0 border-b border-line bg-panel-2 lg:w-64 lg:border-b-0 lg:border-r">
       <div className="border-b border-line px-5 py-4">
-        <p className="text-sm font-semibold text-white">{formattedMobile}</p>
+        {user?.name ? <p className="text-sm font-semibold text-white">{user.name}</p> : null}
+        <p className={`text-sm ${user?.name ? 'text-muted' : 'font-semibold text-white'}`}>
+          {formattedMobile}
+        </p>
       </div>
 
       <nav className="py-2">

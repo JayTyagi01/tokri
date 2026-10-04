@@ -16,7 +16,7 @@ import {
 import { getSettingResource, ensureSettingsRecord } from './settings.js'
 import { prepareProductPayload, afterProductForm } from './product-handlers.js'
 import { prepareCouponPayload } from './coupon-handlers.js'
-import { prepareCategoryPayload } from './category-handlers.js'
+import { prepareCategoryPayload, afterCategoryList } from './category-handlers.js'
 import { orderEditHandler, orderListHandler, orderShowHandler } from './order-handlers.js'
 import {
   preparePartnerPayload,
@@ -253,7 +253,7 @@ export async function buildAdminRouter() {
         options: {
           name: 'Categories',
           navigation: { name: 'Catalog', icon: 'Grid' },
-          listProperties: ['label', 'slug', 'sortOrder', 'isActive'],
+          listProperties: ['label', 'slug', 'productDisplayLimit', 'sortOrder', 'isActive'],
           editProperties: [
             'label',
             'slug',
@@ -267,7 +267,10 @@ export async function buildAdminRouter() {
           ],
           actions: {
             ...resourceActions('manageCatalog'),
-            list: cmsListView('manageCatalog'),
+            list: {
+              ...cmsListView('manageCatalog'),
+              after: afterCategoryList,
+            },
             // Keep show hidden in the UI, but accessible so reference
             // dropdowns (e.g. Product -> Category) can resolve the label.
             show: { isVisible: false, isAccessible: canManage('manageCatalog') },
@@ -293,6 +296,13 @@ export async function buildAdminRouter() {
             title: { label: 'Page heading' },
             subtitle: { type: 'textarea', label: 'Subtitle' },
             description: { type: 'richtext', label: 'Description' },
+            // Reused only as a list column for live product counts (not editable).
+            productDisplayLimit: {
+              type: 'number',
+              label: 'Products',
+              isVisible: { list: true, filter: false, show: false, edit: false },
+              isSortable: false,
+            },
             image: {
               isVisible: { list: false, show: false, edit: true, filter: false },
               type: 'string',
@@ -546,14 +556,53 @@ export async function buildAdminRouter() {
         options: {
           name: 'Delivery partners',
           navigation: { name: 'Settings', icon: 'Truck' },
-          listProperties: ['name', 'email', 'phone', 'address', 'isActive'],
-          editProperties: ['name', 'email', 'phone', 'address', 'isActive', 'notes'],
-          filterProperties: ['name', 'email', 'phone', 'isActive'],
+          listProperties: ['name', 'phone', 'city', 'panNumber', 'vehicleNumber', 'isActive'],
+          editProperties: [
+            'name',
+            'email',
+            'phone',
+            'dateOfBirth',
+            'fatherName',
+            'panNumber',
+            'aadhaarNumber',
+            'addressLine1',
+            'addressLine2',
+            'city',
+            'state',
+            'pincode',
+            'permanentAddress',
+            'emergencyName',
+            'emergencyPhone',
+            'vehicleType',
+            'vehicleNumber',
+            'accountHolderName',
+            'accountNumber',
+            'ifscCode',
+            'isActive',
+            'notes',
+          ],
+          filterProperties: ['name', 'email', 'phone', 'city', 'panNumber', 'isActive'],
           properties: {
             name: { isTitle: true, label: 'Partner' },
             email: { type: 'email', label: 'Email' },
             phone: { label: 'Mobile' },
-            address: { label: 'Address' },
+            dateOfBirth: { type: 'date', label: 'Date of birth' },
+            fatherName: { label: "Father's name" },
+            panNumber: { label: 'PAN' },
+            aadhaarNumber: { label: 'Aadhaar' },
+            addressLine1: { label: 'Address line 1' },
+            addressLine2: { label: 'Address line 2' },
+            city: { label: 'City' },
+            state: { label: 'State' },
+            pincode: { label: 'Pincode' },
+            permanentAddress: { type: 'textarea', label: 'Permanent address' },
+            emergencyName: { label: 'Emergency contact' },
+            emergencyPhone: { label: 'Emergency mobile' },
+            vehicleType: { label: 'Vehicle type' },
+            vehicleNumber: { label: 'Vehicle number' },
+            accountHolderName: { label: 'Account holder' },
+            accountNumber: { label: 'Account number' },
+            ifscCode: { label: 'IFSC' },
             notes: { type: 'textarea', label: 'Notes' },
             isActive: {
               label: 'Status',
@@ -562,6 +611,7 @@ export async function buildAdminRouter() {
                 show: Components.StatusToggle,
               },
             },
+            address: { isVisible: false },
             password: { isVisible: false },
             pincodes: { isVisible: false },
             orders: { isVisible: false },

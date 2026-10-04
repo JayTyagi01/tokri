@@ -22,5 +22,7 @@ componentLoader.override('Login', './components/login.jsx')
 componentLoader.override('ActionHeader', './components/action-header.jsx')
 componentLoader.override('DefaultRichtextEditProperty', './components/richtext-edit.jsx')
 componentLoader.override('SidebarResourceSection', './components/sidebar-dashboard.jsx')
+componentLoader.override('RecordsTable', './components/records-table.jsx')
+componentLoader.override('RecordsTableHeader', './components/records-table-header.jsx')
 
 export default componentLoader

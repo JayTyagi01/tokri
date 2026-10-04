@@ -1,7 +1,27 @@
 import React, { useEffect, useMemo } from 'react'
 import { Box, Button, H3, Icon, Text } from '@adminjs/design-system'
 import { useNotice, useRecord } from 'adminjs'
-import { StatusSwitch, isFlagOn } from './form-controls.jsx'
+import { LocalSelect, StatusSwitch, isFlagOn } from './form-controls.jsx'
+import { INDIA_STATES } from './india-states.js'
+
+const VEHICLE_TYPES = [
+  { value: 'Bike', label: 'Bike' },
+  { value: 'Scooter', label: 'Scooter' },
+  { value: 'Electric bike', label: 'Electric bike' },
+  { value: 'Cycle', label: 'Cycle' },
+  { value: 'Van', label: 'Van' },
+  { value: 'Other', label: 'Other' },
+]
+
+const STATE_OPTIONS = INDIA_STATES.map((item) => ({
+  value: item.name,
+  label: item.name,
+}))
+
+function FieldError({ error }) {
+  if (!error?.message) return null
+  return <span className="tokri-field-error">{error.message}</span>
+}
 
 const PartnerEdit = (props) => {
   const { record: initialRecord, resource, action } = props
@@ -55,7 +75,8 @@ const PartnerEdit = (props) => {
       <Box className="tokri-coupon-hero">
         <H3 color="white">{isNew ? 'Add delivery partner' : params.name || 'Delivery partner'}</H3>
         <Text color="white">
-          They log in to the Tokriii Partner app with this email after setting a password from the invite mail.
+          Collect full KYC and contact details. They log in to the Tokriii Partner app with this email
+          after setting a password from the invite mail.
         </Text>
       </Box>
 
@@ -91,7 +112,7 @@ const PartnerEdit = (props) => {
               onChange={(event) => setField('email', event.target.value)}
               placeholder="partner@example.com"
             />
-            {errors.email ? <span className="tokri-field-error">{errors.email.message}</span> : (
+            {errors.email ? <FieldError error={errors.email} /> : (
               <span className="tokri-field-hint">Password link is sent to this inbox</span>
             )}
           </label>
@@ -107,14 +128,14 @@ const PartnerEdit = (props) => {
               onChange={(event) => setField('phone', event.target.value.replace(/\D/g, '').slice(0, 10))}
               placeholder="10-digit number"
             />
-            {errors.phone ? <span className="tokri-field-error">{errors.phone.message}</span> : null}
+            <FieldError error={errors.phone} />
           </label>
         </section>
       </Box>
 
       <section className="tokri-coupon-card">
-        <h4>Profile</h4>
-        <p>Name is shown on orders. Address is optional and only for your team.</p>
+        <h4>Personal details</h4>
+        <p>Name is shown on orders. Father&apos;s name and DOB help with KYC records.</p>
         <div className="tokri-coupon-two">
           <label className="tokri-coupon-label">
             Full name
@@ -124,30 +145,263 @@ const PartnerEdit = (props) => {
               readOnly={readOnly}
               value={params.name || ''}
               onChange={(event) => setField('name', event.target.value)}
-              placeholder="Partner name"
+              placeholder="Partner full name"
             />
-            {errors.name ? <span className="tokri-field-error">{errors.name.message}</span> : null}
+            <FieldError error={errors.name} />
           </label>
           <label className="tokri-coupon-label">
-            Address <span className="tokri-optional">(optional)</span>
+            Father&apos;s / guardian name <span className="tokri-optional">(optional)</span>
             <input
               className="tokri-coupon-input"
               readOnly={readOnly}
-              value={params.address || ''}
-              onChange={(event) => setField('address', event.target.value)}
-              placeholder="Area, city, or hub"
+              value={params.fatherName || ''}
+              onChange={(event) => setField('fatherName', event.target.value)}
+              placeholder="As on Aadhaar / documents"
             />
           </label>
         </div>
         <label className="tokri-coupon-label">
-          Internal notes <span className="tokri-optional">(optional)</span>
+          Date of birth <span className="tokri-optional">(optional)</span>
+          <input
+            className="tokri-coupon-input"
+            type="date"
+            readOnly={readOnly}
+            value={params.dateOfBirth || ''}
+            onChange={(event) => setField('dateOfBirth', event.target.value)}
+          />
+        </label>
+      </section>
+
+      <section className="tokri-coupon-card">
+        <h4>KYC documents</h4>
+        <p>PAN and Aadhaar are required for partner onboarding.</p>
+        <div className="tokri-coupon-two">
+          <label className="tokri-coupon-label">
+            PAN number
+            <input
+              className="tokri-coupon-input"
+              required
+              readOnly={readOnly}
+              maxLength={10}
+              value={params.panNumber || ''}
+              onChange={(event) =>
+                setField('panNumber', event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))
+              }
+              placeholder="ABCDE1234F"
+            />
+            <FieldError error={errors.panNumber} />
+          </label>
+          <label className="tokri-coupon-label">
+            Aadhaar number
+            <input
+              className="tokri-coupon-input"
+              required
+              readOnly={readOnly}
+              inputMode="numeric"
+              maxLength={12}
+              value={params.aadhaarNumber || ''}
+              onChange={(event) =>
+                setField('aadhaarNumber', event.target.value.replace(/\D/g, '').slice(0, 12))
+              }
+              placeholder="12-digit Aadhaar"
+            />
+            <FieldError error={errors.aadhaarNumber} />
+          </label>
+        </div>
+      </section>
+
+      <section className="tokri-coupon-card">
+        <h4>Current address</h4>
+        <p>Where the partner currently lives / operates from.</p>
+        <div className="tokri-coupon-two">
+          <label className="tokri-coupon-label">
+            Address line 1
+            <input
+              className="tokri-coupon-input"
+              required
+              readOnly={readOnly}
+              value={params.addressLine1 || ''}
+              onChange={(event) => setField('addressLine1', event.target.value)}
+              placeholder="House / street / area"
+            />
+            <FieldError error={errors.addressLine1} />
+          </label>
+          <label className="tokri-coupon-label">
+            Address line 2 <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              readOnly={readOnly}
+              value={params.addressLine2 || ''}
+              onChange={(event) => setField('addressLine2', event.target.value)}
+              placeholder="Landmark, colony"
+            />
+          </label>
+        </div>
+        <div className="tokri-coupon-two">
+          <label className="tokri-coupon-label">
+            City
+            <input
+              className="tokri-coupon-input"
+              required
+              readOnly={readOnly}
+              value={params.city || ''}
+              onChange={(event) => setField('city', event.target.value)}
+              placeholder="City"
+            />
+            <FieldError error={errors.city} />
+          </label>
+          <label className="tokri-coupon-label">
+            Pincode
+            <input
+              className="tokri-coupon-input"
+              required
+              readOnly={readOnly}
+              inputMode="numeric"
+              maxLength={6}
+              value={params.pincode || ''}
+              onChange={(event) => setField('pincode', event.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6-digit pincode"
+            />
+            <FieldError error={errors.pincode} />
+          </label>
+        </div>
+        <label className="tokri-coupon-label">
+          State
+          <div style={{ marginTop: 6 }}>
+            <LocalSelect
+              value={params.state || ''}
+              options={[{ value: '', label: 'Select state' }, ...STATE_OPTIONS]}
+              onChange={(next) => setField('state', next)}
+              disabled={readOnly}
+            />
+          </div>
+          <FieldError error={errors.state} />
+        </label>
+        <label className="tokri-coupon-label">
+          Permanent address <span className="tokri-optional">(optional)</span>
+          <textarea
+            className="tokri-coupon-input tokri-textarea"
+            rows={3}
+            readOnly={readOnly}
+            value={params.permanentAddress || ''}
+            onChange={(event) => setField('permanentAddress', event.target.value)}
+            placeholder="If different from current address"
+          />
+        </label>
+      </section>
+
+      <Box className="tokri-coupon-grid">
+        <section className="tokri-coupon-card">
+          <h4>Emergency contact</h4>
+          <p>Someone we can call if the partner is unreachable.</p>
+          <label className="tokri-coupon-label">
+            Contact name <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              readOnly={readOnly}
+              value={params.emergencyName || ''}
+              onChange={(event) => setField('emergencyName', event.target.value)}
+              placeholder="Relative / friend name"
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Contact mobile <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              inputMode="numeric"
+              maxLength={10}
+              readOnly={readOnly}
+              value={params.emergencyPhone || ''}
+              onChange={(event) =>
+                setField('emergencyPhone', event.target.value.replace(/\D/g, '').slice(0, 10))
+              }
+              placeholder="10-digit number"
+            />
+            <FieldError error={errors.emergencyPhone} />
+          </label>
+        </section>
+
+        <section className="tokri-coupon-card">
+          <h4>Vehicle details</h4>
+          <p>Used for delivery assignment and support.</p>
+          <label className="tokri-coupon-label">
+            Vehicle type <span className="tokri-optional">(optional)</span>
+            <div style={{ marginTop: 6 }}>
+              <LocalSelect
+                value={params.vehicleType || ''}
+                options={[{ value: '', label: 'Select vehicle' }, ...VEHICLE_TYPES]}
+                onChange={(next) => setField('vehicleType', next)}
+                disabled={readOnly}
+              />
+            </div>
+          </label>
+          <label className="tokri-coupon-label">
+            Vehicle number <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              readOnly={readOnly}
+              value={params.vehicleNumber || ''}
+              onChange={(event) =>
+                setField('vehicleNumber', event.target.value.toUpperCase().slice(0, 20))
+              }
+              placeholder="e.g. MH12AB1234"
+            />
+          </label>
+        </section>
+      </Box>
+
+      <section className="tokri-coupon-card">
+        <h4>Bank details</h4>
+        <p>For payouts and reimbursements. Optional for now, but recommended.</p>
+        <div className="tokri-coupon-two">
+          <label className="tokri-coupon-label">
+            Account holder name <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              readOnly={readOnly}
+              value={params.accountHolderName || ''}
+              onChange={(event) => setField('accountHolderName', event.target.value)}
+              placeholder="As per bank account"
+            />
+          </label>
+          <label className="tokri-coupon-label">
+            Account number <span className="tokri-optional">(optional)</span>
+            <input
+              className="tokri-coupon-input"
+              readOnly={readOnly}
+              value={params.accountNumber || ''}
+              onChange={(event) => setField('accountNumber', event.target.value.replace(/\s+/g, ''))}
+              placeholder="Bank account number"
+            />
+          </label>
+        </div>
+        <label className="tokri-coupon-label">
+          IFSC code <span className="tokri-optional">(optional)</span>
+          <input
+            className="tokri-coupon-input"
+            readOnly={readOnly}
+            maxLength={11}
+            value={params.ifscCode || ''}
+            onChange={(event) =>
+              setField('ifscCode', event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11))
+            }
+            placeholder="SBIN0001234"
+          />
+          <FieldError error={errors.ifscCode} />
+        </label>
+      </section>
+
+      <section className="tokri-coupon-card">
+        <h4>Internal notes</h4>
+        <label className="tokri-coupon-label">
+          Notes <span className="tokri-optional">(optional)</span>
           <textarea
             className="tokri-coupon-input tokri-textarea"
             rows={4}
             readOnly={readOnly}
             value={params.notes || ''}
             onChange={(event) => setField('notes', event.target.value)}
-            placeholder="Shift timing, vehicle, or anything your team should remember"
+            placeholder="Shift timing, hub, or anything your team should remember"
           />
         </label>
       </section>

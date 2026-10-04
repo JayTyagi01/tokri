@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import Swal from 'sweetalert2'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -7,12 +8,13 @@ import { useAddress } from '../context/AddressContext'
 import { authGet, authPost, fetchJson } from '../lib/api'
 import { formatPrice, loadRazorpayScript } from '../lib/checkout'
 import { addressLabelIcon } from '../components/account/AccountSidebar'
+import AddressFormModal from '../components/account/AddressFormModal'
 import CouponBox from '../components/CouponBox'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const { user, isLoggedIn } = useAuth()
-  const { selectedAddressId: savedAddressId } = useAddress()
+  const { selectedAddressId: savedAddressId, refreshAddresses } = useAddress()
   const {
     cartItems,
     itemsTotal,
@@ -28,9 +30,11 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState('')
   const [razorpayEnabled, setRazorpayEnabled] = useState(false)
   const [codEnabled, setCodEnabled] = useState(true)
-  const [paymentMode, setPaymentMode] = useState('cod')
+  const [paymentMode, setPaymentMode] = useState('online')
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  const [savingAddress, setSavingAddress] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -43,11 +47,12 @@ export default function CheckoutPage() {
           isLoggedIn ? authGet('/account/addresses', user) : Promise.resolve({ addresses: [] }),
         ])
         if (ignore) return
-        setRazorpayEnabled(Boolean(config?.razorpay?.enabled))
+        const onlineOn = Boolean(config?.razorpay?.enabled)
         const allowCod = config?.codEnabled !== false
+        setRazorpayEnabled(onlineOn)
         setCodEnabled(allowCod)
-        if (config?.razorpay?.enabled && !allowCod) setPaymentMode('online')
-        else if (!config?.razorpay?.enabled && allowCod) setPaymentMode('cod')
+        if (onlineOn) setPaymentMode('online')
+        else if (allowCod) setPaymentMode('cod')
         const list = addressData.addresses || []
         setAddresses(list)
         const canDeliver = (item) => item && item.serviceable !== false
@@ -66,6 +71,33 @@ export default function CheckoutPage() {
       ignore = true
     }
   }, [isLoggedIn, user?.phone, savedAddressId])
+
+  const openAddAddress = () => {
+    if (!isLoggedIn) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Login required',
+        text: 'Please log in to add a delivery address.',
+        confirmButtonColor: '#047857',
+      })
+      return
+    }
+    setFormOpen(true)
+  }
+
+  const handleSaveAddress = async (payload) => {
+    setSavingAddress(true)
+    try {
+      const data = await authPost('/account/addresses', user, payload)
+      const created = data.address
+      setAddresses((prev) => [...prev, created])
+      if (created?.id) setSelectedAddressId(created.id)
+      await refreshAddresses?.()
+      setFormOpen(false)
+    } finally {
+      setSavingAddress(false)
+    }
+  }
 
   const startOnlinePayment = async (checkout) => {
     const loaded = await loadRazorpayScript()
@@ -221,11 +253,7 @@ export default function CheckoutPage() {
               <p className="mt-4 text-sm text-muted">Loading addresses...</p>
             ) : addresses.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed border-line bg-panel-2 p-5 text-sm text-muted">
-                No saved address found.{' '}
-                <Link to="/account?section=addresses" className="font-semibold text-mint underline">
-                  Add a delivery address
-                </Link>{' '}
-                to continue.
+                No saved address found. Add a delivery address to continue.
               </div>
             ) : (
               <ul className="mt-4 space-y-3">
@@ -263,6 +291,15 @@ export default function CheckoutPage() {
                 })}
               </ul>
             )}
+
+            <button
+              type="button"
+              onClick={openAddAddress}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint transition hover:text-white"
+            >
+              <Plus size={16} />
+              Add new address
+            </button>
           </section>
 
           <aside className="h-fit rounded-2xl border border-line bg-panel p-5 sm:p-6">
@@ -352,6 +389,16 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </div>
+
+      {formOpen ? (
+        <AddressFormModal
+          defaultPhone={user?.phone || ''}
+          defaultName={user?.name || ''}
+          saving={savingAddress}
+          onClose={() => setFormOpen(false)}
+          onSave={handleSaveAddress}
+        />
+      ) : null}
     </main>
   )
 }

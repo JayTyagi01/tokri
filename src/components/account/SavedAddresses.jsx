@@ -196,6 +196,7 @@ export default function SavedAddresses() {
         <AddressFormModal
           initial={editingAddress}
           defaultPhone={user?.phone || ''}
+          defaultName={user?.name || ''}
           saving={saving}
           onClose={() => {
             setFormOpen(false)

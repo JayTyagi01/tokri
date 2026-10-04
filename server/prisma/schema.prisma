@@ -89,14 +89,15 @@ model Category {
   title       String?
   subtitle    String?           @db.Text
   description String?           @db.Text
-  image       String?
-  bannerImage String?
-  sortOrder   Int               @default(0)
-  isActive    Boolean           @default(true)
-  products    Product[]
-  productLinks ProductCategory[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  image               String?
+  bannerImage         String?
+  sortOrder           Int               @default(0)
+  productDisplayLimit Int               @default(12)
+  isActive            Boolean           @default(true)
+  products            Product[]
+  productLinks        ProductCategory[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 }
 
 model Product {
@@ -359,20 +360,36 @@ model DeviceToken {
 }
 
 model DeliveryPartner {
-  id             String                  @id @default(cuid())
-  name           String
-  email          String                  @unique
-  phone          String                  @unique
-  password       String?
-  address        String?                 @db.Text
-  isActive       Boolean                 @default(false)
-  notes          String?                 @db.Text
-  pincodes       ServiceablePincode[]
-  orders         Order[]
-  devices        PartnerDeviceToken[]
-  passwordTokens PartnerPasswordToken[]
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
+  id                  String                  @id @default(cuid())
+  name                String
+  email               String                  @unique
+  phone               String                  @unique
+  password            String?
+  dateOfBirth         DateTime?
+  fatherName          String?
+  panNumber           String?
+  aadhaarNumber       String?
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  state               String?
+  pincode             String?
+  permanentAddress    String?                 @db.Text
+  emergencyName       String?
+  emergencyPhone      String?
+  vehicleType         String?
+  vehicleNumber       String?
+  accountHolderName   String?
+  accountNumber       String?
+  ifscCode            String?
+  isActive            Boolean                 @default(false)
+  notes               String?                 @db.Text
+  pincodes            ServiceablePincode[]
+  orders              Order[]
+  devices             PartnerDeviceToken[]
+  passwordTokens      PartnerPasswordToken[]
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
 }
 
 model ServiceablePincode {
