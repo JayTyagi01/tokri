@@ -155,17 +155,32 @@ export function resolveAssetUrl(value) {
     }
   }
 
-  // On staging, never rewrite uploads to production — files live on this host.
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname === 'server.tokriii.com' &&
-    typeof resolved === 'string' &&
-    resolved.startsWith('https://tokriii.com/uploads/')
-  ) {
-    resolved = resolved.replace('https://tokriii.com', 'https://server.tokriii.com')
-  }
-
   return resolved
+}
+
+/**
+ * Staging often has new uploads locally, while older catalog images still live on
+ * production. If a staging upload 404s, retry the same path on tokriii.com.
+ */
+export function installUploadFallback() {
+  if (typeof document === 'undefined' || window.__tokriUploadFallback) return
+  window.__tokriUploadFallback = true
+
+  document.addEventListener(
+    'error',
+    (event) => {
+      const el = event.target
+      if (!(el instanceof HTMLImageElement)) return
+      if (el.dataset.uploadFallbackTried === '1') return
+
+      const src = el.currentSrc || el.src || ''
+      if (!src.includes('://server.tokriii.com/uploads/')) return
+
+      el.dataset.uploadFallbackTried = '1'
+      el.src = src.replace('://server.tokriii.com/', '://tokriii.com/')
+    },
+    true,
+  )
 }
 
 export function normalizeProduct(product) {
