@@ -145,27 +145,24 @@ export function resolveAssetUrl(value) {
     if (typeof window !== 'undefined') {
       const { hostname, origin } = window.location
       if (hostname === 'www.tokriii.com' || hostname === 'tokriii.com') {
-        // Uploads are served from tokriii.com, not the server subdomain
         resolved = `https://tokriii.com${value}`
-      } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        resolved = `${origin}${value}`
       } else {
-        resolved = `${ASSET_BASE_URL}${value}`
+        // Staging / localhost / other hosts: serve uploads from the current origin
+        resolved = `${origin}${value}`
       }
     } else {
       resolved = `${ASSET_BASE_URL}${value}`
     }
   }
 
-  // Older rows still carry server.tokriii.com URLs, whose /uploads path does not serve.
+  // On staging, never rewrite uploads to production — files live on this host.
   if (
+    typeof window !== 'undefined' &&
+    window.location.hostname === 'server.tokriii.com' &&
     typeof resolved === 'string' &&
-    resolved.startsWith('https://server.tokriii.com/uploads/')
+    resolved.startsWith('https://tokriii.com/uploads/')
   ) {
-    resolved = resolved.replace(
-      'https://server.tokriii.com/uploads/',
-      'https://tokriii.com/uploads/',
-    )
+    resolved = resolved.replace('https://tokriii.com', 'https://server.tokriii.com')
   }
 
   return resolved

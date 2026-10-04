@@ -12,15 +12,11 @@ const clientUrl = stripTrailingSlash(process.env.CLIENT_URL || 'http://localhost
 const appUrl = stripTrailingSlash(process.env.APP_URL || clientUrl)
 const apiUrl = stripTrailingSlash(process.env.API_URL || appUrl || `http://localhost:${port}`)
 
-// Uploads public host. Live evidence (2026-08-31):
-// server.tokriii.com/uploads → 502, tokriii.com/uploads → 200.
-// If API_URL points at the broken subdomain and PUBLIC_ASSET_URL is unset, fall back automatically.
+// Uploads public host. Prefer explicit PUBLIC_ASSET_URL, otherwise same host as API.
+// Staging (server.tokriii.com) and production (tokriii.com) each serve their own /uploads.
 function resolvePublicAssetUrl() {
   if (process.env.PUBLIC_ASSET_URL) {
     return stripTrailingSlash(process.env.PUBLIC_ASSET_URL)
-  }
-  if (apiUrl.includes('server.tokriii.com')) {
-    return 'https://tokriii.com'
   }
   return apiUrl
 }

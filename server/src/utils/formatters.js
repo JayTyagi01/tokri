@@ -1,17 +1,23 @@
 import { env } from '../config/env.js'
 import { formatCategoryRef, productCategoryList } from './catalog.js'
 
+const KNOWN_UPLOAD_HOSTS = new Set(['tokriii.com', 'www.tokriii.com', 'server.tokriii.com'])
+
 export function toPublicAssetUrl(value) {
   if (!value) return null
   const raw = String(value)
 
-  // Absolute URLs: rewrite known broken upload host → working public asset host
+  // Absolute upload URLs: normalize to the configured public asset host for this environment.
   if (/^(https?:|data:|blob:)/i.test(raw)) {
-    let out = raw
-    if (out.startsWith('https://server.tokriii.com/uploads/')) {
-      out = out.replace('https://server.tokriii.com', env.publicAssetUrl)
+    try {
+      const url = new URL(raw)
+      if (url.pathname.startsWith('/uploads/') && KNOWN_UPLOAD_HOSTS.has(url.hostname)) {
+        return `${env.publicAssetUrl}${url.pathname}${url.search}`
+      }
+    } catch {
+      // keep raw
     }
-    return out
+    return raw
   }
 
   if (raw.startsWith('/')) {
