@@ -2,6 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { authDelete, authGet, authPatch, authPost, authPut, fetchJson, formatPrice, normalizeLineItem, normalizeProduct, postJson, resolveAssetUrl } from '../lib/api'
 import { useAuth } from './AuthContext'
+import { useAddress } from './AddressContext'
+import {
+  DEFAULT_DELIVERY,
+  defaultOptionForAddress,
+  deliveryChargeFor,
+  mergeDeliveryConfig,
+} from '../lib/delivery'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'tokri_mobile_cart'
@@ -15,7 +22,9 @@ function withTotals(items, rates = DEFAULT_RATES, discount = 0) {
   const safeItems = Array.isArray(items) ? items : []
   const itemsTotal = safeItems.reduce((sum, item) => sum + Number(item.priceValue) * Number(item.quantity), 0)
   const hasItems = safeItems.length > 0
-  const deliveryCharge = hasItems ? Number(rates.deliveryCharge || 0) : 0
+  const deliveryCharge = hasItems
+    ? deliveryChargeFor(rates.option || 'morning', itemsTotal, rates.delivery || DEFAULT_DELIVERY)
+    : 0
   const handlingCharge = hasItems ? Number(rates.handlingCharge || 0) : 0
   const safeDiscount = hasItems ? Math.max(0, Number(discount) || 0) : 0
 
@@ -82,7 +91,13 @@ function toLineItem(product, quantity) {
 
 export function CartProvider({ children }) {
   const { token, isLoggedIn, booting } = useAuth()
-  const [rates, setRates] = useState(DEFAULT_RATES)
+  const { selectedAddress } = useAddress()
+  const [rates, setRates] = useState({
+    ...DEFAULT_RATES,
+    option: 'morning',
+    delivery: DEFAULT_DELIVERY,
+  })
+  const [deliveryOption, setDeliveryOption] = useState('morning')
   const [cart, setCart] = useState(withTotals([]))
   const [coupon, setCoupon] = useState(null)
   const [couponError, setCouponError] = useState('')
@@ -120,16 +135,24 @@ export function CartProvider({ children }) {
     fetchJson('/app/bootstrap')
       .then((data) => {
         if (ignore || !data?.charges) return
-        setRates({
+        setRates((current) => ({
+          ...current,
           deliveryCharge: Number(data.charges.deliveryCharge ?? DEFAULT_RATES.deliveryCharge),
           handlingCharge: Number(data.charges.handlingCharge ?? DEFAULT_RATES.handlingCharge),
-        })
+          delivery: mergeDeliveryConfig(data.charges.delivery || data.settings?.charges?.delivery),
+        }))
       })
       .catch(() => {})
     return () => {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+    const next = defaultOptionForAddress(selectedAddress)
+    setDeliveryOption(next)
+    setRates((current) => ({ ...current, option: next }))
+  }, [selectedAddress?.id, selectedAddress?.delivery?.defaultOption])
 
   useEffect(() => {
     setCart((current) => withTotals(current.items || [], rates, coupon?.discount || 0))
@@ -387,6 +410,7 @@ export function CartProvider({ children }) {
         const body = {
           code,
           items: cart.items.map((item) => ({ slug: item.slug, quantity: item.quantity })),
+          deliveryOption: rates.option || deliveryOption,
         }
         const data = token
           ? await authPost('/checkout/preview-coupon', token, body)
@@ -402,7 +426,7 @@ export function CartProvider({ children }) {
         setCouponLoading(false)
       }
     },
-    [cart.items, token, rates],
+    [cart.items, token, rates, deliveryOption],
   )
 
   const removeCoupon = useCallback(() => {
@@ -410,6 +434,35 @@ export function CartProvider({ children }) {
     setCouponError('')
     setCart((current) => withTotals(current.items || [], rates, 0))
   }, [rates])
+
+  useEffect(() => {
+    const items = itemsRef.current || []
+    if (!coupon?.code || !items.length) return undefined
+    let ignore = false
+    const body = {
+      code: coupon.code,
+      items: items.map((item) => ({ slug: item.slug, quantity: item.quantity })),
+      deliveryOption: rates.option || deliveryOption,
+    }
+    const request = token
+      ? authPost('/checkout/preview-coupon', token, body)
+      : postJson('/checkout/preview-coupon', body)
+    request
+      .then((data) => {
+        if (!ignore) {
+          setCoupon(data.coupon)
+          setCart((current) => withTotals(current.items || [], rates, data.coupon?.discount || 0))
+        }
+      })
+      .catch((error) => {
+        if (ignore) return
+        setCoupon(null)
+        setCouponError(error.message || 'Coupon is no longer valid for this cart')
+      })
+    return () => {
+      ignore = true
+    }
+  }, [deliveryOption, rates.option, coupon?.code, token])
 
   const assignCart = useCallback(
     (next) => {
@@ -440,6 +493,27 @@ export function CartProvider({ children }) {
       handlingCharge: cart.handlingCharge,
       smallCartCharge: cart.smallCartCharge,
       discount: cart.discount,
+      deliveryOption: rates.option || deliveryOption,
+      setDeliveryOption: (next) => {
+        setDeliveryOption(next)
+        setRates((current) => ({ ...current, option: next }))
+      },
+      deliveryConfig: rates.delivery || DEFAULT_DELIVERY,
+      setDeliveryConfig: (next) => {
+        setRates((current) => ({ ...current, delivery: mergeDeliveryConfig(next) }))
+      },
+      pinDelivery: selectedAddress?.delivery
+        || (selectedAddress
+          ? {
+              serviceable: selectedAddress.serviceable !== false,
+              morning: {
+                enabled: selectedAddress.serviceable !== false,
+                comingSoon: selectedAddress.serviceable === false,
+              },
+              express: { enabled: false, comingSoon: true },
+              defaultOption: selectedAddress.serviceable !== false ? 'morning' : null,
+            }
+          : null),
       coupon,
       couponError,
       couponLoading,
@@ -456,6 +530,9 @@ export function CartProvider({ children }) {
     }),
     [
       cart,
+      rates,
+      deliveryOption,
+      selectedAddress,
       coupon,
       couponError,
       couponLoading,

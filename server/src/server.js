@@ -34,15 +34,6 @@ app.use(
 
 app.use('/uploads', express.static(uploadsPath))
 
-// #region agent log
-app.use((req, _res, next) => {
-  if (req.path === '/' || req.path.startsWith(env.adminPath) || req.path.startsWith('/admin')) {
-    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:req.path.startsWith('/admin')&&!req.path.startsWith(env.adminPath)?'A':'E',location:'server.js:request',message:'incoming request',data:{method:req.method,path:req.path,hasDist,host:req.headers.host||null,secure:!!req.secure,xfp:req.headers['x-forwarded-proto']||null},timestamp:Date.now()})}).catch(()=>{})
-  }
-  next()
-})
-// #endregion
-
 // Serve storefront from dist/ when present (staging/single-host). Live often uses nginx for this.
 if (hasDist) {
   app.use(express.static(distPath, { index: false, maxAge: '1h' }))
@@ -87,14 +78,12 @@ if (hasDist) {
     if (
       req.path.startsWith('/api') ||
       req.path.startsWith(env.adminPath) ||
+      req.path.startsWith('/admin') ||
       req.path.startsWith('/uploads') ||
       req.path.startsWith('/partner')
     ) {
       return next()
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'F',location:'server.js:spa-fallback',message:'serving storefront index',data:{path:req.path},timestamp:Date.now()})}).catch(()=>{})
-    // #endregion
     return res.sendFile(path.join(distPath, 'index.html'))
   })
 }

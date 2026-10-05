@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from './AuthContext'
+import { useAddress } from './AddressContext'
 import { authPost, fetchJson, PLACEHOLDER_IMAGE, postJson } from '../lib/api'
+import {
+  DEFAULT_DELIVERY,
+  defaultOptionForAddress,
+  deliveryChargeFor,
+  mergeDeliveryConfig,
+} from '../lib/delivery'
 
 const CartContext = createContext(null)
 const CART_STORAGE_KEY = 'tokri_cart_v1'
@@ -36,11 +43,14 @@ function readStoredCart() {
         if (!item?.id || !item?.name) return null
         const quantity = Math.max(1, Number(item.quantity) || 1)
         const priceValue = Number(item.priceValue) || parsePrice(item.price)
+        const oldPriceValue = Number(item.oldPriceValue) || parsePrice(item.oldPrice)
         return {
           id: String(item.id),
           name: String(item.name),
           price: item.price || `₹${priceValue}`,
           priceValue,
+          oldPrice: item.oldPrice || (oldPriceValue > priceValue ? `₹${oldPriceValue}` : null),
+          oldPriceValue: oldPriceValue > priceValue ? oldPriceValue : 0,
           image: item.image || PLACEHOLDER_IMAGE,
           weight: item.weight || '250 g',
           quantity,
@@ -56,9 +66,12 @@ function readStoredCart() {
 
 export function CartProvider({ children }) {
   const { user, isLoggedIn } = useAuth()
+  const { selectedAddress } = useAddress()
   const [cartItems, setCartItems] = useState(readStoredCart)
   const [showDrawer, setShowDrawer] = useState(false)
   const [charges, setCharges] = useState(DEFAULT_CHARGES)
+  const [deliveryConfig, setDeliveryConfig] = useState(DEFAULT_DELIVERY)
+  const [deliveryOption, setDeliveryOption] = useState('morning')
   const [coupon, setCoupon] = useState(null)
   const [couponError, setCouponError] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
@@ -81,6 +94,9 @@ export function CartProvider({ children }) {
           deliveryCharge: Number(data.charges.deliveryCharge ?? DEFAULT_CHARGES.deliveryCharge),
           handlingCharge: Number(data.charges.handlingCharge ?? DEFAULT_CHARGES.handlingCharge),
         })
+        if (data.charges.delivery || data.settings?.charges?.delivery) {
+          setDeliveryConfig(mergeDeliveryConfig(data.charges.delivery || data.settings.charges.delivery))
+        }
       })
       .catch(() => {})
     return () => {
@@ -88,13 +104,26 @@ export function CartProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    setDeliveryOption(defaultOptionForAddress(selectedAddress))
+  }, [selectedAddress?.id, selectedAddress?.delivery?.defaultOption])
+
   const addItem = (product) => {
     const priceValue = parsePrice(product.price ?? product.priceValue)
+    const oldPriceValue = parsePrice(product.oldPriceValue ?? product.oldPrice)
+    const oldPrice = product.oldPrice || (oldPriceValue > priceValue ? `₹${oldPriceValue}` : null)
     setCartItems((items) => {
       const existing = items.find((item) => item.id === product.id)
       if (existing) {
         return items.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === product.id
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                oldPriceValue: item.oldPriceValue || (oldPriceValue > priceValue ? oldPriceValue : 0),
+                oldPrice: item.oldPrice || oldPrice,
+              }
+            : item,
         )
       }
 
@@ -105,6 +134,8 @@ export function CartProvider({ children }) {
           name: product.name,
           price: product.price,
           priceValue,
+          oldPrice,
+          oldPriceValue: oldPriceValue > priceValue ? oldPriceValue : 0,
           image: product.image || PLACEHOLDER_IMAGE,
           weight: product.weight || '250 g',
           quantity: 1,
@@ -154,7 +185,23 @@ export function CartProvider({ children }) {
   )
 
   const hasItems = cartItems.length > 0
-  const deliveryCharge = hasItems ? charges.deliveryCharge : 0
+  const pinDelivery = selectedAddress?.delivery
+    || (selectedAddress
+      ? {
+          serviceable: selectedAddress.serviceable !== false,
+          morning: {
+            enabled: selectedAddress.serviceable !== false,
+            comingSoon: selectedAddress.serviceable === false,
+          },
+          express: { enabled: false, comingSoon: true },
+          defaultOption: selectedAddress.serviceable !== false ? 'morning' : null,
+        }
+      : null)
+  const activeOption =
+    pinDelivery && !pinDelivery[deliveryOption]?.enabled
+      ? defaultOptionForAddress(selectedAddress)
+      : deliveryOption
+  const deliveryCharge = hasItems ? deliveryChargeFor(activeOption, itemsTotal, deliveryConfig) : 0
   const handlingCharge = hasItems ? charges.handlingCharge : 0
   const discount = coupon?.discount ? Number(coupon.discount) : 0
   const grandTotal = Math.max(0, itemsTotal + deliveryCharge + handlingCharge - discount)
@@ -163,8 +210,9 @@ export function CartProvider({ children }) {
     () => ({
       code: coupon?.code,
       items: cartItems.map((item) => ({ slug: item.id, quantity: item.quantity })),
+      deliveryOption: activeOption,
     }),
-    [cartItems, coupon?.code],
+    [activeOption, cartItems, coupon?.code],
   )
 
   const applyCoupon = useCallback(
@@ -185,6 +233,7 @@ export function CartProvider({ children }) {
         const body = {
           code,
           items: cartItems.map((item) => ({ slug: item.id, quantity: item.quantity })),
+          deliveryOption: activeOption,
         }
         const data = isLoggedIn
           ? await authPost('/checkout/preview-coupon', user, body)
@@ -199,7 +248,7 @@ export function CartProvider({ children }) {
         setCouponLoading(false)
       }
     },
-    [cartItems, isLoggedIn, user],
+    [activeOption, cartItems, isLoggedIn, user],
   )
 
   const removeCoupon = useCallback(() => {
@@ -233,7 +282,7 @@ export function CartProvider({ children }) {
     return () => {
       ignore = true
     }
-  }, [cartItems, charges, coupon?.code, isLoggedIn, previewPayload, user])
+  }, [activeOption, cartItems, charges, coupon?.code, isLoggedIn, previewPayload, user])
 
   return (
     <CartContext.Provider
@@ -250,6 +299,11 @@ export function CartProvider({ children }) {
         handlingCharge,
         discount,
         grandTotal,
+        deliveryOption: activeOption,
+        setDeliveryOption,
+        deliveryConfig,
+        setDeliveryConfig,
+        pinDelivery,
         coupon,
         couponError,
         couponLoading,

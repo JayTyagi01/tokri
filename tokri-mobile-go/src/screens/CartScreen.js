@@ -16,6 +16,7 @@ import { useSystemBottomInset } from '../lib/safeArea'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
+import { remainingForFreeDelivery, waivedDeliveryAmount } from '../lib/delivery'
 
 const PAY_CHOICE_KEY = 'tokri_pay_choice'
 const ONLINE_CHOICES = ['gpay', 'phonepe', 'paytm', 'cred', 'amazon', 'bhim', 'card', 'netbanking', 'wallet']
@@ -52,6 +53,11 @@ export default function CartScreen({ navigation }) {
     updateQuantity,
     clearCart,
     refreshCart,
+    deliveryOption,
+    setDeliveryOption,
+    deliveryConfig,
+    setDeliveryConfig,
+    pinDelivery,
   } = useCart()
   const [suggested, setSuggested] = useState([])
   const [onlineEnabled, setOnlineEnabled] = useState(false)
@@ -79,6 +85,7 @@ export default function CartScreen({ navigation }) {
         setOnlineEnabled(online)
         setCodEnabled(cod)
         setInstalledUpiIds(upiIds)
+        if (config?.delivery) setDeliveryConfig?.(config.delivery)
         const savedOk =
           (saved === 'cod' && cod) ||
           (online && ONLINE_CHOICES.includes(saved) && (!upiAppById(saved) || upiIds.includes(saved)))
@@ -136,7 +143,9 @@ export default function CartScreen({ navigation }) {
     [items],
   )
   const couponSavings = Number(discount) || 0
-  const totalSavings = Math.round((itemSavings + couponSavings) * 100) / 100
+  const deliverySaved = waivedDeliveryAmount(deliveryOption, itemsTotal, deliveryConfig)
+  const remainingForFree = remainingForFreeDelivery(deliveryOption, itemsTotal, deliveryConfig)
+  const totalSavings = Math.round((itemSavings + couponSavings + deliverySaved) * 100) / 100
   const itemsOriginal = itemsTotal + itemSavings
 
   const changeQty = async (slug, quantity) => {
@@ -158,6 +167,10 @@ export default function CartScreen({ navigation }) {
       openPicker()
       return
     }
+    if (!pinDelivery?.[deliveryOption]?.enabled) {
+      setNotice('Please select an available delivery option.')
+      return
+    }
     if (!payChoice) {
       setPaySheet(true)
       return
@@ -173,6 +186,7 @@ export default function CartScreen({ navigation }) {
         upiApp: isUpi ? payChoice : undefined,
         items: items.map((item) => ({ slug: item.slug, quantity: item.quantity })),
         couponCode: coupon?.code || undefined,
+        deliveryOption,
       })
       const orderNo = checkout.order.orderNo
 
@@ -339,6 +353,39 @@ export default function CartScreen({ navigation }) {
 
             <CouponBox />
 
+            {selectedAddress ? (
+              <View style={styles.optionCard}>
+                <Text style={styles.billTitle}>Delivery option</Text>
+                {['morning', 'express'].map((optionId) => {
+                  const copy = deliveryConfig?.[optionId] || {}
+                  const enabled = Boolean(pinDelivery?.[optionId]?.enabled)
+                  const comingSoon = !enabled
+                  const selected = deliveryOption === optionId && enabled
+                  return (
+                    <Pressable
+                      key={optionId}
+                      disabled={comingSoon}
+                      onPress={() => enabled && setDeliveryOption(optionId)}
+                      style={[
+                        styles.optionRow,
+                        selected && styles.optionRowOn,
+                        comingSoon && styles.optionRowSoon,
+                      ]}
+                    >
+                      <View style={[styles.optionDot, selected && styles.optionDotOn]} />
+                      <View style={styles.optionCopy}>
+                        <Text style={styles.optionTitle}>
+                          {copy.title || (optionId === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery')}
+                          {comingSoon ? ' (coming soon)' : ''}
+                        </Text>
+                        {copy.subtitle ? <Text style={styles.optionSub}>{copy.subtitle}</Text> : null}
+                      </View>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            ) : null}
+
             <View style={styles.billCard}>
               <Text style={styles.billTitle}>Bill details</Text>
               <BillRow
@@ -359,6 +406,11 @@ export default function CartScreen({ navigation }) {
                 value={deliveryCharge > 0 ? formatPrice(deliveryCharge) : 'FREE'}
                 free={!deliveryCharge}
               />
+              {remainingForFree > 0 ? (
+                <Text style={styles.freeNudge}>
+                  Add {formatPrice(remainingForFree)} more for free delivery
+                </Text>
+              ) : null}
               {couponSavings > 0 ? (
                 <BillRow icon="pricetag-outline" label="Coupon" value={`-${formatPrice(couponSavings)}`} free />
               ) : null}
@@ -540,6 +592,37 @@ const createStyles = (c) => ({
   likeTitle: { color: c.text, fontSize: 18, fontWeight: '800', marginBottom: 10 },
   likeRow: { paddingRight: 8 },
   likeCard: { width: 148, marginRight: 8 },
+  optionCard: {
+    backgroundColor: c.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: c.line,
+    padding: 16,
+    gap: 10,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 14,
+    padding: 12,
+  },
+  optionRowOn: { borderColor: c.brand, backgroundColor: c.brand + '14' },
+  optionRowSoon: { opacity: 0.55 },
+  optionDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: c.muted,
+    marginTop: 2,
+  },
+  optionDotOn: { borderColor: c.brand, backgroundColor: c.brand },
+  optionCopy: { flex: 1 },
+  optionTitle: { color: c.text, fontWeight: '800', fontSize: 15 },
+  optionSub: { color: c.muted, fontSize: 13, marginTop: 2 },
   billCard: {
     backgroundColor: c.panel,
     borderRadius: 16,
@@ -563,6 +646,7 @@ const createStyles = (c) => ({
   billValue: { color: c.text, fontWeight: '700' },
   oldValue: { color: c.muted, textDecorationLine: 'line-through', fontSize: 13, fontWeight: '600' },
   freeValue: { color: c.savingsText, fontWeight: '800' },
+  freeNudge: { color: c.savingsText, fontSize: 12, fontWeight: '700', marginTop: -4, marginBottom: 6 },
   savedBadge: {
     alignSelf: 'flex-start',
     backgroundColor: c.savingsBg,

@@ -206,6 +206,7 @@ model Order {
   discount               Decimal          @db.Decimal(10, 2) @default(0)
   grandTotal             Decimal          @db.Decimal(10, 2)
   couponCode             String?
+  deliveryOption         String?
   address                Json?
   razorpayOrderId        String?
   razorpayPaymentId      String?
@@ -275,6 +276,14 @@ model Setting {
   earlyDelivery             String?
   shippingFee               Decimal  @default(25) @db.Decimal(10, 2)
   handlingFee               Decimal  @default(2) @db.Decimal(10, 2)
+  morningDeliveryTitle      String?  @default("Flawless Morning Delivery")
+  morningDeliverySubtitle   String?  @default("Freshness Guaranteed")
+  morningShippingFee        Decimal  @default(25) @db.Decimal(10, 2)
+  morningFreeAbove          Decimal  @default(0) @db.Decimal(10, 2)
+  expressDeliveryTitle      String?  @default("90-Minute Emergency Drops")
+  expressDeliverySubtitle   String?  @default("On-Demand Luxury")
+  expressShippingFee        Decimal  @default(99) @db.Decimal(10, 2)
+  expressFreeAbove          Decimal  @default(0) @db.Decimal(10, 2)
   homeBannerImage           String?  @db.Text
   homeMobileBannerImage     String?  @db.Text
   homeHighlightImage        String?  @db.Text
@@ -393,17 +402,19 @@ model DeliveryPartner {
 }
 
 model ServiceablePincode {
-  id         String           @id @default(cuid())
-  pincode    String           @unique
-  areaLabel  String?
-  city       String?
-  stateCode  String?
-  state      IndiaState?      @relation(fields: [stateCode], references: [code], onDelete: SetNull)
-  isActive   Boolean          @default(true)
-  partnerId  String?
-  partner    DeliveryPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  id               String           @id @default(cuid())
+  pincode          String           @unique
+  areaLabel        String?
+  city             String?
+  stateCode        String?
+  state            IndiaState?      @relation(fields: [stateCode], references: [code], onDelete: SetNull)
+  isActive         Boolean          @default(true)
+  morningEnabled   Boolean          @default(true)
+  expressEnabled   Boolean          @default(false)
+  partnerId        String?
+  partner          DeliveryPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([partnerId])
   @@index([stateCode])

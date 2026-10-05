@@ -66,6 +66,7 @@ router.post('/preview-coupon', optionalCustomer, async (req, res, next) => {
       code: req.body?.code,
       items,
       customerId: req.customer?.id || null,
+      deliveryOption: req.body?.deliveryOption,
     })
     res.json({ coupon: result.preview, totals: result.totals })
   } catch (error) {

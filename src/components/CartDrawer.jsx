@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
 import CouponBox from './CouponBox'
+import { formatDeliveryCharge } from '../lib/delivery'
 
 const formatPrice = (value) => `₹${value.toLocaleString('en-IN')}`
 
@@ -105,7 +106,7 @@ export default function CartDrawer() {
               </div>
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>Delivery charges</span>
-                <span>{formatPrice(deliveryCharge)}</span>
+                <span className={deliveryCharge > 0 ? '' : 'text-mint'}>{formatDeliveryCharge(deliveryCharge)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex items-center justify-between text-sm text-mint">

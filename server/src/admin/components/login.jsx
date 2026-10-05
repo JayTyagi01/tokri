@@ -40,10 +40,6 @@ const Login = () => {
       emailInput.value = value
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'A',location:'login.jsx:handleSubmit',message:'admin login form submit',data:{action:action||null,reduxRoot:window.REDUX_STATE?.paths?.rootPath||null,hasIdentifier:!!value,href:window.location.href},timestamp:Date.now()})}).catch(()=>{})
-    // #endregion
-
     if (rememberLogin && value) {
       window.localStorage.setItem(REMEMBERED_LOGIN_KEY, value)
     } else {

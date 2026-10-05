@@ -12,6 +12,14 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'storeAddress',
   'promoBanner',
   'earlyDelivery',
+  'morningDeliveryTitle',
+  'morningDeliverySubtitle',
+  'morningShippingFee',
+  'morningFreeAbove',
+  'expressDeliveryTitle',
+  'expressDeliverySubtitle',
+  'expressShippingFee',
+  'expressFreeAbove',
   'shippingFee',
   'handlingFee',
   'homeBannerImage',
@@ -36,7 +44,14 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'msg91WhatsappOtpButton',
 ])
 
-const NUMBER_FIELDS = new Set(['shippingFee', 'handlingFee'])
+const NUMBER_FIELDS = new Set([
+  'shippingFee',
+  'handlingFee',
+  'morningShippingFee',
+  'morningFreeAbove',
+  'expressShippingFee',
+  'expressFreeAbove',
+])
 
 const BOOLEAN_FIELDS = new Set([
   'razorpayEnabled',
@@ -96,6 +111,7 @@ export function payloadToSettingData(payload) {
 
 export async function saveSettingsFromPayload(payload) {
   const data = payloadToSettingData(payload)
+  if (data.morningShippingFee != null) data.shippingFee = data.morningShippingFee
 
   return prisma.setting.update({
     where: { id: SETTING_ID },

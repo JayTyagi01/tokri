@@ -17,7 +17,7 @@ module.exports = {
   expo: {
     name: isStaging ? 'Tokriii Staging' : 'Tokriii',
     slug: 'tokriii',
-    version: '1.0.0',
+    version: '1.0.3',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -49,6 +49,7 @@ module.exports = {
     },
     android: {
       package: isStaging ? 'com.tokriii.app.staging' : 'com.tokriii.app',
+      versionCode: 6,
       usesCleartextTraffic: true,
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',

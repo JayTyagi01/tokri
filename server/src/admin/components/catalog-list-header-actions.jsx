@@ -56,8 +56,8 @@ export default function CatalogListHeaderActions({ resource, onImported }) {
         type: errorCount ? 'info' : 'success',
         text:
           errorCount > 0
-            ? `Import finished. ${data.created} added, ${data.updated} updated. ${errorCount} row(s) could not be imported.`
-            : `Import finished. ${data.created} added, ${data.updated} updated.`,
+            ? `Import finished. ${data.created} added, ${data.updated} updated. ${errorCount} row(s) could not be imported. Existing rows are matched by slug.`
+            : `Import finished. ${data.created} added, ${data.updated} updated. Existing rows are matched by slug — keep slug the same to update price.`,
       })
       onImported?.()
     } catch (error) {
@@ -72,9 +72,14 @@ export default function CatalogListHeaderActions({ resource, onImported }) {
 
     const items = [
       {
-        label: 'Export',
+        label: 'Export CSV',
         variant: 'text',
         href: `${root}/catalog/${config.exportUrl}`,
+      },
+      {
+        label: 'Export Excel',
+        variant: 'text',
+        href: `${root}/catalog/${config.exportUrl}?format=xlsx`,
       },
       {
         label: loading ? 'Importing...' : 'Import',
@@ -132,7 +137,7 @@ export default function CatalogListHeaderActions({ resource, onImported }) {
         <input
           ref={fileRef}
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           style={{ display: 'none' }}
           onChange={handleImport}
         />

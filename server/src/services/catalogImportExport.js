@@ -1,3 +1,4 @@
+import ExcelJS from 'exceljs'
 import { prisma } from '../lib/prisma.js'
 import { slugify, syncProductCategories } from '../admin/product-handlers.js'
 
@@ -8,15 +9,23 @@ function escapeCsv(value) {
   return text
 }
 
+function normalizeHeader(value) {
+  return String(value ?? '')
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+}
+
 function parseCsv(text) {
   const rows = []
   let row = []
   let cell = ''
   let inQuotes = false
+  const source = String(text || '').replace(/^\uFEFF/, '')
 
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i]
-    const next = text[i + 1]
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i]
+    const next = source[i + 1]
 
     if (inQuotes) {
       if (char === '"' && next === '"') {
@@ -53,14 +62,80 @@ function parseCsv(text) {
 
   if (!rows.length) return []
 
-  const headers = rows[0].map((header) => header.trim().toLowerCase())
+  const headers = rows[0].map((header) => normalizeHeader(header))
   return rows.slice(1).map((values) => {
     const record = {}
     headers.forEach((header, index) => {
+      if (!header) return
       record[header] = values[index] ?? ''
     })
     return record
   })
+}
+
+function cellToString(value) {
+  if (value == null) return ''
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value === 'object') {
+    if (typeof value.text === 'string') return value.text.trim()
+    if (value.result != null) return cellToString(value.result)
+    if (Array.isArray(value.richText)) return value.richText.map((part) => part.text || '').join('').trim()
+    if (typeof value.hyperlink === 'string') return String(value.text || value.hyperlink).trim()
+  }
+  return String(value).trim()
+}
+
+function looksLikeXlsx(buffer, filename = '') {
+  const name = String(filename || '').toLowerCase()
+  if (name.endsWith('.xlsx')) return true
+  return Boolean(buffer?.length >= 2 && buffer[0] === 0x50 && buffer[1] === 0x4b)
+}
+
+async function parseXlsx(buffer) {
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer)
+  const sheet = workbook.worksheets[0]
+  if (!sheet) return []
+
+  const headers = []
+  sheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    headers[colNumber] = normalizeHeader(cellToString(cell.value))
+  })
+
+  const records = []
+  sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) return
+    const record = {}
+    headers.forEach((header, colNumber) => {
+      if (!header) return
+      record[header] = cellToString(row.getCell(colNumber).value)
+    })
+    if (Object.values(record).some((value) => value !== '')) records.push(record)
+  })
+  return records
+}
+
+export async function parseCatalogFile(buffer, filename = '') {
+  const name = String(filename || '').toLowerCase()
+  if (name.endsWith('.xls') && !name.endsWith('.xlsx')) {
+    throw Object.assign(new Error('Old .xls files are not supported. Save as .xlsx or .csv and try again.'), {
+      status: 400,
+    })
+  }
+  if (looksLikeXlsx(buffer, filename)) {
+    try {
+      return await parseXlsx(buffer)
+    } catch (error) {
+      throw Object.assign(new Error('Could not read this Excel file. Export again as .xlsx or use CSV.'), {
+        status: 400,
+        cause: error,
+      })
+    }
+  }
+  const text = Buffer.isBuffer(buffer) ? buffer.toString('utf-8') : String(buffer || '')
+  return parseCsv(text)
 }
 
 function toBoolean(value, fallback = false) {
@@ -85,12 +160,42 @@ function toOptionalString(value) {
   return text || null
 }
 
+function excelCell(value) {
+  if (value == null || value === '') return ''
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const numeric = Number(value)
+  if (typeof value !== 'boolean' && String(value).trim() !== '' && Number.isFinite(numeric)) {
+    const asText = String(value).trim()
+    if (asText === String(numeric) || asText === numeric.toFixed?.(2)) return numeric
+  }
+  return String(value)
+}
+
 export function rowsToCsv(headers, rows) {
   const lines = [headers.join(',')]
   for (const row of rows) {
     lines.push(headers.map((header) => escapeCsv(row[header])).join(','))
   }
   return `${lines.join('\n')}\n`
+}
+
+async function rowsToXlsx(sheetName, headers, rows) {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet(sheetName)
+  sheet.columns = headers.map((header) => ({
+    header,
+    key: header,
+    width: ['description', 'name', 'label', 'title', 'categorySlugs', 'image', 'bannerImage'].includes(header)
+      ? 28
+      : 16,
+  }))
+  for (const row of rows) {
+    const line = {}
+    for (const header of headers) line[header] = excelCell(row[header])
+    sheet.addRow(line)
+  }
+  sheet.getRow(1).font = { bold: true }
+  return Buffer.from(await workbook.xlsx.writeBuffer())
 }
 
 const CATEGORY_HEADERS = [
@@ -140,9 +245,15 @@ function parseCategorySlugs(row) {
     .filter(Boolean))]
 }
 
-export async function exportCategoriesCsv() {
+function moneyNumber(value) {
+  if (value == null || value === '') return ''
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : String(value)
+}
+
+async function categoryRows() {
   const categories = await prisma.category.findMany({ orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }] })
-  const rows = categories.map((item) => ({
+  return categories.map((item) => ({
     slug: item.slug,
     label: item.label,
     title: item.title || '',
@@ -153,10 +264,9 @@ export async function exportCategoriesCsv() {
     sortOrder: item.sortOrder,
     isActive: item.isActive ? 'true' : 'false',
   }))
-  return rowsToCsv(CATEGORY_HEADERS, rows)
 }
 
-export async function exportProductsCsv() {
+async function productRows() {
   const products = await prisma.product.findMany({
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     include: {
@@ -165,13 +275,13 @@ export async function exportProductsCsv() {
     },
   })
 
-  const rows = products.map((item) => ({
+  return products.map((item) => ({
     slug: item.slug,
     name: item.name,
     description: item.description || '',
     image: item.image || '',
-    priceValue: item.priceValue,
-    oldPriceValue: item.oldPriceValue ?? '',
+    priceValue: moneyNumber(item.priceValue),
+    oldPriceValue: item.oldPriceValue == null ? '' : moneyNumber(item.oldPriceValue),
     currency: item.currency || 'INR',
     weight: item.weight || '',
     categorySlugs: productCategorySlugs(item).join(', '),
@@ -183,12 +293,25 @@ export async function exportProductsCsv() {
     sortOrder: item.sortOrder,
     isActive: item.isActive ? 'true' : 'false',
   }))
-
-  return rowsToCsv(PRODUCT_HEADERS, rows)
 }
 
-export async function importCategoriesCsv(csvText) {
-  const rows = parseCsv(csvText)
+export async function exportCategoriesCsv() {
+  return rowsToCsv(CATEGORY_HEADERS, await categoryRows())
+}
+
+export async function exportCategoriesXlsx() {
+  return rowsToXlsx('Categories', CATEGORY_HEADERS, await categoryRows())
+}
+
+export async function exportProductsCsv() {
+  return rowsToCsv(PRODUCT_HEADERS, await productRows())
+}
+
+export async function exportProductsXlsx() {
+  return rowsToXlsx('Products', PRODUCT_HEADERS, await productRows())
+}
+
+export async function importCategoriesRows(rows) {
   let created = 0
   let updated = 0
   const errors = []
@@ -230,8 +353,7 @@ export async function importCategoriesCsv(csvText) {
   return { created, updated, errors }
 }
 
-export async function importProductsCsv(csvText) {
-  const rows = parseCsv(csvText)
+export async function importProductsRows(rows) {
   let created = 0
   let updated = 0
   const errors = []
@@ -247,7 +369,7 @@ export async function importProductsCsv(csvText) {
       const name = toOptionalString(row.name)
       if (!name) throw new Error('Name is required.')
 
-      const priceValue = toNumber(row.pricevalue ?? row.priceValue, NaN)
+      const priceValue = toNumber(row.pricevalue ?? row.priceValue ?? row.price, NaN)
       if (!Number.isFinite(priceValue) || priceValue < 0) {
         throw new Error('A valid price is required.')
       }
@@ -293,6 +415,22 @@ export async function importProductsCsv(csvText) {
   return { created, updated, errors }
 }
 
+export async function importCategoriesCsv(csvText) {
+  return importCategoriesRows(parseCsv(csvText))
+}
+
+export async function importProductsCsv(csvText) {
+  return importProductsRows(parseCsv(csvText))
+}
+
+export async function importCategoriesFile(buffer, filename) {
+  return importCategoriesRows(await parseCatalogFile(buffer, filename))
+}
+
+export async function importProductsFile(buffer, filename) {
+  return importProductsRows(await parseCatalogFile(buffer, filename))
+}
+
 export function categoryImportTemplateCsv() {
   return rowsToCsv(CATEGORY_HEADERS, [
     {
@@ -311,6 +449,45 @@ export function categoryImportTemplateCsv() {
 
 export function productImportTemplateCsv() {
   return rowsToCsv(PRODUCT_HEADERS, [
+    {
+      slug: 'alphonso-mango',
+      name: 'Alphonso Mango',
+      description: 'Sweet and juicy alphonso mangoes.',
+      image: '/uploads/products/mango.jpg',
+      priceValue: 199,
+      oldPriceValue: 249,
+      currency: 'INR',
+      weight: '1 kg',
+      categorySlugs: 'fresh-fruits, imported',
+      badge: '',
+      isBestSeller: 'true',
+      isImported: 'false',
+      isFeatured: 'false',
+      stock: 100,
+      sortOrder: 1,
+      isActive: 'true',
+    },
+  ])
+}
+
+export async function categoryImportTemplateXlsx() {
+  return rowsToXlsx('Categories', CATEGORY_HEADERS, [
+    {
+      slug: 'fresh-fruits',
+      label: 'Fresh Fruits',
+      title: 'Fresh Fruits',
+      subtitle: '',
+      description: '',
+      image: '/uploads/categories/fresh-fruits.jpg',
+      bannerImage: '',
+      sortOrder: 1,
+      isActive: 'true',
+    },
+  ])
+}
+
+export async function productImportTemplateXlsx() {
+  return rowsToXlsx('Products', PRODUCT_HEADERS, [
     {
       slug: 'alphonso-mango',
       name: 'Alphonso Mango',

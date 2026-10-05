@@ -131,6 +131,8 @@ export function StatusSwitch({
   title,
   hint,
   compact = false,
+  onLabel = 'Active',
+  offLabel = 'Inactive',
 }) {
   return (
     <button
@@ -153,7 +155,9 @@ export function StatusSwitch({
           {hint ? <span>{hint}</span> : null}
         </span>
       ) : (
-        <span className={`tokri-status-pill${checked ? ' is-on' : ''}`}>{checked ? 'Active' : 'Inactive'}</span>
+        <span className={`tokri-status-pill${checked ? ' is-on' : ''}`}>
+          {checked ? onLabel : offLabel}
+        </span>
       )}
     </button>
   )

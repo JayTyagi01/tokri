@@ -1,3 +1,4 @@
+import { publicDeliveryConfig } from '../config/charges.js'
 import { toPublicAssetUrl } from './formatters.js'
 
 export function parseFeaturedCategorySlugs(value) {
@@ -53,8 +54,9 @@ export function formatPublicSettings(settings) {
       },
     },
     charges: {
-      shippingFee: Number(settings.shippingFee ?? 25),
+      shippingFee: Number(settings.morningShippingFee ?? settings.shippingFee ?? 25),
       handlingFee: Number(settings.handlingFee ?? 2),
+      delivery: publicDeliveryConfig(settings),
     },
   }
 }

@@ -134,7 +134,7 @@ function CategoryProductRow({ slug, title, limit = 12, onSettled }) {
             {heading}
           </h2>
           <Link
-            to={`/category/${slug}`}
+            to={`/shop?category=${slug}`}
             className="text-sm font-medium text-mint transition hover:text-white"
           >
             View all

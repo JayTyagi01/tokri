@@ -24,11 +24,23 @@ const PincodeEdit = (props) => {
   const isActive = isNew && (params.isActive === undefined || params.isActive === '')
     ? true
     : isFlagOn(params.isActive)
+  const morningEnabled = isNew && (params.morningEnabled === undefined || params.morningEnabled === '')
+    ? true
+    : isFlagOn(params.morningEnabled)
+  const expressEnabled = isNew && (params.expressEnabled === undefined || params.expressEnabled === '')
+    ? false
+    : isFlagOn(params.expressEnabled)
   const [partners, setPartners] = useState([])
 
   useEffect(() => {
     if (isNew && (params.isActive === undefined || params.isActive === '')) {
       handleChange('isActive', true)
+    }
+    if (isNew && (params.morningEnabled === undefined || params.morningEnabled === '')) {
+      handleChange('morningEnabled', true)
+    }
+    if (isNew && (params.expressEnabled === undefined || params.expressEnabled === '')) {
+      handleChange('expressEnabled', false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNew])
@@ -97,6 +109,30 @@ const PincodeEdit = (props) => {
             title={isActive ? 'We deliver here' : 'Not delivering'}
             hint={isActive ? 'Address save and checkout are allowed' : 'Customers will see that this PIN is not serviceable'}
             onChange={(next) => setField('isActive', next)}
+          />
+        </section>
+
+        <section className="tokri-coupon-card">
+          <h4>Delivery options</h4>
+          <p>Turn an option off to show it as coming soon at checkout. If both are off, this PIN is not deliverable.</p>
+          <StatusSwitch
+            checked={morningEnabled}
+            disabled={readOnly}
+            onLabel="On"
+            offLabel="Off"
+            title="Morning delivery"
+            hint={morningEnabled ? 'Shoppers can choose morning delivery' : 'Shown as coming soon'}
+            onChange={(next) => setField('morningEnabled', next)}
+          />
+          <div style={{ height: 12 }} />
+          <StatusSwitch
+            checked={expressEnabled}
+            disabled={readOnly}
+            onLabel="On"
+            offLabel="Off"
+            title="90-Minute delivery"
+            hint={expressEnabled ? 'Shoppers can choose 90-minute delivery' : 'Shown as coming soon'}
+            onChange={(next) => setField('expressEnabled', next)}
           />
         </section>
 

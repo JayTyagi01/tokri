@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Header from './components/Header'
 import LoginPopup from './components/LoginPopup'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
-import CategoryPage from './pages/CategoryPage'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
 import CmsPage from './pages/CmsPage'
@@ -32,6 +31,11 @@ const CMS_PAGE_PATHS = [
 
 const FULLSCREEN_ROUTES = ['/login', '/profile']
 
+function CategoryToShopRedirect() {
+  const { categoryId } = useParams()
+  return <Navigate to={`/shop?category=${categoryId}`} replace />
+}
+
 function ScrollToTop() {
   const location = useLocation()
 
@@ -49,8 +53,9 @@ function AppShell() {
   const { totalCount } = useCart()
   const hideChrome = FULLSCREEN_ROUTES.includes(location.pathname)
   const isCartPage = location.pathname === '/cart'
+  const isCheckoutPage = location.pathname === '/checkout'
   const isShopPage = location.pathname === '/shop'
-  const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage
+  const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage && !isCheckoutPage
   // Shop all pins itself to the viewport on mobile, so the footer would sit in
   // unreachable space below it. It comes back from md up, where the page scrolls.
   const footerVisibility = isCartPage ? 'hidden lg:block' : isShopPage ? 'hidden md:block' : ''
@@ -74,7 +79,7 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/category/:categoryId" element={<CategoryPage />} />
+        <Route path="/category/:categoryId" element={<CategoryToShopRedirect />} />
         <Route path="/shop" element={<ShopAllPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />

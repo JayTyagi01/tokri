@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js'
-import { calcCartTotals, getChargeRates } from '../config/charges.js'
+import { calcCartTotals, deliveryChargeFor, getChargeRates } from '../config/charges.js'
 
 function httpError(message, status = 400) {
   return Object.assign(new Error(message), { status })
@@ -98,7 +98,7 @@ export async function findActiveCoupon(code) {
   return coupon
 }
 
-export async function applyCouponToItems(coupon, items, customerId) {
+export async function applyCouponToItems(coupon, items, customerId, deliveryOption = 'morning') {
   if (!items.length) throw httpError('Add items to your cart before applying a coupon.')
 
   if ((coupon.usageType || 'unlimited') === 'single' && customerId) {
@@ -111,7 +111,7 @@ export async function applyCouponToItems(coupon, items, customerId) {
     throw httpError('Please log in to use this coupon.')
   }
 
-  const rates = await getChargeRates()
+  const rates = await getChargeRates(deliveryOption)
   const eligibleItems = items.filter((item) => isItemEligible(item, coupon))
   const eligibleTotal = eligibleItems.reduce(
     (sum, item) => sum + Number(item.priceValue) * Number(item.quantity),
@@ -133,7 +133,8 @@ export async function applyCouponToItems(coupon, items, customerId) {
     )
   }
 
-  const base = applyOn === 'shipping' ? rates.deliveryCharge : eligibleTotal
+  const shippingCharge = deliveryChargeFor(deliveryOption, itemsTotal, rates)
+  const base = applyOn === 'shipping' ? shippingCharge : eligibleTotal
   if (base <= 0) {
     throw httpError(applyOn === 'shipping' ? 'No shipping fee to discount.' : 'No eligible items for this coupon.')
   }
@@ -152,9 +153,9 @@ export async function applyCouponToItems(coupon, items, customerId) {
   }
 }
 
-export async function previewCoupon({ code, items, customerId }) {
+export async function previewCoupon({ code, items, customerId, deliveryOption }) {
   const coupon = await findActiveCoupon(code)
-  return applyCouponToItems(coupon, items, customerId)
+  return applyCouponToItems(coupon, items, customerId, deliveryOption)
 }
 
 export async function redeemCoupon({ coupon, customerId, orderId }) {

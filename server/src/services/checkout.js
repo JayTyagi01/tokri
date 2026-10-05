@@ -8,13 +8,13 @@ import {
   verifyRazorpayPayment,
 } from './razorpay.js'
 import { listAddresses, snapshotCurrentAddress } from './addresses.js'
-import { calcCartTotals, getChargeRates } from '../config/charges.js'
+import { calcCartTotals, getChargeRates, publicDeliveryConfig } from '../config/charges.js'
 import { clearCart, getCartCheckoutItems } from './cart.js'
 import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
 import { sendOrderConfirmation } from './msg91.js'
-import { assignmentForPincode } from './delivery.js'
+import { assignmentForPincode, assertDeliveryOptionEnabled } from './delivery.js'
 
 function parseAddresses(raw) {
   if (!raw) return []
@@ -81,23 +81,31 @@ async function resolveAddress(user, addressId, addressSnapshot) {
 }
 
 export async function getCheckoutConfig() {
-  return getPublicPaymentConfig()
+  const [payment, settings] = await Promise.all([
+    getPublicPaymentConfig(),
+    prisma.setting.findUnique({ where: { id: 1 } }),
+  ])
+  return {
+    ...payment,
+    delivery: publicDeliveryConfig(settings),
+  }
 }
 
-export async function createCheckoutOrder(user, { items: rawItems, addressId, address: addressSnapshot, paymentMode = 'online', couponCode, upiApp }, meta = {}) {
+export async function createCheckoutOrder(user, { items: rawItems, addressId, address: addressSnapshot, paymentMode = 'online', couponCode, upiApp, deliveryOption }, meta = {}) {
   const sourceItems =
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems
       : await getCartCheckoutItems(user.id)
   const cartItems = await resolveCartItems(sourceItems)
   const address = await resolveAddress(user, addressId, addressSnapshot)
-  const rates = await getChargeRates()
+  const { option } = await assertDeliveryOptionEnabled(address.pincode, deliveryOption || address.delivery?.defaultOption)
+  const rates = await getChargeRates(option)
   let totals = calcCartTotals(cartItems, rates)
   let appliedCoupon = null
 
   if (String(couponCode || '').trim()) {
     const coupon = await findActiveCoupon(couponCode)
-    const applied = await applyCouponToItems(coupon, cartItems, user.id)
+    const applied = await applyCouponToItems(coupon, cartItems, user.id, option)
     totals = applied.totals
     appliedCoupon = applied.coupon
   }
@@ -150,6 +158,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
       smallCartCharge: totals.smallCartCharge,
       discount: totals.discount,
       couponCode: appliedCoupon?.code || null,
+      deliveryOption: option,
       grandTotal: totals.grandTotal,
       address,
       razorpayOrderId,

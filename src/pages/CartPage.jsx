@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
 import { resolveAssetUrl } from '../lib/api'
 import CouponBox from '../components/CouponBox'
+import BillDetails from '../components/BillDetails'
 
 const formatPrice = (value) =>
   `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -36,34 +37,25 @@ function MobileCartItem({ item, onDecrease, onIncrease }) {
   const lineTotal = item.priceValue * item.quantity
 
   return (
-    <article className="flex gap-3 border-b border-slate-100 px-4 py-4 last:border-b-0">
+    <article className="flex gap-3 rounded-2xl border border-line bg-panel px-4 py-4">
       <img
         src={resolveAssetUrl(item.image)}
         alt={item.name}
-        className="h-[72px] w-[72px] shrink-0 rounded-xl border border-slate-100 object-cover"
+        className="h-[72px] w-[72px] shrink-0 rounded-xl border border-line bg-panel-2 object-cover"
       />
 
       <div className="min-w-0 flex-1">
-        <p className="m-0 line-clamp-2 text-xs font-medium leading-snug text-slate-900">
+        <p className="m-0 line-clamp-2 text-xs font-medium leading-snug text-white">
           {item.name}
         </p>
-        {item.weight && <p className="mt-1 text-xs text-slate-500">{item.weight}</p>}
-        <p className="mt-2 text-sm font-bold text-slate-900">{formatPrice(lineTotal)}</p>
+        {item.weight && <p className="mt-1 text-xs text-muted">{item.weight}</p>}
+        <p className="mt-2 text-sm font-bold text-white">{formatPrice(lineTotal)}</p>
       </div>
 
       <div className="shrink-0 self-center">
         <CartQtyStepper quantity={item.quantity} onDecrease={onDecrease} onIncrease={onIncrease} />
       </div>
     </article>
-  )
-}
-
-function BillRow({ label, value }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 text-sm">
-      <span className="text-muted">{label}</span>
-      <span className="font-medium text-white">{value}</span>
-    </div>
   )
 }
 
@@ -79,6 +71,8 @@ function MobileCartView({
   onProceed,
   hasDeliveryAddress,
   onAddAddress,
+  deliveryOption,
+  deliveryConfig,
 }) {
   const navigate = useNavigate()
 
@@ -111,7 +105,7 @@ function MobileCartView({
         </div>
       ) : (
         <div className="space-y-3 px-3 pt-3">
-          <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+          <section className="space-y-3">
             {cartItems.map((item) => (
               <MobileCartItem
                 key={item.id}
@@ -130,19 +124,16 @@ function MobileCartView({
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-line bg-panel p-4">
-            <h2 className="text-base font-bold text-white">Bill details</h2>
-
-            <div className="mt-1 divide-y divide-line">
-              <BillRow label="Items total" value={formatPrice(itemsTotal)} />
-              <BillRow label="Cart handling" value={formatPrice(handlingCharge)} />
-              <BillRow label="Delivery charges" value={formatPrice(deliveryCharge)} />
-              {discount > 0 && <BillRow label="Coupon discount" value={`-${formatPrice(discount)}`} />}
-            </div>
-
-            <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
-              <span className="text-base font-bold text-white">Grand total</span>
-              <span className="text-base font-bold text-white">{formatPrice(grandTotal)}</span>
-            </div>
+            <BillDetails
+              cartItems={cartItems}
+              itemsTotal={itemsTotal}
+              deliveryCharge={deliveryCharge}
+              handlingCharge={handlingCharge}
+              discount={discount}
+              grandTotal={grandTotal}
+              deliveryOption={deliveryOption}
+              deliveryConfig={deliveryConfig}
+            />
           </section>
 
           <section className="rounded-2xl border border-line bg-panel p-4">
@@ -201,10 +192,11 @@ function DesktopCartView({
   onProceed,
   hasDeliveryAddress,
   onAddAddress,
+  deliveryOption,
+  deliveryConfig,
 }) {
   return (
-    <section className="container mx-auto hidden bg-canvas px-4 py-10 lg:block">
-      <div className="mx-auto max-w-4xl">
+    <section className="mx-auto hidden max-w-7xl bg-canvas px-4 py-10 sm:px-6 lg:block lg:px-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-muted">Cart</p>
@@ -273,32 +265,17 @@ function DesktopCartView({
             </div>
 
             <div className="space-y-6 rounded-[2rem] border border-line bg-panel p-6">
-              <h2 className="text-xl font-semibold text-white">Order summary</h2>
               <CouponBox />
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm text-muted">
-                  <span>Item total</span>
-                  <span>{formatPrice(itemsTotal)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted">
-                  <span>Cart handling</span>
-                  <span>{formatPrice(handlingCharge)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted">
-                  <span>Delivery charges</span>
-                  <span>{formatPrice(deliveryCharge)}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-mint">
-                    <span>Coupon discount</span>
-                    <span>-{formatPrice(discount)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between border-t border-line pt-4 text-lg font-semibold text-white">
-                <span>Total</span>
-                <span>{formatPrice(grandTotal)}</span>
-              </div>
+              <BillDetails
+                cartItems={cartItems}
+                itemsTotal={itemsTotal}
+                deliveryCharge={deliveryCharge}
+                handlingCharge={handlingCharge}
+                discount={discount}
+                grandTotal={grandTotal}
+                deliveryOption={deliveryOption}
+                deliveryConfig={deliveryConfig}
+              />
               {hasDeliveryAddress ? (
                 <button
                   type="button"
@@ -319,7 +296,6 @@ function DesktopCartView({
             </div>
           </div>
         )}
-      </div>
     </section>
   )
 }
@@ -336,6 +312,8 @@ export default function CartPage() {
     grandTotal,
     updateQuantity,
     removeItem,
+    deliveryOption,
+    deliveryConfig,
   } = useCart()
 
   const handleProceed = () => navigate('/checkout')
@@ -354,6 +332,8 @@ export default function CartPage() {
         onProceed={handleProceed}
         hasDeliveryAddress={hasDeliveryAddress}
         onAddAddress={openPicker}
+        deliveryOption={deliveryOption}
+        deliveryConfig={deliveryConfig}
       />
       <DesktopCartView
         cartItems={cartItems}
@@ -367,6 +347,8 @@ export default function CartPage() {
         onProceed={handleProceed}
         hasDeliveryAddress={hasDeliveryAddress}
         onAddAddress={openPicker}
+        deliveryOption={deliveryOption}
+        deliveryConfig={deliveryConfig}
       />
     </>
   )

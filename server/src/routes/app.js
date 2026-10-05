@@ -67,7 +67,15 @@ router.get('/bootstrap', optionalCustomer, async (req, res, next) => {
         image: toPublicAssetUrl(review.image),
         rating: review.rating,
       })),
-      charges,
+      charges: {
+        deliveryCharge: charges.deliveryCharge,
+        handlingCharge: charges.handlingCharge,
+        smallCartCharge: charges.smallCartCharge,
+        delivery: {
+          morning: charges.morning,
+          express: charges.express,
+        },
+      },
       cart,
     })
   } catch (error) {

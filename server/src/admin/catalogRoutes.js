@@ -3,11 +3,15 @@ import fs from 'fs/promises'
 import { hasPermission } from './permissions.js'
 import {
   exportCategoriesCsv,
+  exportCategoriesXlsx,
   exportProductsCsv,
-  importCategoriesCsv,
-  importProductsCsv,
+  exportProductsXlsx,
+  importCategoriesFile,
+  importProductsFile,
   categoryImportTemplateCsv,
+  categoryImportTemplateXlsx,
   productImportTemplateCsv,
+  productImportTemplateXlsx,
 } from '../services/catalogImportExport.js'
 
 function requireAdminPermission(key) {
@@ -20,10 +24,21 @@ function requireAdminPermission(key) {
   }
 }
 
+function wantsExcel(req) {
+  const raw = String(req.query.format || req.query.type || '').toLowerCase()
+  return raw === 'xlsx' || raw === 'excel' || raw === 'xls'
+}
+
 function sendCsv(res, filename, content) {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
   return res.send(content)
+}
+
+function sendXlsx(res, filename, buffer) {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+  return res.send(buffer)
 }
 
 function formidableUpload(req) {
@@ -34,78 +49,101 @@ function formidableUpload(req) {
   return first || null
 }
 
-async function readCsvFromRequest(req) {
+async function readUploadFromRequest(req) {
   const uploaded = formidableUpload(req)
+  const filename =
+    uploaded?.originalFilename ||
+    uploaded?.name ||
+    req.file?.originalname ||
+    req.body?.filename ||
+    req.fields?.filename ||
+    ''
   const diskPath = uploaded?.filepath || uploaded?.path
   if (diskPath) {
     try {
-      return await fs.readFile(diskPath, 'utf-8')
+      return { buffer: await fs.readFile(diskPath), filename }
     } finally {
       await fs.unlink(diskPath).catch(() => {})
     }
   }
   if (uploaded?.data) {
-    return Buffer.from(uploaded.data).toString('utf-8')
+    return { buffer: Buffer.from(uploaded.data), filename }
   }
   if (req.file?.buffer) {
-    return req.file.buffer.toString('utf-8')
+    return { buffer: req.file.buffer, filename: filename || req.file.originalname || '' }
   }
-  return String(req.body?.csv || req.fields?.csv || '')
+  const csv = String(req.body?.csv || req.fields?.csv || '')
+  if (csv.trim()) return { buffer: Buffer.from(csv, 'utf-8'), filename: filename || 'upload.csv' }
+  return { buffer: Buffer.alloc(0), filename }
 }
 
 export function buildCatalogRoutes() {
   const router = Router()
 
-  router.get('/categories/export', requireAdminPermission('manageCatalog'), async (_req, res, next) => {
+  router.get('/categories/export', requireAdminPermission('manageCatalog'), async (req, res, next) => {
     try {
-      const csv = await exportCategoriesCsv()
-      return sendCsv(res, 'tokri-categories.csv', csv)
+      if (wantsExcel(req)) {
+        return sendXlsx(res, 'tokri-categories.xlsx', await exportCategoriesXlsx())
+      }
+      return sendCsv(res, 'tokri-categories.csv', await exportCategoriesCsv())
     } catch (error) {
       return next(error)
     }
   })
 
-  router.get(
-    '/categories/template',
-    requireAdminPermission('manageCatalog'),
-    (_req, res) => sendCsv(res, 'tokri-categories-template.csv', categoryImportTemplateCsv()),
-  )
+  router.get('/categories/template', requireAdminPermission('manageCatalog'), async (req, res, next) => {
+    try {
+      if (wantsExcel(req)) {
+        return sendXlsx(res, 'tokri-categories-template.xlsx', await categoryImportTemplateXlsx())
+      }
+      return sendCsv(res, 'tokri-categories-template.csv', categoryImportTemplateCsv())
+    } catch (error) {
+      return next(error)
+    }
+  })
 
   router.post('/categories/import', requireAdminPermission('manageCatalog'), async (req, res, next) => {
     try {
-      const csvText = await readCsvFromRequest(req)
-      if (!String(csvText || '').trim()) {
-        return res.status(400).json({ message: 'Please upload a CSV file.' })
+      const { buffer, filename } = await readUploadFromRequest(req)
+      if (!buffer?.length) {
+        return res.status(400).json({ message: 'Please upload a CSV or Excel (.xlsx) file.' })
       }
-      const result = await importCategoriesCsv(csvText)
+      const result = await importCategoriesFile(buffer, filename)
       return res.json(result)
     } catch (error) {
       return next(error)
     }
   })
 
-  router.get('/products/export', requireAdminPermission('manageProducts'), async (_req, res, next) => {
+  router.get('/products/export', requireAdminPermission('manageProducts'), async (req, res, next) => {
     try {
-      const csv = await exportProductsCsv()
-      return sendCsv(res, 'tokri-products.csv', csv)
+      if (wantsExcel(req)) {
+        return sendXlsx(res, 'tokri-products.xlsx', await exportProductsXlsx())
+      }
+      return sendCsv(res, 'tokri-products.csv', await exportProductsCsv())
     } catch (error) {
       return next(error)
     }
   })
 
-  router.get(
-    '/products/template',
-    requireAdminPermission('manageProducts'),
-    (_req, res) => sendCsv(res, 'tokri-products-template.csv', productImportTemplateCsv()),
-  )
+  router.get('/products/template', requireAdminPermission('manageProducts'), async (req, res, next) => {
+    try {
+      if (wantsExcel(req)) {
+        return sendXlsx(res, 'tokri-products-template.xlsx', await productImportTemplateXlsx())
+      }
+      return sendCsv(res, 'tokri-products-template.csv', productImportTemplateCsv())
+    } catch (error) {
+      return next(error)
+    }
+  })
 
   router.post('/products/import', requireAdminPermission('manageProducts'), async (req, res, next) => {
     try {
-      const csvText = await readCsvFromRequest(req)
-      if (!String(csvText || '').trim()) {
-        return res.status(400).json({ message: 'Please upload a CSV file.' })
+      const { buffer, filename } = await readUploadFromRequest(req)
+      if (!buffer?.length) {
+        return res.status(400).json({ message: 'Please upload a CSV or Excel (.xlsx) file.' })
       }
-      const result = await importProductsCsv(csvText)
+      const result = await importProductsFile(buffer, filename)
       return res.json(result)
     } catch (error) {
       return next(error)

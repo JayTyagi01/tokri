@@ -23,7 +23,9 @@ function invoiceText(order) {
     '',
     `Item total  ${formatPrice(order.itemsTotal)}`,
     `Cart handling  ${formatPrice(order.handlingCharge)}`,
-    `Delivery  ${Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}`,
+    `Delivery  ${Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}${
+      order.deliveryOption ? ` (${order.deliveryOption === 'express' ? '90-minute' : 'Morning'})` : ''
+    }`,
     Number(order.discount) ? `Discount  -${formatPrice(order.discount)}` : null,
     `Bill total  ${formatPrice(order.grandTotal)}`,
   ].filter(Boolean)
@@ -132,7 +134,7 @@ export default function OrderDetailScreen({ navigation, route }) {
         <BillRow label="Item total" value={formatPrice(order.itemsTotal)} />
         <BillRow label="Cart handling" value={`+${formatPrice(order.handlingCharge)}`} />
         <BillRow
-          label="Delivery charges"
+          label={order.deliveryOption === 'express' ? '90-minute delivery' : 'Delivery charges'}
           value={Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}
         />
         {Number(order.discount) ? (

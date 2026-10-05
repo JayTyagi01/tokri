@@ -41,7 +41,7 @@ export default function Categories() {
             {categories.map((category) => (
               <Link
                 key={category.id}
-                to={`/category/${category.id}`}
+                to={`/shop?category=${category.id}`}
                 className="w-[22%] min-w-[78px] shrink-0 snap-start sm:w-[100px] sm:min-w-[100px] lg:min-w-[120px]"
               >
                 <article className="text-center">

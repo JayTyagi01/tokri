@@ -150,7 +150,7 @@ export default function ProductDetail() {
           {categorySlug && product.category?.label && (
             <>
               <span className="mx-2">/</span>
-              <Link to={`/category/${categorySlug}`} className="text-mint hover:underline">
+              <Link to={`/shop?category=${categorySlug}`} className="text-mint hover:underline">
                 {product.category.label}
               </Link>
             </>
@@ -241,7 +241,7 @@ export default function ProductDetail() {
               </h2>
               {categorySlug && (
                 <Link
-                  to={`/category/${categorySlug}`}
+                  to={`/shop?category=${categorySlug}`}
                   className="shrink-0 text-sm font-semibold text-mint hover:underline"
                 >
                   View all

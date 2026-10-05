@@ -37,6 +37,7 @@ export function formatCustomerOrder(order) {
     createdAt: order.createdAt,
     itemsTotal: Number(order.itemsTotal),
     deliveryCharge: Number(order.deliveryCharge),
+    deliveryOption: order.deliveryOption || null,
     handlingCharge: Number(order.handlingCharge),
     smallCartCharge: Number(order.smallCartCharge),
     discount: Number(order.discount),

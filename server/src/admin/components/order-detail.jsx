@@ -312,7 +312,11 @@ const OrderDetail = (props) => {
             </div>
             <dl className="tokri-order-totals">
               <div><dt>Subtotal</dt><dd>{itemCount} {itemCount === 1 ? 'item' : 'items'}</dd><dd>{formatMoney(params.itemsTotal)}</dd></div>
-              <div><dt>Delivery</dt><dd /><dd>{formatMoney(params.deliveryCharge)}</dd></div>
+              <div>
+                <dt>Delivery{params.deliveryOption ? ` · ${params.deliveryOption === 'express' ? '90-minute' : 'Morning'}` : ''}</dt>
+                <dd />
+                <dd>{formatMoney(params.deliveryCharge)}</dd>
+              </div>
               <div><dt>Handling</dt><dd /><dd>{formatMoney(params.handlingCharge)}</dd></div>
               {Number(params.smallCartCharge) > 0 ? (
                 <div><dt>Small cart</dt><dd /><dd>{formatMoney(params.smallCartCharge)}</dd></div>

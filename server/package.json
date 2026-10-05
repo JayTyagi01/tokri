@@ -19,7 +19,8 @@
     "db:apply-home": "node scripts/apply-home-settings.js",
     "db:apply-delivery": "node scripts/apply-delivery.js",
     "db:apply-category-display-limit": "node scripts/apply-category-display-limit.js",
-    "db:apply-partner-kyc": "node scripts/apply-partner-kyc.js"
+    "db:apply-partner-kyc": "node scripts/apply-partner-kyc.js",
+    "db:apply-delivery-options": "node scripts/apply-delivery-options.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -32,6 +33,7 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "express-session": "^1.18.2",
     "multer": "^2.0.2",

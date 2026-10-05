@@ -7,6 +7,12 @@ import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
 import { authGet, authPost, fetchJson } from '../lib/api'
 import { formatPrice, loadRazorpayScript } from '../lib/checkout'
+import {
+  formatDeliveryCharge,
+  mergeDeliveryConfig,
+  remainingForFreeDelivery,
+  waivedDeliveryAmount,
+} from '../lib/delivery'
 import { addressLabelIcon } from '../components/account/AccountSidebar'
 import AddressFormModal from '../components/account/AddressFormModal'
 import CouponBox from '../components/CouponBox'
@@ -14,7 +20,7 @@ import CouponBox from '../components/CouponBox'
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const { user, isLoggedIn } = useAuth()
-  const { selectedAddressId: savedAddressId, refreshAddresses } = useAddress()
+  const { selectedAddressId: savedAddressId, refreshAddresses, selectAddress } = useAddress()
   const {
     cartItems,
     itemsTotal,
@@ -24,6 +30,11 @@ export default function CheckoutPage() {
     grandTotal,
     coupon,
     clearCart,
+    deliveryOption,
+    setDeliveryOption,
+    deliveryConfig,
+    setDeliveryConfig,
+    pinDelivery,
   } = useCart()
 
   const [addresses, setAddresses] = useState([])
@@ -51,6 +62,7 @@ export default function CheckoutPage() {
         const allowCod = config?.codEnabled !== false
         setRazorpayEnabled(onlineOn)
         setCodEnabled(allowCod)
+        if (config?.delivery) setDeliveryConfig?.(mergeDeliveryConfig(config.delivery))
         if (onlineOn) setPaymentMode('online')
         else if (allowCod) setPaymentMode('cod')
         const list = addressData.addresses || []
@@ -60,7 +72,10 @@ export default function CheckoutPage() {
           list.find((item) => item.id === savedAddressId && canDeliver(item)) ||
           list.find(canDeliver)
         const preferredId = preferred?.id || ''
-        if (preferredId) setSelectedAddressId(preferredId)
+        if (preferredId) {
+          setSelectedAddressId(preferredId)
+          selectAddress?.(preferredId)
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -91,7 +106,10 @@ export default function CheckoutPage() {
       const data = await authPost('/account/addresses', user, payload)
       const created = data.address
       setAddresses((prev) => [...prev, created])
-      if (created?.id) setSelectedAddressId(created.id)
+      if (created?.id) {
+        setSelectedAddressId(created.id)
+        selectAddress?.(created.id)
+      }
       await refreshAddresses?.()
       setFormOpen(false)
     } finally {
@@ -162,6 +180,28 @@ export default function CheckoutPage() {
       return
     }
 
+    const selected = addresses.find((item) => item.id === selectedAddressId)
+    const availability = selected?.delivery || pinDelivery
+    if (selected?.serviceable === false || availability?.serviceable === false) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Not deliverable',
+        text: "We don't deliver to this pincode yet.",
+        confirmButtonColor: '#047857',
+      })
+      return
+    }
+
+    if (!availability?.[deliveryOption]?.enabled) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Choose delivery',
+        text: 'Please select an available delivery option.',
+        confirmButtonColor: '#047857',
+      })
+      return
+    }
+
     setPaying(true)
     try {
       const checkout = await authPost('/checkout/create-order', user, {
@@ -169,6 +209,7 @@ export default function CheckoutPage() {
         addressId: selectedAddressId,
         paymentMode,
         couponCode: coupon?.code || undefined,
+        deliveryOption,
       })
 
       let orderNo = checkout.order.orderNo
@@ -198,6 +239,17 @@ export default function CheckoutPage() {
     }
   }
 
+  const remainingForFree = remainingForFreeDelivery(deliveryOption, itemsTotal, deliveryConfig)
+  const itemSavings = cartItems.reduce((sum, item) => {
+    const oldPrice = Number(item.oldPriceValue) || Number(String(item.oldPrice || '').replace(/[^0-9.]/g, ''))
+    const price = Number(item.priceValue)
+    if (!oldPrice || !price || oldPrice <= price) return sum
+    return sum + (oldPrice - price) * Number(item.quantity || 0)
+  }, 0)
+  const totalSavings = Math.round(
+    (itemSavings + Number(discount || 0) + waivedDeliveryAmount(deliveryOption, itemsTotal, deliveryConfig)) * 100,
+  ) / 100
+
   if (!cartItems.length) {
     return (
       <main className="min-h-screen bg-canvas py-16">
@@ -217,7 +269,7 @@ export default function CheckoutPage() {
 
   return (
     <main className="account-detail min-h-screen bg-canvas py-8 sm:py-10">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link to="/cart" className="text-sm font-medium text-mint hover:underline">
             ← Back to cart
@@ -238,6 +290,7 @@ export default function CheckoutPage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
           <section className="rounded-2xl border border-line bg-panel p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-white">Delivery address</h2>
@@ -260,20 +313,27 @@ export default function CheckoutPage() {
                 {addresses.map((address) => {
                   const Icon = addressLabelIcon(address.label)
                   const selected = selectedAddressId === address.id
+                  const deliverable = address.serviceable !== false
                   return (
                     <li key={address.id}>
                       <label
-                        className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
-                          selected
-                            ? 'border-brand bg-brand/10'
-                            : 'border-line hover:border-line/80'
+                        className={`flex items-start gap-3 rounded-xl border p-4 transition ${
+                          !deliverable
+                            ? 'cursor-not-allowed border-line opacity-60'
+                            : selected
+                              ? 'cursor-pointer border-brand bg-brand/10'
+                              : 'cursor-pointer border-line hover:border-line/80'
                         }`}
                       >
                         <input
                           type="radio"
                           name="address"
                           checked={selected}
-                          onChange={() => setSelectedAddressId(address.id)}
+                          disabled={!deliverable}
+                          onChange={() => {
+                            setSelectedAddressId(address.id)
+                            selectAddress?.(address.id)
+                          }}
                           className="mt-1"
                         />
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel-2 text-emerald-400">
@@ -284,6 +344,11 @@ export default function CheckoutPage() {
                           <span className="mt-1 block text-sm leading-6 text-muted">
                             {address.formatted}
                           </span>
+                          {!deliverable ? (
+                            <span className="mt-1 block text-xs text-amber-300">
+                              We don't deliver to this pincode yet
+                            </span>
+                          ) : null}
                         </span>
                       </label>
                     </li>
@@ -301,6 +366,56 @@ export default function CheckoutPage() {
               Add new address
             </button>
           </section>
+
+          {selectedAddressId ? (
+            <section className="rounded-2xl border border-line bg-panel p-5 sm:p-6">
+              <h2 className="text-lg font-bold text-white">Delivery option</h2>
+              <p className="mt-1 text-sm text-muted">Morning is selected when it is available for your PIN.</p>
+              <fieldset className="mt-4 space-y-3">
+                {['morning', 'express'].map((optionId) => {
+                  const copy = deliveryConfig?.[optionId] || {}
+                  const availability =
+                    addresses.find((item) => item.id === selectedAddressId)?.delivery || pinDelivery
+                  const enabled = Boolean(availability?.[optionId]?.enabled)
+                  const comingSoon = !enabled
+                  const selected = deliveryOption === optionId && enabled
+                  return (
+                    <label
+                      key={optionId}
+                      className={`flex items-start gap-3 rounded-xl border p-4 transition ${
+                        comingSoon
+                          ? 'cursor-not-allowed border-line opacity-60'
+                          : selected
+                            ? 'cursor-pointer border-brand bg-brand/10'
+                            : 'cursor-pointer border-line hover:border-line/80'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="deliveryOption"
+                        className="mt-1"
+                        checked={selected}
+                        disabled={comingSoon}
+                        onChange={() => {
+                          if (enabled) setDeliveryOption(optionId)
+                        }}
+                      />
+                      <span>
+                        <span className="block font-semibold text-white">
+                          {copy.title || (optionId === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery')}
+                          {comingSoon ? ' (coming soon)' : ''}
+                        </span>
+                        {copy.subtitle ? (
+                          <span className="mt-1 block text-sm text-muted">{copy.subtitle}</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  )
+                })}
+              </fieldset>
+            </section>
+          ) : null}
+          </div>
 
           <aside className="h-fit rounded-2xl border border-line bg-panel p-5 sm:p-6">
             <h2 className="text-lg font-bold text-white">Order summary</h2>
@@ -331,8 +446,13 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between">
                 <span>Delivery charges</span>
-                <span>{formatPrice(deliveryCharge)}</span>
+                <span className={deliveryCharge > 0 ? '' : 'text-mint'}>{formatDeliveryCharge(deliveryCharge)}</span>
               </div>
+              {remainingForFree > 0 && (
+                <p className="text-xs text-mint">
+                  Add {formatPrice(remainingForFree)} more for free delivery
+                </p>
+              )}
               {discount > 0 && (
                 <div className="flex justify-between text-mint">
                   <span>Coupon discount</span>
@@ -345,6 +465,11 @@ export default function CheckoutPage() {
               <span>Total</span>
               <span>{formatPrice(grandTotal)}</span>
             </div>
+            {totalSavings > 0 && (
+              <div className="mt-3 rounded-xl bg-emerald-950/60 px-3 py-2 text-sm font-semibold text-mint">
+                You saved {formatPrice(totalSavings)}
+              </div>
+            )}
 
             {(razorpayEnabled || codEnabled) && (
               <fieldset className="mt-4 space-y-2">
@@ -377,7 +502,15 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={handleCheckout}
-              disabled={paying || loading || !isLoggedIn || !addresses.length || (!razorpayEnabled && !codEnabled)}
+              disabled={
+                paying ||
+                loading ||
+                !isLoggedIn ||
+                !addresses.length ||
+                (!razorpayEnabled && !codEnabled) ||
+                (addresses.find((item) => item.id === selectedAddressId)?.delivery || pinDelivery)?.serviceable === false ||
+                !(addresses.find((item) => item.id === selectedAddressId)?.delivery || pinDelivery)?.[deliveryOption]?.enabled
+              }
               className="mt-5 w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-black transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {paying

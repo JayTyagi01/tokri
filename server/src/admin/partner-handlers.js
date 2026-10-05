@@ -211,6 +211,8 @@ export async function preparePincodePayload(request) {
   payload.areaLabel = String(payload.areaLabel || '').trim() || null
   payload.city = String(payload.city || '').trim() || null
   payload.isActive = toBoolean(payload.isActive, true)
+  payload.morningEnabled = toBoolean(payload.morningEnabled, true)
+  payload.expressEnabled = toBoolean(payload.expressEnabled, false)
   const partnerRef = payload.partner ?? payload.partnerId
   payload.partnerId = partnerRef && partnerRef !== 'null' && partnerRef !== '' ? String(partnerRef) : null
   payload.partner = payload.partnerId
@@ -243,6 +245,8 @@ export async function preparePincodePayload(request) {
     stateCode: payload.stateCode,
     state: payload.stateCode,
     isActive: payload.isActive,
+    morningEnabled: payload.morningEnabled,
+    expressEnabled: payload.expressEnabled,
     partnerId: payload.partnerId,
     partner: payload.partnerId,
   }
@@ -252,18 +256,35 @@ export async function preparePincodePayload(request) {
 export async function togglePincodeActiveAction(request, _response, context) {
   const row = await prisma.serviceablePincode.findUnique({ where: { id: request.params.recordId } })
   if (!row) throw new Error('Pincode not found')
-  const raw = request.payload?.isActive ?? request.payload?.record?.params?.isActive
-  const next = raw === undefined ? !row.isActive : toBoolean(raw)
+  const payload = request.payload || {}
+  const field =
+    payload.morningEnabled !== undefined
+      ? 'morningEnabled'
+      : payload.expressEnabled !== undefined
+        ? 'expressEnabled'
+        : 'isActive'
+  const raw = payload[field] ?? payload.record?.params?.[field]
+  const next = raw === undefined ? !row[field] : toBoolean(raw)
   const updated = await prisma.serviceablePincode.update({
     where: { id: row.id },
-    data: { isActive: next },
+    data: { [field]: next },
   })
+  const message =
+    field === 'morningEnabled'
+      ? updated.morningEnabled
+        ? `${updated.pincode}: morning delivery on.`
+        : `${updated.pincode}: morning delivery off.`
+      : field === 'expressEnabled'
+        ? updated.expressEnabled
+          ? `${updated.pincode}: 90-minute delivery on.`
+          : `${updated.pincode}: 90-minute delivery off.`
+        : updated.isActive
+          ? `${updated.pincode} is now serviceable.`
+          : `${updated.pincode} is not delivering.`
   return {
     record: context.resource.build(updated).toJSON(context.currentAdmin),
     notice: {
-      message: updated.isActive
-        ? `${updated.pincode} is now serviceable.`
-        : `${updated.pincode} is not delivering.`,
+      message,
       type: 'success',
     },
   }

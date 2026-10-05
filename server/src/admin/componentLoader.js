@@ -16,6 +16,8 @@ export const Components = {
   PincodeEdit: componentLoader.add('PincodeEdit', './components/pincode-edit.jsx'),
   StatusToggle: componentLoader.add('StatusToggle', './components/status-toggle.jsx'),
   CustomerEdit: componentLoader.add('CustomerEdit', './components/customer-edit.jsx'),
+  TeamEdit: componentLoader.add('TeamEdit', './components/team-edit.jsx'),
+  MediaLibrary: componentLoader.add('MediaLibrary', './components/media-library.jsx'),
 }
 
 componentLoader.override('Login', './components/login.jsx')

@@ -1,4 +1,4 @@
-import AdminJS, { ValidationError } from 'adminjs'
+import AdminJS from 'adminjs'
 import AdminJSExpress from '@adminjs/express'
 import * as AdminJSPrisma from '@adminjs/prisma'
 import bcrypt from 'bcryptjs'
@@ -11,7 +11,6 @@ import {
   resourceActions,
   serializeAdminUser,
   PERMISSION_KEYS,
-  defaultStaffPermissions,
 } from './permissions.js'
 import { getSettingResource, ensureSettingsRecord } from './settings.js'
 import { prepareProductPayload, afterProductForm } from './product-handlers.js'
@@ -30,6 +29,8 @@ import {
   generateQrAction,
 } from './partner-handlers.js'
 import { prepareCustomerPayload, attachCustomerAddresses, toggleCustomerActiveAction } from './customer-handlers.js'
+import { prepareTeamPayload, afterTeamSave, toggleTeamActiveAction } from './team-handlers.js'
+import { prepareReviewPayload, toggleReviewApprovedAction } from './review-handlers.js'
 import { buildCatalogRoutes } from './catalogRoutes.js'
 import { adminLocale } from './locale.js'
 import { INDIA_STATES } from '../data/indiaStates.js'
@@ -39,29 +40,6 @@ AdminJS.registerAdapter({
   Database: AdminJSPrisma.Database,
   Resource: AdminJSPrisma.Resource,
 })
-
-const hashNewPassword = async (request) => {
-  if (request.method !== 'post') return request
-
-  const password = String(request.payload?.password || '').trim()
-  const confirmPassword = String(request.payload?.confirmPassword || '').trim()
-
-  if (!password) {
-    throw new ValidationError({ password: { message: 'Password is required.' } })
-  }
-  if (password.length < 6) {
-    throw new ValidationError({ password: { message: 'Password must be at least 6 characters.' } })
-  }
-  if (password !== confirmPassword) {
-    throw new ValidationError({
-      confirmPassword: { message: 'New password and confirm password must be the same.' },
-    })
-  }
-
-  request.payload.password = await bcrypt.hash(password, 10)
-  delete request.payload.confirmPassword
-  return request
-}
 
 const permissionFields = Object.fromEntries(
   Object.entries(PERMISSION_KEYS).map(([key, label]) => [
@@ -146,6 +124,8 @@ export async function buildAdminRouter() {
   const admin = new AdminJS({
     rootPath: env.adminPath,
     loginPath: `${env.adminPath}/login`,
+    logoutPath: `${env.adminPath}/logout`,
+    refreshTokenPath: `${env.adminPath}/refresh-token`,
     componentLoader,
     dashboard: {
       component: Components.Dashboard,
@@ -322,13 +302,33 @@ export async function buildAdminRouter() {
           name: 'Media Library',
           navigation: { name: 'Catalog', icon: 'Image' },
           listProperties: ['originalName', 'folder', 'path', 'size', 'createdAt'],
+          custom: {
+            apiBaseUrl: `${env.apiUrl}/api/v1`,
+            appUrl: env.apiUrl,
+          },
           actions: {
             ...resourceActions('manageMedia'),
-            list: cmsListView('manageMedia'),
+            list: {
+              isAccessible: canManage('manageMedia'),
+              component: Components.MediaLibrary,
+            },
+            new: { isVisible: false, isAccessible: canManage('manageMedia') },
+            edit: { isVisible: false, isAccessible: () => false },
+            show: { isVisible: false, isAccessible: () => false },
           },
           properties: {
-            originalName: { isTitle: true },
+            originalName: { isTitle: true, label: 'File name' },
             path: { label: 'File path' },
+            folder: {
+              availableValues: [
+                { value: 'products', label: 'products' },
+                { value: 'categories', label: 'categories' },
+                { value: 'reviews', label: 'reviews' },
+                { value: 'pages', label: 'pages' },
+                { value: 'general', label: 'general' },
+              ],
+            },
+            products: { isVisible: false },
           },
         },
       },
@@ -365,11 +365,20 @@ export async function buildAdminRouter() {
               isAccessible: canManage('manageContent'),
               isVisible: true,
               component: Components.ReviewEdit,
+              before: prepareReviewPayload,
             },
             edit: {
               isAccessible: canManage('manageContent'),
               isVisible: true,
               component: Components.ReviewEdit,
+              before: prepareReviewPayload,
+            },
+            toggleActive: {
+              actionType: 'record',
+              isVisible: false,
+              isAccessible: canManage('manageContent'),
+              component: false,
+              handler: toggleReviewApprovedAction,
             },
           },
           custom: {
@@ -382,7 +391,16 @@ export async function buildAdminRouter() {
             content: { type: 'textarea', label: 'Review content' },
             rating: { label: 'Rating (1-5)' },
             image: { isVisible: false },
-            isApproved: { label: 'Approved' },
+            isApproved: {
+              label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+              },
+              custom: {
+                onLabel: 'Approved',
+                offLabel: 'Hidden',
+              },
+            },
             product: { isVisible: false },
             productId: { isVisible: false },
           },
@@ -406,6 +424,7 @@ export async function buildAdminRouter() {
             'itemsJson',
             'itemsTotal',
             'deliveryCharge',
+            'deliveryOption',
             'handlingCharge',
             'smallCartCharge',
             'discount',
@@ -480,6 +499,7 @@ export async function buildAdminRouter() {
             updatedAt: { isVisible: false },
             deliveryPartner: { isVisible: false },
             deliveryPartnerName: { label: 'Delivery partner' },
+            deliveryOption: { label: 'Delivery option' },
             paymentMode: { label: 'Checkout method' },
             paymentCollectedAs: { label: 'Collected as' },
           },
@@ -682,8 +702,8 @@ export async function buildAdminRouter() {
         options: {
           name: 'Serviceable pincodes',
           navigation: { name: 'Settings', icon: 'MapPin' },
-          listProperties: ['pincode', 'city', 'state', 'areaLabel', 'partner', 'isActive'],
-          editProperties: ['pincode', 'city', 'state', 'areaLabel', 'isActive', 'partner'],
+          listProperties: ['pincode', 'city', 'areaLabel', 'partner', 'morningEnabled', 'expressEnabled', 'isActive'],
+          editProperties: ['pincode', 'city', 'state', 'areaLabel', 'isActive', 'morningEnabled', 'expressEnabled', 'partner'],
           filterProperties: ['pincode', 'city', 'state', 'areaLabel', 'isActive', 'partner'],
           custom: {
             states: INDIA_STATES,
@@ -694,6 +714,22 @@ export async function buildAdminRouter() {
             city: { label: 'City' },
             isActive: {
               label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+                show: Components.StatusToggle,
+              },
+            },
+            morningEnabled: {
+              label: 'Morning',
+              custom: { onLabel: 'On', offLabel: 'Off' },
+              components: {
+                list: Components.StatusToggle,
+                show: Components.StatusToggle,
+              },
+            },
+            expressEnabled: {
+              label: '90-minute',
+              custom: { onLabel: 'On', offLabel: 'Off' },
               components: {
                 list: Components.StatusToggle,
                 show: Components.StatusToggle,
@@ -833,16 +869,6 @@ export async function buildAdminRouter() {
             ...Object.keys(PERMISSION_KEYS).map((key) => `permissions.${key}`),
           ],
           newProperties: ['name', 'username', 'email', 'role', 'isActive', 'password', 'confirmPassword'],
-          sections: [
-            {
-              label: 'Account',
-              properties: ['name', 'username', 'email', 'role', 'isActive'],
-            },
-            {
-              label: 'Permissions',
-              properties: Object.keys(PERMISSION_KEYS).map((key) => `permissions.${key}`),
-            },
-          ],
           properties: {
             name: { isTitle: true },
             password: {
@@ -862,6 +888,13 @@ export async function buildAdminRouter() {
                 { value: 'super_admin', label: 'Super Admin (full access)' },
               ],
             },
+            isActive: {
+              label: 'Status',
+              components: {
+                list: Components.StatusToggle,
+                edit: Components.StatusToggle,
+              },
+            },
             passwordResetTokens: { isVisible: false },
             permissions: { isVisible: false },
             ...permissionFields,
@@ -874,39 +907,22 @@ export async function buildAdminRouter() {
             },
             new: {
               isAccessible: canManage('manageUsers'),
-              before: [hashNewPassword],
-              after: async (response) => {
-                const userId = response.record?.params?.id
-                const role = response.record?.params?.role
-                if (userId && role === 'staff') {
-                  const exists = await prisma.adminPermission.findUnique({ where: { userId } })
-                  if (!exists) {
-                    await prisma.adminPermission.create({
-                      data: { userId, ...defaultStaffPermissions },
-                    })
-                  }
-                }
-                return response
-              },
+              component: Components.TeamEdit,
+              before: prepareTeamPayload,
+              after: afterTeamSave,
             },
             edit: {
               isAccessible: canManage('manageUsers'),
-              before: [
-                async (request) => {
-                  if (request.payload) delete request.payload.password
-                  const userId = request.params?.recordId
-                  const role = request.payload?.role
-                  if (userId && role === 'staff') {
-                    const exists = await prisma.adminPermission.findUnique({ where: { userId } })
-                    if (!exists) {
-                      await prisma.adminPermission.create({
-                        data: { userId, ...defaultStaffPermissions },
-                      })
-                    }
-                  }
-                  return request
-                },
-              ],
+              component: Components.TeamEdit,
+              before: prepareTeamPayload,
+              after: afterTeamSave,
+            },
+            toggleActive: {
+              actionType: 'record',
+              isVisible: false,
+              isAccessible: canManage('manageUsers'),
+              component: false,
+              handler: toggleTeamActiveAction,
             },
             changePassword: {
               actionType: 'record',
@@ -969,9 +985,6 @@ export async function buildAdminRouter() {
       authenticate: async (identifier, password) => {
         const login = String(identifier || '').trim()
         const pass = String(password || '')
-        // #region agent log
-        fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin login attempt',data:{hasIdentifier:!!login,passLen:pass.length,adminRoot:env.adminPath},timestamp:Date.now()})}).catch(()=>{})
-        // #endregion
         if (!login || !pass) return null
 
         const user = await prisma.user.findFirst({
@@ -983,24 +996,11 @@ export async function buildAdminRouter() {
           include: { permissions: true },
         })
 
-        if (!user?.password) {
-          // #region agent log
-          fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin user missing or no password',data:{found:!!user,hasPassword:!!user?.password,role:user?.role||null,isActive:user?.isActive??null},timestamp:Date.now()})}).catch(()=>{})
-          // #endregion
-          return null
-        }
+        if (!user?.password) return null
 
         const valid = await bcrypt.compare(pass, user.password)
-        if (!valid) {
-          // #region agent log
-          fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'C',location:'admin/index.js:authenticate',message:'admin password mismatch',data:{userId:user.id,role:user.role},timestamp:Date.now()})}).catch(()=>{})
-          // #endregion
-          return null
-        }
+        if (!valid) return null
 
-        // #region agent log
-        fetch('http://127.0.0.1:7316/ingest/db52256f-3cb2-454c-a236-a9264b383672',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'da77dc'},body:JSON.stringify({sessionId:'da77dc',runId:'pre-fix',hypothesisId:'B',location:'admin/index.js:authenticate',message:'admin auth success',data:{userId:user.id,role:user.role,redirectRoot:env.adminPath,cookieSecure:env.nodeEnv==='production'},timestamp:Date.now()})}).catch(()=>{})
-        // #endregion
         return serializeAdminUser(user)
       },
       cookieName: 'tokri_admin',

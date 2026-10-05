@@ -29,7 +29,17 @@ const TABS = [
   {
     id: 'charges',
     label: 'Charges',
-    fields: ['shippingFee', 'handlingFee'],
+    fields: [
+      'morningDeliveryTitle',
+      'morningDeliverySubtitle',
+      'morningShippingFee',
+      'morningFreeAbove',
+      'expressDeliveryTitle',
+      'expressDeliverySubtitle',
+      'expressShippingFee',
+      'expressFreeAbove',
+      'handlingFee',
+    ],
   },
   {
     id: 'homepage',
@@ -297,26 +307,112 @@ const SettingsEdit = (props) => {
               <H4 mb="sm">{tab.label}</H4>
               <Text mb="xl" opacity={0.75}>
                 {tab.id === 'charges'
-                  ? 'Shipping fee and handling charge are added to every order on the website and the app.'
+                  ? 'Set copy and prices for Morning and 90-Minute delivery. Handling fee is added to every order.'
                   : tab.id === 'homepage'
                     ? 'These images and categories appear on the website homepage. Click Save changes after uploading.'
                     : 'Update your store settings and click Save changes below.'}
               </Text>
               {tab.id === 'charges' ? (
                 <div className="tokri-charges-fields">
-                  <label className="tokri-coupon-label">
-                    Shipping fee (₹)
-                    <input
-                      className="tokri-coupon-input"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={record?.params?.shippingFee ?? ''}
-                      onChange={(event) => handleChange('shippingFee', event.target.value)}
-                    />
-                    <span className="tokri-field-hint">Delivery charge added to every order</span>
-                  </label>
-                  <label className="tokri-coupon-label">
+                  <section className="tokri-coupon-card">
+                    <h4>Morning delivery</h4>
+                    <p>Shown at checkout when this option is on for the pincode.</p>
+                    <label className="tokri-coupon-label">
+                      Title
+                      <input
+                        className="tokri-coupon-input"
+                        type="text"
+                        value={record?.params?.morningDeliveryTitle ?? ''}
+                        onChange={(event) => handleChange('morningDeliveryTitle', event.target.value)}
+                        placeholder="Flawless Morning Delivery"
+                      />
+                    </label>
+                    <label className="tokri-coupon-label">
+                      Subtitle
+                      <input
+                        className="tokri-coupon-input"
+                        type="text"
+                        value={record?.params?.morningDeliverySubtitle ?? ''}
+                        onChange={(event) => handleChange('morningDeliverySubtitle', event.target.value)}
+                        placeholder="Freshness Guaranteed"
+                      />
+                    </label>
+                    <div className="tokri-coupon-two">
+                      <label className="tokri-coupon-label">
+                        Shipping fee (₹)
+                        <input
+                          className="tokri-coupon-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={record?.params?.morningShippingFee ?? ''}
+                          onChange={(event) => handleChange('morningShippingFee', event.target.value)}
+                        />
+                      </label>
+                      <label className="tokri-coupon-label">
+                        Free above (₹)
+                        <input
+                          className="tokri-coupon-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={record?.params?.morningFreeAbove ?? ''}
+                          onChange={(event) => handleChange('morningFreeAbove', event.target.value)}
+                        />
+                        <span className="tokri-field-hint">0 means no free delivery</span>
+                      </label>
+                    </div>
+                  </section>
+                  <section className="tokri-coupon-card">
+                    <h4>90-Minute delivery</h4>
+                    <p>Shown at checkout. Disabled pincodes still see this as coming soon.</p>
+                    <label className="tokri-coupon-label">
+                      Title
+                      <input
+                        className="tokri-coupon-input"
+                        type="text"
+                        value={record?.params?.expressDeliveryTitle ?? ''}
+                        onChange={(event) => handleChange('expressDeliveryTitle', event.target.value)}
+                        placeholder="90-Minute Emergency Drops"
+                      />
+                    </label>
+                    <label className="tokri-coupon-label">
+                      Subtitle
+                      <input
+                        className="tokri-coupon-input"
+                        type="text"
+                        value={record?.params?.expressDeliverySubtitle ?? ''}
+                        onChange={(event) => handleChange('expressDeliverySubtitle', event.target.value)}
+                        placeholder="On-Demand Luxury"
+                      />
+                    </label>
+                    <div className="tokri-coupon-two">
+                      <label className="tokri-coupon-label">
+                        Shipping fee (₹)
+                        <input
+                          className="tokri-coupon-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={record?.params?.expressShippingFee ?? ''}
+                          onChange={(event) => handleChange('expressShippingFee', event.target.value)}
+                        />
+                      </label>
+                      <label className="tokri-coupon-label">
+                        Free above (₹)
+                        <input
+                          className="tokri-coupon-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={record?.params?.expressFreeAbove ?? ''}
+                          onChange={(event) => handleChange('expressFreeAbove', event.target.value)}
+                        />
+                        <span className="tokri-field-hint">0 means no free delivery</span>
+                      </label>
+                    </div>
+                  </section>
+                  <label className="tokri-coupon-label tokri-charges-handling">
                     Handling charge (₹)
                     <input
                       className="tokri-coupon-input"

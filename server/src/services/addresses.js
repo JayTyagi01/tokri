@@ -1,6 +1,10 @@
 import crypto from 'crypto'
 import { prisma } from '../lib/prisma.js'
-import { assertPincodeServiceable, normalizePincode, serviceablePincodeSet } from './delivery.js'
+import {
+  assertPincodeServiceable,
+  deliveryOptionsByPincode,
+  normalizePincode,
+} from './delivery.js'
 
 const LABELS = new Set(['Home', 'Work', 'Other'])
 
@@ -96,11 +100,20 @@ export async function listAddresses(customerId) {
   if (!customer) throw Object.assign(new Error('Customer not found.'), { status: 404 })
 
   const list = parseAddresses(customer.addresses).map(formatAddressRecord)
-  const allowed = await serviceablePincodeSet(list.map((item) => item.pincode))
-  return list.map((item) => ({
-    ...item,
-    serviceable: allowed.has(normalizePincode(item.pincode)),
-  }))
+  const deliveryByPin = await deliveryOptionsByPincode(list.map((item) => item.pincode))
+  return list.map((item) => {
+    const delivery = deliveryByPin.get(normalizePincode(item.pincode)) || {
+      serviceable: false,
+      morning: { enabled: false, comingSoon: true },
+      express: { enabled: false, comingSoon: true },
+      defaultOption: null,
+    }
+    return {
+      ...item,
+      serviceable: delivery.serviceable,
+      delivery,
+    }
+  })
 }
 
 export async function createAddress(customerId, input) {

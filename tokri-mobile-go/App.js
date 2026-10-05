@@ -23,11 +23,11 @@ export default function App() {
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <ThemeProvider>
         <AuthProvider>
-          <CartProvider>
-            <AddressProvider>
+          <AddressProvider>
+            <CartProvider>
               <AppShell />
-            </AddressProvider>
-          </CartProvider>
+            </CartProvider>
+          </AddressProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
