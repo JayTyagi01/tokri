@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
+import OrderSuccessPage from './pages/OrderSuccessPage'
 import CmsPage from './pages/CmsPage'
 import MyAccount from './pages/MyAccount'
 import MobileLoginPage from './pages/MobileLoginPage'
@@ -51,14 +52,21 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const { totalCount } = useCart()
-  const hideChrome = FULLSCREEN_ROUTES.includes(location.pathname)
   const isCartPage = location.pathname === '/cart'
   const isCheckoutPage = location.pathname === '/checkout'
+  const isOrderSuccess = location.pathname.startsWith('/order/')
   const isShopPage = location.pathname === '/shop'
-  const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage && !isCheckoutPage
+  const hideChrome = FULLSCREEN_ROUTES.includes(location.pathname) || isOrderSuccess
+  const showStickyCart = totalCount > 0 && !hideChrome && !isCartPage && !isCheckoutPage && !isOrderSuccess
   // Shop all pins itself to the viewport on mobile, so the footer would sit in
   // unreachable space below it. It comes back from md up, where the page scrolls.
-  const footerVisibility = isCartPage ? 'hidden lg:block' : isShopPage ? 'hidden md:block' : ''
+  const footerVisibility = isOrderSuccess
+    ? 'hidden'
+    : isCartPage
+      ? 'hidden lg:block'
+      : isShopPage
+        ? 'hidden md:block'
+        : ''
 
   useEffect(() => {
     if (location.state?.openLogin) {
@@ -83,6 +91,7 @@ function AppShell() {
         <Route path="/shop" element={<ShopAllPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/order/:orderNo" element={<OrderSuccessPage />} />
         <Route path="/account" element={<MyAccount />} />
         <Route path="/login" element={<MobileLoginPage />} />
         <Route path="/profile" element={<MobileProfilePage />} />

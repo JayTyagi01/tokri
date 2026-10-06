@@ -31,7 +31,7 @@ function resolveApiBaseUrl() {
   return 'http://localhost:5223/api/v1'
 }
 
-const API_BASE_URL = resolveApiBaseUrl()
+export const API_BASE_URL = resolveApiBaseUrl()
 const ASSET_BASE_URL = API_BASE_URL.replace(/\/api\/v1$/, '') || API_BASE_URL
 
 async function fetchWithTimeout(url, options = {}) {

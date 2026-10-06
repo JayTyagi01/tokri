@@ -5,7 +5,7 @@ import Swal from 'sweetalert2'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
-import { authGet, authPost, downloadOrderInvoice, fetchJson } from '../lib/api'
+import { authGet, authPost, API_BASE_URL, fetchJson } from '../lib/api'
 import { formatPrice, loadRazorpayScript } from '../lib/checkout'
 import {
   formatDeliveryCharge,
@@ -30,7 +30,6 @@ export default function CheckoutPage() {
     discount,
     grandTotal,
     coupon,
-    clearCart,
     deliveryOption,
     setDeliveryOption,
     deliveryConfig,
@@ -147,6 +146,7 @@ export default function CheckoutPage() {
         order_id: rzp.orderId,
         prefill: rzp.prefill,
         theme: { color: '#064e3b' },
+        callback_url: `${API_BASE_URL}/checkout/razorpay-callback?orderNo=${encodeURIComponent(orderNo)}`,
         handler: async (response) => {
           try {
             await authPost('/checkout/verify-payment', user, {
@@ -239,40 +239,26 @@ export default function CheckoutPage() {
 
       if (checkout.razorpay) {
         orderNo = await startOnlinePayment(checkout)
+      } else {
+        await authPost('/checkout/confirm-cod', user, { orderNo })
       }
 
-      clearCart()
       refreshFreeDelivery?.()
-      Swal.fire({
-        icon: 'success',
-        title: 'Order Placed Successfully!',
-        text: checkout.razorpay
-          ? `Payment successful. Order #${orderNo} confirmed.`
-          : `Order #${orderNo} confirmed. Pay on delivery.`,
-        showCancelButton: true,
-        confirmButtonText: 'Download Invoice',
-        cancelButtonText: 'View My Orders',
-        confirmButtonColor: '#047857',
-        cancelButtonColor: '#334155',
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            await downloadOrderInvoice(orderNo, user)
-          } catch (err) {
-            console.error('Invoice download failed:', err)
-          }
-        }
-        navigate('/account?section=orders')
+      navigate(`/order/${orderNo}`, {
+        replace: true,
+        state: {
+          paymentMode: checkout.razorpay ? 'online' : 'cod',
+          confirmed: true,
+        },
       })
     } catch (error) {
+      setPaying(false)
       Swal.fire({
         icon: 'error',
         title: 'Checkout failed',
         text: error.message || 'Could not complete checkout.',
         confirmButtonColor: '#047857',
       })
-    } finally {
-      setPaying(false)
     }
   }
 
@@ -287,7 +273,7 @@ export default function CheckoutPage() {
     (itemSavings + Number(discount || 0) + waivedDeliveryAmount(deliveryOption, itemsTotal, deliveryConfig)) * 100,
   ) / 100
 
-  if (!cartItems.length) {
+  if (!cartItems.length && !paying) {
     return (
       <main className="min-h-screen bg-canvas py-16">
         <div className="mx-auto max-w-lg px-4 text-center">

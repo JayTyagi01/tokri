@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { useAddress } from './AddressContext'
-import { authGet, authPost, fetchJson, PLACEHOLDER_IMAGE, postJson } from '../lib/api'
+import { authDelete, authGet, authPost, authPut, fetchJson, PLACEHOLDER_IMAGE, postJson } from '../lib/api'
 import {
   DEFAULT_DELIVERY,
   defaultOptionForAddress,
@@ -67,6 +67,33 @@ function readStoredCart() {
   }
 }
 
+function mapServerCartItem(item) {
+  const slug = String(item?.slug || item?.id || '').trim()
+  if (!slug || !item?.name) return null
+  const priceValue = Number(item.priceValue) || parsePrice(item.price)
+  const oldPriceValue = Number(item.oldPriceValue) || parsePrice(item.oldPrice)
+  return {
+    id: slug,
+    name: String(item.name),
+    price: item.price || `₹${priceValue}`,
+    priceValue,
+    oldPrice: item.oldPrice || (oldPriceValue > priceValue ? `₹${oldPriceValue}` : null),
+    oldPriceValue: oldPriceValue > priceValue ? oldPriceValue : 0,
+    image: item.image || PLACEHOLDER_IMAGE,
+    weight: item.weight || '250 g',
+    quantity: Math.max(1, Number(item.quantity) || 1),
+    categorySlug: item.category?.slug || item.categorySlug || null,
+    categories: Array.isArray(item.categories) ? item.categories : [],
+    isTaxable: item.isTaxable !== undefined ? Boolean(item.isTaxable) : false,
+    gstRate: Number(item.gstRate ?? 0),
+    hsnCode: item.hsnCode || '0808',
+  }
+}
+
+function toServerCartItems(items) {
+  return items.map((item) => ({ slug: item.id, quantity: item.quantity }))
+}
+
 export function CartProvider({ children }) {
   const { user, isLoggedIn, refreshUser } = useAuth()
   const { selectedAddress } = useAddress()
@@ -79,6 +106,10 @@ export function CartProvider({ children }) {
   const [coupon, setCoupon] = useState(null)
   const [couponError, setCouponError] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+  const cartItemsRef = useRef(cartItems)
+  cartItemsRef.current = cartItems
+  const skipServerPush = useRef(true)
+  const wasGuest = useRef(!isLoggedIn)
 
   const refreshFreeDelivery = useCallback(async () => {
     if (isLoggedIn && user?.token) {
@@ -106,6 +137,49 @@ export function CartProvider({ children }) {
       // Private mode / quota — cart still works for this session.
     }
   }, [cartItems])
+
+  useEffect(() => {
+    if (!isLoggedIn || !user?.token) {
+      wasGuest.current = true
+      skipServerPush.current = false
+      return undefined
+    }
+
+    let ignore = false
+    skipServerPush.current = true
+    authGet('/account/cart', user)
+      .then(async (data) => {
+        if (ignore) return
+        const serverItems = (data.cart?.items || []).map(mapServerCartItem).filter(Boolean)
+        const localItems = cartItemsRef.current
+        if (wasGuest.current && !serverItems.length && localItems.length) {
+          await authPut('/account/cart', user, { items: toServerCartItems(localItems) }).catch(() => {})
+        } else {
+          setCartItems(serverItems)
+        }
+        wasGuest.current = false
+      })
+      .catch(() => {
+        wasGuest.current = false
+      })
+      .finally(() => {
+        window.setTimeout(() => {
+          skipServerPush.current = false
+        }, 0)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [isLoggedIn, user?.id, user?.token])
+
+  useEffect(() => {
+    if (!isLoggedIn || !user?.token || skipServerPush.current) return undefined
+    const timer = window.setTimeout(() => {
+      authPut('/account/cart', user, { items: toServerCartItems(cartItems) }).catch(() => {})
+    }, 400)
+    return () => window.clearTimeout(timer)
+  }, [cartItems, isLoggedIn, user])
 
   // Hydrate tax data for cart items if missing (e.g. from older localStorage)
   useEffect(() => {
@@ -243,11 +317,18 @@ export function CartProvider({ children }) {
     setCartItems((items) => items.filter((item) => item.id !== productId))
   }
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
+    skipServerPush.current = true
     setCartItems([])
     setCoupon(null)
     setCouponError('')
-  }
+    if (isLoggedIn && user?.token) {
+      authDelete('/account/cart', user).catch(() => {})
+    }
+    window.setTimeout(() => {
+      skipServerPush.current = false
+    }, 500)
+  }, [isLoggedIn, user])
 
   const getItemQuantity = (productId) => {
     const found = cartItems.find((item) => item.id === productId)

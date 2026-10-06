@@ -36,6 +36,7 @@ import { buildOrderRoutes } from './orderRoutes.js'
 import { adminLocale } from './locale.js'
 import { INDIA_STATES } from '../data/indiaStates.js'
 import { buildDashboardAnalytics } from '../services/dashboardAnalytics.js'
+import { createSearchListHandler, readAdminSearch } from './list-search.js'
 
 AdminJS.registerAdapter({
   Database: AdminJSPrisma.Database,
@@ -53,9 +54,12 @@ const permissionFields = Object.fromEntries(
   ]),
 )
 
-const cmsListView = (manageKey) => ({
+const cmsListView = (manageKey, searchFields, listOptions) => ({
   isAccessible: canManage(manageKey),
   component: Components.CmsList,
+  ...(searchFields?.length
+    ? { handler: createSearchListHandler(searchFields, listOptions) }
+    : {}),
 })
 
 const teamListHandler = {
@@ -64,9 +68,7 @@ const teamListHandler = {
     const { query } = request
     const perPage = Math.min(Number(query.perPage) || 10, 50)
     const page = Number(query.page) || 1
-    const searchTerm = String(
-      query['filters.name'] || query['filters.email'] || query['filters.username'] || '',
-    ).trim()
+    const searchTerm = readAdminSearch(query)
 
     const where = {
       role: { in: ['staff', 'admin', 'super_admin'] },
@@ -195,7 +197,11 @@ export async function buildAdminRouter() {
           ],
           actions: {
             ...resourceActions('manageProducts'),
-            list: cmsListView('manageProducts'),
+            list: cmsListView('manageProducts', ['name', 'slug', 'hsnCode', 'badge', 'category.label'], {
+              include: { category: true },
+              populate: { category: 'Category' },
+              defaultSortBy: 'createdAt',
+            }),
             new: {
               isAccessible: canManage('manageProducts'),
               component: Components.ProductEdit,
@@ -216,6 +222,7 @@ export async function buildAdminRouter() {
             productUrlBase: `${env.clientUrl}/product`,
           },
           properties: {
+            name: { isTitle: true, label: 'Product' },
             description: { type: 'richtext', label: 'Description' },
             image: { isVisible: false },
             mediaId: { isVisible: false },
@@ -237,50 +244,14 @@ export async function buildAdminRouter() {
         resource: { model: AdminJSPrisma.getModelByName('ProductTax'), client: prisma },
         options: {
           name: 'Tax',
-          navigation: { name: null, icon: 'Percent' },
-          listProperties: ['productName', 'categoryName', 'hsnCode', 'gstRate', 'isTaxable'],
-          showProperties: ['productName', 'categoryName', 'hsnCode', 'gstRate', 'isTaxable', 'updatedAt'],
-          editProperties: ['hsnCode', 'gstRate', 'isTaxable'],
+          navigation: false,
           actions: {
-            ...resourceActions('manageProducts'),
-            list: cmsListView('manageProducts'),
+            list: { isVisible: false, isAccessible: () => false },
+            show: { isVisible: false, isAccessible: () => false },
             new: { isVisible: false, isAccessible: () => false },
+            edit: { isVisible: false, isAccessible: () => false },
             delete: { isVisible: false, isAccessible: () => false },
             bulkDelete: { isVisible: false, isAccessible: () => false },
-            edit: {
-              isAccessible: canManage('manageProducts'),
-              isVisible: true,
-              component: Components.TaxEdit,
-              after: async (response, request) => {
-                if (request.method === 'post' && response?.record) {
-                  const record = response.record
-                  const pt = record.params
-                  if (pt.productId) {
-                    await prisma.product.update({
-                      where: { id: pt.productId },
-                      data: {
-                        hsnCode: pt.hsnCode || '0808',
-                        gstRate: parseFloat(pt.gstRate) || 0,
-                        isTaxable: pt.isTaxable === true || pt.isTaxable === 'true' || pt.isTaxable === 1,
-                      },
-                    }).catch((err) => console.error('Failed to sync Product from ProductTax edit:', err))
-                  }
-                }
-                return response
-              },
-            },
-          },
-          properties: {
-            productName: { isTitle: true, label: 'Product Name', isEditable: false },
-            categoryName: { label: 'Category', isEditable: false },
-            hsnCode: { label: 'HSN Code' },
-            gstRate: { label: 'GST %', type: 'number' },
-            isTaxable: {
-              label: 'Taxable Yes/No',
-              type: 'boolean',
-            },
-            productId: { isVisible: false },
-            product: { isVisible: false },
           },
         },
       },
@@ -304,7 +275,7 @@ export async function buildAdminRouter() {
           actions: {
             ...resourceActions('manageCatalog'),
             list: {
-              ...cmsListView('manageCatalog'),
+              ...cmsListView('manageCatalog', ['label', 'slug', 'title']),
               after: afterCategoryList,
             },
             // Keep show hidden in the UI, but accessible so reference
@@ -397,7 +368,7 @@ export async function buildAdminRouter() {
           editProperties: ['title', 'slug', 'body', 'isPublished'],
           actions: {
             ...resourceActions('manageContent'),
-            list: cmsListView('manageContent'),
+            list: cmsListView('manageContent', ['title', 'slug']),
           },
           properties: {
             title: { label: 'Page title', isTitle: true },
@@ -416,7 +387,7 @@ export async function buildAdminRouter() {
           editProperties: ['title', 'name', 'content', 'rating', 'image', 'isApproved'],
           actions: {
             ...resourceActions('manageContent'),
-            list: cmsListView('manageContent'),
+            list: cmsListView('manageContent', ['title', 'name', 'content']),
             new: {
               isAccessible: canManage('manageContent'),
               isVisible: true,
@@ -631,7 +602,7 @@ export async function buildAdminRouter() {
           ],
           actions: {
             ...resourceActions('manageCoupons'),
-            list: cmsListView('manageCoupons'),
+            list: cmsListView('manageCoupons', ['code']),
             new: {
               isAccessible: canManage('manageCoupons'),
               component: Components.CouponEdit,
@@ -730,7 +701,7 @@ export async function buildAdminRouter() {
           actions: {
             ...resourceActions('manageSettings'),
             list: {
-              ...cmsListView('manageSettings'),
+              ...cmsListView('manageSettings', ['name', 'email', 'phone', 'city', 'panNumber']),
               after: sanitizePartnerRecord,
             },
             new: {
@@ -831,7 +802,14 @@ export async function buildAdminRouter() {
           },
           actions: {
             ...resourceActions('manageSettings'),
-            list: cmsListView('manageSettings'),
+            list: cmsListView(
+              'manageSettings',
+              ['pincode', 'city', 'areaLabel'],
+              {
+                include: { partner: true, state: true },
+                populate: { partner: 'DeliveryPartner', state: 'IndiaState' },
+              },
+            ),
             new: {
               isAccessible: canManage('manageSettings'),
               component: Components.PincodeEdit,
@@ -923,7 +901,7 @@ export async function buildAdminRouter() {
           },
           actions: {
             ...resourceActions('manageUsers'),
-            list: cmsListView('manageUsers'),
+            list: cmsListView('manageUsers', ['name', 'phone']),
             edit: {
               isAccessible: canManage('manageUsers'),
               isVisible: true,

@@ -8,6 +8,7 @@ import { buildAdminRouter } from './admin/index.js'
 import adminAuthRouter from './admin/authRoutes.js'
 import partnerPagesRouter from './routes/partnerPages.js'
 import { handleRazorpayWebhook } from './routes/webhooks.js'
+import { handleRazorpayCheckoutCallback } from './routes/checkout.js'
 import apiRouter from './routes/api.js'
 import mediaRouter from './routes/media.js'
 import { errorHandler } from './middleware/errorHandler.js'
@@ -54,6 +55,11 @@ app.use(`${env.adminPath}/partner`, partnerPagesRouter)
 app.use('/partner', partnerPagesRouter)
 
 app.post('/api/v1/webhooks/razorpay', express.raw({ type: 'application/json' }), handleRazorpayWebhook)
+app.post(
+  '/api/v1/checkout/razorpay-callback',
+  express.urlencoded({ extended: true }),
+  handleRazorpayCheckoutCallback,
+)
 
 // CMS theme assets
 app.use(

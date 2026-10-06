@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma.js'
 import { canManage } from './permissions.js'
 import { notifyOrderStatus } from '../services/push.js'
 import { assertPincodeServiceable, normalizePincode } from '../services/delivery.js'
+import { readAdminSearch } from './list-search.js'
 
 function parseAddress(address) {
   if (!address || typeof address !== 'object') return null
@@ -114,21 +115,27 @@ export const orderListHandler = {
     const { query } = request
     const perPage = Math.min(Number(query.perPage) || 10, 50)
     const page = Number(query.page) || 1
-    const searchTerm = String(query['filters.orderNo'] || query['filters.customerName'] || '').trim()
+    const searchTerm = readAdminSearch(query)
 
-    const where = searchTerm
-      ? {
-          OR: [
-            { orderNo: { contains: searchTerm } },
-            { razorpayPaymentId: { contains: searchTerm } },
-            { razorpayOrderId: { contains: searchTerm } },
-            { customer: { is: { name: { contains: searchTerm } } } },
-            { customer: { is: { phone: { contains: searchTerm } } } },
-          ],
-        }
-      : {}
+    const searchOr = searchTerm
+      ? [
+          { orderNo: { contains: searchTerm } },
+          { couponCode: { contains: searchTerm } },
+          { deliveryPincode: { contains: searchTerm } },
+          { deliveryPartnerName: { contains: searchTerm } },
+          { deliveryPartnerPhone: { contains: searchTerm } },
+          { razorpayPaymentId: { contains: searchTerm } },
+          { razorpayOrderId: { contains: searchTerm } },
+          { customer: { is: { name: { contains: searchTerm } } } },
+          { customer: { is: { phone: { contains: searchTerm } } } },
+          { items: { some: { name: { contains: searchTerm } } } },
+          { address: { path: '$.name', string_contains: searchTerm } },
+          { address: { path: '$.phone', string_contains: searchTerm } },
+          { address: { path: '$.pincode', string_contains: searchTerm } },
+        ]
+      : null
 
-    const [orders, total] = await Promise.all([
+    const runQuery = async (where) => Promise.all([
       prisma.order.findMany({
         where,
         skip: (page - 1) * perPage,
@@ -140,6 +147,20 @@ export const orderListHandler = {
       }),
       prisma.order.count({ where }),
     ])
+
+    let orders
+    let total
+    try {
+      ;[orders, total] = await runQuery(searchOr ? { OR: searchOr } : {})
+    } catch {
+      const withoutAddress = searchOr?.filter((clause) => !clause.address) || null
+      try {
+        ;[orders, total] = await runQuery(withoutAddress ? { OR: withoutAddress } : {})
+      } catch {
+        orders = []
+        total = 0
+      }
+    }
 
     const records = orders.map((order) => {
       const address = parseAddress(order.address)
