@@ -12,6 +12,7 @@ import apiRouter from './routes/api.js'
 import mediaRouter from './routes/media.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { prisma } from './lib/prisma.js'
+import { recoverPendingOnlinePayments } from './services/checkout.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const uploadsPath = path.join(__dirname, '../uploads')
@@ -99,6 +100,14 @@ async function start() {
       console.log(`Admin panel: ${env.appUrl}${env.adminPath}`)
       console.log(`API: ${env.apiUrl}/api/v1`)
       console.log(`Storefront dist: ${hasDist ? distPath : 'not found (API-only root)'}`)
+      const recover = () =>
+        recoverPendingOnlinePayments()
+          .then((ids) => {
+            if (ids.length) console.log('Recovered Razorpay payments:', ids.join(', '))
+          })
+          .catch((error) => console.error('Razorpay payment recovery failed:', error))
+      setTimeout(recover, 8000)
+      setInterval(recover, 5 * 60 * 1000)
     })
   } catch (error) {
     console.error('Failed to start server:', error)

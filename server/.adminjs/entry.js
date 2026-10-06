@@ -31,6 +31,8 @@ import MediaLibrary from '../src/admin/components/media-library'
 AdminJS.UserComponents.MediaLibrary = MediaLibrary
 import TaxEdit from '../src/admin/components/tax-edit'
 AdminJS.UserComponents.TaxEdit = TaxEdit
+import RazorpayPaymentId from '../src/admin/components/razorpay-payment-id'
+AdminJS.UserComponents.RazorpayPaymentId = RazorpayPaymentId
 import Login from '../src/admin/components/login'
 AdminJS.UserComponents.Login = Login
 import ActionHeader from '../src/admin/components/action-header'

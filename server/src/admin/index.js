@@ -16,7 +16,7 @@ import { getSettingResource, ensureSettingsRecord } from './settings.js'
 import { prepareProductPayload, afterProductForm } from './product-handlers.js'
 import { prepareCouponPayload } from './coupon-handlers.js'
 import { prepareCategoryPayload, afterCategoryList } from './category-handlers.js'
-import { orderEditHandler, orderListHandler, orderShowHandler } from './order-handlers.js'
+import { orderEditHandler, orderListHandler, orderShowHandler, syncRazorpayAction } from './order-handlers.js'
 import {
   preparePartnerPayload,
   afterPartnerSave,
@@ -467,7 +467,7 @@ export async function buildAdminRouter() {
         options: {
           name: 'Orders',
           navigation: { name: null, icon: 'ShoppingBag' },
-          listProperties: ['orderNo', 'customerName', 'customerPhone', 'status', 'paymentStatus', 'grandTotal', 'createdAt'],
+          listProperties: ['orderNo', 'customerName', 'customerPhone', 'status', 'paymentStatus', 'razorpayPaymentId', 'grandTotal', 'createdAt'],
           showProperties: [
             'orderNo',
             'customerName',
@@ -531,6 +531,15 @@ export async function buildAdminRouter() {
               component: false,
               handler: generateQrAction,
             },
+            syncRazorpay: {
+              actionType: 'record',
+              icon: 'Refresh',
+              label: 'Sync Razorpay payment',
+              isVisible: false,
+              isAccessible: canManage('manageOrders'),
+              component: false,
+              handler: syncRazorpayAction,
+            },
             downloadInvoice: {
               actionType: 'record',
               icon: 'Document',
@@ -566,7 +575,13 @@ export async function buildAdminRouter() {
             address: { isVisible: false },
             items: { isVisible: false },
             razorpayOrderId: { isVisible: false },
-            razorpayPaymentId: { isVisible: false },
+            razorpayPaymentId: {
+              label: 'Razorpay payment ID',
+              isVisible: { list: true, filter: false, show: true, edit: false },
+              components: {
+                list: Components.RazorpayPaymentId,
+              },
+            },
             razorpayPaymentLinkId: { isVisible: false },
             razorpayQrUrl: { isVisible: { list: false, show: true, edit: false, filter: false } },
             couponCode: { isVisible: false },

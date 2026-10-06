@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Button, H3, Icon, Text } from '@adminjs/design-system'
 import { useNotice, useRecord } from 'adminjs'
-import { FlagCard } from './form-controls.jsx'
+import { isFlagOn, StatusSwitch } from './form-controls.jsx'
 
 const TaxEdit = (props) => {
   const { record: initialRecord, resource } = props
@@ -14,7 +14,7 @@ const TaxEdit = (props) => {
 
   const setField = (key, value) => handleChange(key, value)
 
-  const isTaxableBool = params.isTaxable === true || params.isTaxable === 'true' || params.isTaxable === 1
+  const isTaxableBool = isFlagOn(params.isTaxable)
 
   const handleTaxableToggle = (value) => {
     setField('isTaxable', value)
@@ -72,20 +72,14 @@ const TaxEdit = (props) => {
 
       <section className="tokri-coupon-card">
         <h4>Taxability status</h4>
-        <div className="tokri-choice-row">
-          <FlagCard
-            selected={isTaxableBool}
-            title="Taxable (Yes)"
-            hint="Charge GST at checkout"
-            onClick={() => handleTaxableToggle(true)}
-          />
-          <FlagCard
-            selected={!isTaxableBool}
-            title="Non-taxable (No)"
-            hint="0% GST (Fresh fruits)"
-            onClick={() => handleTaxableToggle(false)}
-          />
-        </div>
+        <StatusSwitch
+          checked={isTaxableBool}
+          title="Taxable"
+          hint={isTaxableBool ? 'GST will be charged at checkout' : '0% GST (fresh fruits / exempt)'}
+          onLabel="Yes"
+          offLabel="No"
+          onChange={handleTaxableToggle}
+        />
       </section>
 
       <section className="tokri-coupon-card">

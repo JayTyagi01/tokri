@@ -5,6 +5,8 @@ import {
   createUpiIntentPayment,
   fetchRazorpayPayment,
   getPublicPaymentConfig,
+  listRazorpayOrderPayments,
+  listRazorpayOrdersByReceipt,
   verifyRazorpayPayment,
 } from './razorpay.js'
 import { listAddresses, snapshotCurrentAddress } from './addresses.js'
@@ -290,8 +292,10 @@ function paymentPhone(user, address) {
 }
 
 async function markOnlineOrderPaid(user, order, razorpayPaymentId) {
-  const updated = await prisma.order.update({
-    where: { id: order.id },
+  if (order.paymentStatus === 'paid' && order.razorpayPaymentId) return order
+
+  const result = await prisma.order.updateMany({
+    where: { id: order.id, paymentStatus: { not: 'paid' } },
     data: {
       paymentStatus: 'paid',
       status: order.status === 'pending' ? 'paid' : order.status,
@@ -300,6 +304,9 @@ async function markOnlineOrderPaid(user, order, razorpayPaymentId) {
     },
   })
 
+  const updated = await prisma.order.findUnique({ where: { id: order.id } })
+  if (result.count === 0) return updated
+
   await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
   notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
   sendOrderConfirmation(updated, { phone: user.phone, name: user.name }).catch((error) =>
@@ -307,6 +314,107 @@ async function markOnlineOrderPaid(user, order, razorpayPaymentId) {
   )
 
   return updated
+}
+
+function expectedAmountPaise(order) {
+  return Math.round(Number(order.grandTotal) * 100)
+}
+
+function pickSuccessfulPayment(payments, expectedPaise) {
+  const list = Array.isArray(payments) ? payments : []
+  const matching = list.filter((payment) => Number(payment.amount) === expectedPaise)
+  return (
+    matching.find((payment) => payment.status === 'captured') ||
+    matching.find((payment) => payment.status === 'authorized') ||
+    null
+  )
+}
+
+async function captureIfNeeded(payment, expectedPaise) {
+  if (!payment) return payment
+  if (payment.status === 'captured') return payment
+  if (payment.status !== 'authorized') return payment
+  try {
+    return await captureRazorpayPayment(payment.id, expectedPaise, payment.currency || 'INR')
+  } catch (error) {
+    const latest = await fetchRazorpayPayment(payment.id)
+    if (latest.status === 'captured') return latest
+    throw error
+  }
+}
+
+export async function reconcileOnlineOrderFromRazorpay(order) {
+  if (!order) return { status: 'missing', order: null }
+  if (order.paymentStatus === 'paid') return { status: 'paid', order }
+  if (order.paymentMode !== 'online') {
+    return { status: order.paymentStatus || 'pending', order }
+  }
+
+  let razorpayOrderId = String(order.razorpayOrderId || '').trim()
+  if (!razorpayOrderId) {
+    const remoteOrders = await listRazorpayOrdersByReceipt(order.orderNo)
+    razorpayOrderId = remoteOrders[0]?.id || ''
+    if (razorpayOrderId) {
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { razorpayOrderId },
+      })
+      order = { ...order, razorpayOrderId }
+    }
+  }
+  if (!razorpayOrderId) return { status: order.paymentStatus || 'pending', order }
+
+  const expected = expectedAmountPaise(order)
+  const payments = await listRazorpayOrderPayments(razorpayOrderId)
+  let payment = pickSuccessfulPayment(payments, expected)
+  if (!payment) return { status: 'pending', order }
+
+  payment = await captureIfNeeded(payment, expected)
+  if (payment.status !== 'captured' && payment.status !== 'authorized') {
+    return { status: 'pending', order }
+  }
+
+  const customer = order.customerId
+    ? await prisma.customer.findUnique({ where: { id: order.customerId } })
+    : null
+  const updated = await markOnlineOrderPaid(
+    { id: order.customerId, phone: customer?.phone || '', name: customer?.name || '' },
+    order,
+    payment.id,
+  )
+  return { status: 'paid', order: updated }
+}
+
+export async function syncOnlineOrderPayment(user, { orderNo }) {
+  const order = await prisma.order.findFirst({
+    where: { orderNo, customerId: user.id },
+  })
+  if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
+  return reconcileOnlineOrderFromRazorpay(order)
+}
+
+export async function recoverPendingOnlinePayments({ lookbackHours = 24, limit = 20 } = {}) {
+  const since = new Date(Date.now() - lookbackHours * 60 * 60 * 1000)
+  const orders = await prisma.order.findMany({
+    where: {
+      paymentMode: 'online',
+      paymentStatus: { not: 'paid' },
+      createdAt: { gte: since },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  })
+
+  const recovered = []
+  for (const order of orders) {
+    try {
+      const result = await reconcileOnlineOrderFromRazorpay(order)
+      if (result.status === 'paid') recovered.push(result.order.orderNo)
+    } catch (error) {
+      console.error('Razorpay reconcile failed:', order.orderNo, error.message)
+    }
+  }
+  return recovered
 }
 
 export async function markOnlineOrderPaidFromWebhook({ orderNo, razorpayOrderId, paymentId }) {
@@ -391,13 +499,13 @@ export async function syncIntentPayment(user, { orderNo, razorpayPaymentId }) {
   }
 
   let payment = await fetchRazorpayPayment(razorpayPaymentId)
-  const expected = Math.round(Number(order.grandTotal) * 100)
+  const expected = expectedAmountPaise(order)
   if (payment.order_id !== order.razorpayOrderId || Number(payment.amount) !== expected) {
     throw Object.assign(new Error('Payment details do not match this order.'), { status: 400 })
   }
 
   if (payment.status === 'authorized') {
-    payment = await captureRazorpayPayment(payment.id, expected, payment.currency || 'INR')
+    payment = await captureIfNeeded(payment, expected)
   }
 
   if (payment.status === 'captured') {

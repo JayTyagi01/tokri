@@ -262,6 +262,16 @@ export async function fetchRazorpayPayment(paymentId) {
   return razorpayFetch(`/payments/${encodeURIComponent(paymentId)}`)
 }
 
+export async function listRazorpayOrderPayments(razorpayOrderId) {
+  const payload = await razorpayFetch(`/orders/${encodeURIComponent(razorpayOrderId)}/payments`)
+  return Array.isArray(payload?.items) ? payload.items : []
+}
+
+export async function listRazorpayOrdersByReceipt(receipt) {
+  const payload = await razorpayFetch(`/orders?receipt=${encodeURIComponent(receipt)}&count=5`)
+  return Array.isArray(payload?.items) ? payload.items : []
+}
+
 export async function captureRazorpayPayment(paymentId, amountPaise, currency = 'INR') {
   return razorpayFetch(`/payments/${encodeURIComponent(paymentId)}/capture`, {
     method: 'POST',
@@ -285,18 +295,20 @@ export async function verifyRazorpayPayment({ razorpayOrderId, razorpayPaymentId
 
 export async function verifyRazorpayWebhook(rawBody, signature) {
   const config = await getRazorpaySettings()
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || config.keySecret
-  if (!secret) {
+  const secrets = [...new Set([process.env.RAZORPAY_WEBHOOK_SECRET, config.keySecret].filter(Boolean))]
+  if (!secrets.length) {
     throw Object.assign(new Error('Razorpay webhook secret is not configured.'), { status: 400 })
   }
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
   const actualBuffer = Buffer.from(String(signature || ''))
-  const expectedBuffer = Buffer.from(expected)
-  if (
-    actualBuffer.length !== expectedBuffer.length ||
-    !crypto.timingSafeEqual(actualBuffer, expectedBuffer)
-  ) {
-    throw Object.assign(new Error('Invalid webhook signature.'), { status: 400 })
+  for (const secret of secrets) {
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+    const expectedBuffer = Buffer.from(expected)
+    if (
+      actualBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+    ) {
+      return true
+    }
   }
-  return true
+  throw Object.assign(new Error('Invalid webhook signature.'), { status: 400 })
 }

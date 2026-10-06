@@ -872,6 +872,75 @@ section[data-css="logged-in"] {
   word-break: break-all;
 }
 
+.tokri-order-rzp {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d1fae5;
+  border-radius: 10px;
+  background: #f0fdf4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tokri-order-rzp-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.tokri-order-rzp-row span {
+  min-width: 96px;
+  font-weight: 700;
+  color: #047857;
+}
+
+.tokri-order-rzp-row code {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+.tokri-order-rzp-row button,
+.tokri-order-rzp-row a,
+.tokri-rzp-copy {
+  border: 0;
+  background: #fff;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tokri-rzp-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+}
+
+.tokri-rzp-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #047857;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tokri-rzp-empty {
+  color: #94a3b8;
+}
+
 .tokri-order-side .tokri-multiselect {
   margin-top: 6px;
 }

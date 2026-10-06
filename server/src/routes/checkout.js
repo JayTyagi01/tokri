@@ -8,6 +8,7 @@ import {
   getCheckoutConfig,
   startUpiIntent,
   syncIntentPayment,
+  syncOnlineOrderPayment,
 } from '../services/checkout.js'
 import { previewCoupon } from '../services/coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
@@ -116,6 +117,20 @@ router.post('/verify-payment', async (req, res, next) => {
   try {
     const result = await confirmCheckoutPayment(req.customer, req.body)
     res.json({ ok: true, ...result })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.post('/sync-payment', async (req, res, next) => {
+  try {
+    const result = await syncOnlineOrderPayment(req.customer, req.body)
+    res.json({
+      ok: result.status === 'paid',
+      status: result.status,
+      orderNo: result.order?.orderNo,
+      paymentStatus: result.order?.paymentStatus,
+    })
   } catch (error) {
     next(error)
   }

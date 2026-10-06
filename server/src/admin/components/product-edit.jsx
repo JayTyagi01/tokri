@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Button, H3, Icon, Text } from '@adminjs/design-system'
 import { BasePropertyComponent, useNotice, useRecord } from 'adminjs'
-import { FlagCard, SearchableMultiSelect } from './form-controls.jsx'
+import { FlagCard, isFlagOn, SearchableMultiSelect, StatusSwitch } from './form-controls.jsx'
 
 const normalizeSlugInput = (value) =>
   String(value || '')
@@ -267,13 +267,14 @@ const ProductEdit = (props) => {
 
         <section className="tokri-coupon-card">
           <h4>Tax & GST</h4>
-          <div className="tokri-choice-row" style={{ marginBottom: 12 }}>
-            <FlagCard
-              selected={params.isTaxable === true || params.isTaxable === 'true'}
-              title="Taxable (Yes)"
-              hint="Charge GST at checkout"
-              onClick={() => {
-                const next = !(params.isTaxable === true || params.isTaxable === 'true')
+          <div style={{ marginBottom: 12 }}>
+            <StatusSwitch
+              checked={isFlagOn(params.isTaxable)}
+              title="Taxable"
+              hint={isFlagOn(params.isTaxable) ? 'GST will be charged at checkout' : 'No GST on this product'}
+              onLabel="Yes"
+              offLabel="No"
+              onChange={(next) => {
                 setField('isTaxable', next)
                 if (next && Number(params.gstRate || 0) === 0) setField('gstRate', 5)
                 if (!next) setField('gstRate', 0)
