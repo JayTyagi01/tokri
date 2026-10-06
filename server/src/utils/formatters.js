@@ -53,6 +53,9 @@ export function formatProduct(product) {
     isImported: product.isImported,
     isFeatured: product.isFeatured,
     stock: product.stock,
+    hsnCode: product.hsnCode || '0808',
+    gstRate: Number(product.gstRate ?? 0),
+    isTaxable: Boolean(product.isTaxable),
   }
 }
 

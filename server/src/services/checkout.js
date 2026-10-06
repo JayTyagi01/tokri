@@ -8,13 +8,25 @@ import {
   verifyRazorpayPayment,
 } from './razorpay.js'
 import { listAddresses, snapshotCurrentAddress } from './addresses.js'
-import { calcCartTotals, getChargeRates, publicDeliveryConfig } from '../config/charges.js'
+import { calcCartTotals, calcItemTax, getChargeRates, publicDeliveryConfig } from '../config/charges.js'
 import { clearCart, getCartCheckoutItems } from './cart.js'
 import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
 import { sendOrderConfirmation } from './msg91.js'
 import { assignmentForPincode, assertDeliveryOptionEnabled } from './delivery.js'
+import { applyFreeDeliveryRates, getCustomerFreeDeliveryStatus } from './freeDelivery.js'
+
+export function isStoreIntraState(customerState) {
+  if (!customerState) return true
+  const norm = String(customerState).trim().toLowerCase()
+  return (
+    norm === 'dl' ||
+    norm === 'delhi' ||
+    norm.includes('delhi') ||
+    norm.includes('nct')
+  )
+}
 
 function parseAddresses(raw) {
   if (!raw) return []
@@ -60,6 +72,9 @@ async function resolveCartItems(rawItems) {
       quantity: entry.quantity,
       priceValue: Number(product.priceValue),
       slug: product.slug,
+      isTaxable: Boolean(product.isTaxable),
+      gstRate: Number(product.gstRate || 0),
+      hsnCode: product.hsnCode || '0808',
       category: product.category,
       categories: (product.categoryLinks || []).map((row) => row.category).filter(Boolean),
     })
@@ -80,14 +95,16 @@ async function resolveAddress(user, addressId, addressSnapshot) {
   return address
 }
 
-export async function getCheckoutConfig() {
-  const [payment, settings] = await Promise.all([
+export async function getCheckoutConfig(customer) {
+  const [payment, settings, freeDelivery] = await Promise.all([
     getPublicPaymentConfig(),
     prisma.setting.findUnique({ where: { id: 1 } }),
+    customer?.id ? getCustomerFreeDeliveryStatus(customer.id) : null,
   ])
   return {
     ...payment,
     delivery: publicDeliveryConfig(settings),
+    freeDelivery: freeDelivery || { quota: 3, used: 0, remaining: 0, isEligible: false },
   }
 }
 
@@ -99,13 +116,21 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
   const cartItems = await resolveCartItems(sourceItems)
   const address = await resolveAddress(user, addressId, addressSnapshot)
   const { option } = await assertDeliveryOptionEnabled(address.pincode, deliveryOption || address.delivery?.defaultOption)
-  const rates = await getChargeRates(option)
-  let totals = calcCartTotals(cartItems, rates)
+  let rates = await getChargeRates(option)
+
+  const freeDeliveryStatus = await getCustomerFreeDeliveryStatus(user.id)
+  const isFreeDelivery = Boolean(freeDeliveryStatus?.isEligible)
+  if (isFreeDelivery) {
+    rates = applyFreeDeliveryRates(rates)
+  }
+
+  const isInterState = !isStoreIntraState(address.state)
+  let totals = calcCartTotals(cartItems, rates, 0, isInterState)
   let appliedCoupon = null
 
   if (String(couponCode || '').trim()) {
     const coupon = await findActiveCoupon(couponCode)
-    const applied = await applyCouponToItems(coupon, cartItems, user.id, option)
+    const applied = await applyCouponToItems(coupon, cartItems, user.id, option, isInterState)
     totals = applied.totals
     appliedCoupon = applied.coupon
   }
@@ -145,6 +170,25 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
     razorpayOrderId = razorpayOrder.id
   }
 
+  const orderItemsData = cartItems.map((entry) => {
+    const itemTax = calcItemTax(entry, isInterState)
+    return {
+      productId: entry.product.id,
+      name: entry.product.name,
+      priceValue: entry.priceValue,
+      quantity: entry.quantity,
+      image: entry.product.image,
+      weight: entry.product.weight,
+      hsnCode: entry.hsnCode || '0808',
+      isTaxable: Boolean(entry.isTaxable),
+      gstRate: entry.gstRate || 0,
+      taxAmount: itemTax.taxAmount,
+      cgstAmount: itemTax.cgstAmount,
+      sgstAmount: itemTax.sgstAmount,
+      igstAmount: itemTax.igstAmount,
+    }
+  })
+
   const order = await prisma.order.create({
     data: {
       orderNo,
@@ -157,21 +201,20 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
       handlingCharge: totals.handlingCharge,
       smallCartCharge: totals.smallCartCharge,
       discount: totals.discount,
+      taxTotal: totals.taxTotal,
+      cgstTotal: totals.cgstTotal,
+      sgstTotal: totals.sgstTotal,
+      igstTotal: totals.igstTotal,
+      isInterState,
       couponCode: appliedCoupon?.code || null,
       deliveryOption: option,
+      freeDeliveryApplied: isFreeDelivery,
       grandTotal: totals.grandTotal,
       address,
       razorpayOrderId,
       ...delivery,
       items: {
-        create: cartItems.map(({ product, quantity, priceValue }) => ({
-          productId: product.id,
-          name: product.name,
-          priceValue,
-          quantity,
-          image: product.image,
-          weight: product.weight,
-        })),
+        create: orderItemsData,
       },
     },
     include: { items: true },

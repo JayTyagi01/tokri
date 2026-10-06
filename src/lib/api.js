@@ -136,6 +136,33 @@ export async function authDelete(path, user) {
   return data
 }
 
+export async function authDownloadBlob(path, user) {
+  const headers = {}
+  if (user?.token) headers.Authorization = `Bearer ${user.token}`
+  if (user?.phone) headers['X-User-Phone'] = user.phone
+
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
+    headers,
+  })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Download failed (${response.status})`)
+  }
+  return response.blob()
+}
+
+export async function downloadOrderInvoice(orderNo, user) {
+  const blob = await authDownloadBlob(`/account/orders/${orderNo}/invoice?download=1`, user)
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `invoice-${orderNo}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
 export function resolveAssetUrl(value) {
   if (!value) return PLACEHOLDER_IMAGE
   let resolved = value

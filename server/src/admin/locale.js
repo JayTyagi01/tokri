@@ -28,6 +28,8 @@ const resourceLabels = {
   'Delivery partners': 'Delivery partners',
   'Serviceable pincodes': 'Serviceable pincodes',
   Team: 'Team',
+  Tax: 'Tax',
+  'Tax Management': 'Tax Management',
 }
 
 export const adminLocale = {
@@ -84,6 +86,16 @@ export const adminLocale = {
         IndiaState: { labels: { 'Indian states': 'Indian states' } },
         Customer: { labels: { Customers: 'Customers' } },
         User: { labels: { Team: 'Team' } },
+        ProductTax: {
+          labels: { Tax: 'Tax', 'Tax Management': 'Tax Management' },
+          properties: {
+            productName: 'Product Name',
+            categoryName: 'Category',
+            hsnCode: 'HSN Code',
+            gstRate: 'GST %',
+            isTaxable: 'Taxable Yes/No',
+          },
+        },
       },
     },
   },

@@ -77,7 +77,7 @@ export default function AddressFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 md:flex md:items-center md:justify-center md:p-4">
+    <div className="fixed inset-0 z-[70] bg-black/60 md:flex md:items-center md:justify-center md:p-4">
       <div className="flex h-dvh w-full flex-col bg-panel md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl md:border md:border-line md:shadow-2xl">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h2 className="pr-8 text-xl font-bold text-white">

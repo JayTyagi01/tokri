@@ -32,6 +32,7 @@ import { prepareCustomerPayload, attachCustomerAddresses, toggleCustomerActiveAc
 import { prepareTeamPayload, afterTeamSave, toggleTeamActiveAction } from './team-handlers.js'
 import { prepareReviewPayload, toggleReviewApprovedAction } from './review-handlers.js'
 import { buildCatalogRoutes } from './catalogRoutes.js'
+import { buildOrderRoutes } from './orderRoutes.js'
 import { adminLocale } from './locale.js'
 import { INDIA_STATES } from '../data/indiaStates.js'
 import { buildDashboardAnalytics } from '../services/dashboardAnalytics.js'
@@ -188,6 +189,9 @@ export async function buildAdminRouter() {
             'stock',
             'sortOrder',
             'isActive',
+            'hsnCode',
+            'gstRate',
+            'isTaxable',
           ],
           actions: {
             ...resourceActions('manageProducts'),
@@ -221,10 +225,62 @@ export async function buildAdminRouter() {
             reviews: { isVisible: false },
             orderItems: { isVisible: false },
             cartItems: { isVisible: false },
+            taxInfo: { isVisible: false },
             slug: {
               label: 'Slug',
               description: 'The public product URL updates below this field.',
             },
+          },
+        },
+      },
+      {
+        resource: { model: AdminJSPrisma.getModelByName('ProductTax'), client: prisma },
+        options: {
+          name: 'Tax',
+          navigation: { name: null, icon: 'Percent' },
+          listProperties: ['productName', 'categoryName', 'hsnCode', 'gstRate', 'isTaxable'],
+          showProperties: ['productName', 'categoryName', 'hsnCode', 'gstRate', 'isTaxable', 'updatedAt'],
+          editProperties: ['hsnCode', 'gstRate', 'isTaxable'],
+          actions: {
+            ...resourceActions('manageProducts'),
+            list: cmsListView('manageProducts'),
+            new: { isVisible: false, isAccessible: () => false },
+            delete: { isVisible: false, isAccessible: () => false },
+            bulkDelete: { isVisible: false, isAccessible: () => false },
+            edit: {
+              isAccessible: canManage('manageProducts'),
+              isVisible: true,
+              component: Components.TaxEdit,
+              after: async (response, request) => {
+                if (request.method === 'post' && response?.record) {
+                  const record = response.record
+                  const pt = record.params
+                  if (pt.productId) {
+                    await prisma.product.update({
+                      where: { id: pt.productId },
+                      data: {
+                        hsnCode: pt.hsnCode || '0808',
+                        gstRate: parseFloat(pt.gstRate) || 0,
+                        isTaxable: pt.isTaxable === true || pt.isTaxable === 'true' || pt.isTaxable === 1,
+                      },
+                    }).catch((err) => console.error('Failed to sync Product from ProductTax edit:', err))
+                  }
+                }
+                return response
+              },
+            },
+          },
+          properties: {
+            productName: { isTitle: true, label: 'Product Name', isEditable: false },
+            categoryName: { label: 'Category', isEditable: false },
+            hsnCode: { label: 'HSN Code' },
+            gstRate: { label: 'GST %', type: 'number' },
+            isTaxable: {
+              label: 'Taxable Yes/No',
+              type: 'boolean',
+            },
+            productId: { isVisible: false },
+            product: { isVisible: false },
           },
         },
       },
@@ -428,6 +484,11 @@ export async function buildAdminRouter() {
             'handlingCharge',
             'smallCartCharge',
             'discount',
+            'taxTotal',
+            'cgstTotal',
+            'sgstTotal',
+            'igstTotal',
+            'isInterState',
             'grandTotal',
             'createdAt',
           ],
@@ -469,6 +530,19 @@ export async function buildAdminRouter() {
               isAccessible: canManage('manageOrders'),
               component: false,
               handler: generateQrAction,
+            },
+            downloadInvoice: {
+              actionType: 'record',
+              icon: 'Document',
+              label: 'Download Invoice',
+              isVisible: true,
+              isAccessible: canManage('manageOrders'),
+              component: false,
+              handler: async (request) => {
+                return {
+                  redirectUrl: `${env.adminPath}/orders/${request.params.recordId}/invoice?download=1`,
+                }
+              },
             },
           },
           properties: {
@@ -1024,6 +1098,7 @@ export async function buildAdminRouter() {
   )
 
   adminRouter.use('/catalog', buildCatalogRoutes())
+  adminRouter.use('/orders', buildOrderRoutes())
 
   return { admin, adminRouter }
 }

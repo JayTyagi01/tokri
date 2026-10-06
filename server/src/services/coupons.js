@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js'
 import { calcCartTotals, deliveryChargeFor, getChargeRates } from '../config/charges.js'
+import { applyFreeDeliveryRates, getCustomerFreeDeliveryStatus } from './freeDelivery.js'
 
 function httpError(message, status = 400) {
   return Object.assign(new Error(message), { status })
@@ -72,6 +73,7 @@ export function formatCouponPreview(coupon, totals) {
     deliveryCharge: totals.deliveryCharge,
     handlingCharge: totals.handlingCharge,
     smallCartCharge: totals.smallCartCharge,
+    taxTotal: totals.taxTotal || 0,
     grandTotal: totals.grandTotal,
     message:
       applyOn === 'shipping'
@@ -111,7 +113,13 @@ export async function applyCouponToItems(coupon, items, customerId, deliveryOpti
     throw httpError('Please log in to use this coupon.')
   }
 
-  const rates = await getChargeRates(deliveryOption)
+  let rates = await getChargeRates(deliveryOption)
+  if (customerId) {
+    const freeDelivery = await getCustomerFreeDeliveryStatus(customerId)
+    if (freeDelivery?.isEligible) {
+      rates = applyFreeDeliveryRates(rates)
+    }
+  }
   const eligibleItems = items.filter((item) => isItemEligible(item, coupon))
   const eligibleTotal = eligibleItems.reduce(
     (sum, item) => sum + Number(item.priceValue) * Number(item.quantity),
@@ -145,7 +153,7 @@ export async function applyCouponToItems(coupon, items, customerId, deliveryOpti
   discount = Math.min(roundMoney(discount), base)
   if (discount <= 0) throw httpError('This coupon does not give a discount on your cart.')
 
-  const totals = calcCartTotals(items, rates, discount)
+  const totals = calcCartTotals(items, rates, discount, taxOptions)
   return {
     coupon,
     totals,
@@ -153,9 +161,9 @@ export async function applyCouponToItems(coupon, items, customerId, deliveryOpti
   }
 }
 
-export async function previewCoupon({ code, items, customerId, deliveryOption }) {
+export async function previewCoupon({ code, items, customerId, deliveryOption, taxOptions }) {
   const coupon = await findActiveCoupon(code)
-  return applyCouponToItems(coupon, items, customerId, deliveryOption)
+  return applyCouponToItems(coupon, items, customerId, deliveryOption, taxOptions)
 }
 
 export async function redeemCoupon({ coupon, customerId, orderId }) {

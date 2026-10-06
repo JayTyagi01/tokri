@@ -18,6 +18,7 @@ export const Components = {
   CustomerEdit: componentLoader.add('CustomerEdit', './components/customer-edit.jsx'),
   TeamEdit: componentLoader.add('TeamEdit', './components/team-edit.jsx'),
   MediaLibrary: componentLoader.add('MediaLibrary', './components/media-library.jsx'),
+  TaxEdit: componentLoader.add('TaxEdit', './components/tax-edit.jsx'),
 }
 
 componentLoader.override('Login', './components/login.jsx')

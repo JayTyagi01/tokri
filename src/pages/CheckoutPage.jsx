@@ -5,7 +5,7 @@ import Swal from 'sweetalert2'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useAddress } from '../context/AddressContext'
-import { authGet, authPost, fetchJson } from '../lib/api'
+import { authGet, authPost, downloadOrderInvoice, fetchJson } from '../lib/api'
 import { formatPrice, loadRazorpayScript } from '../lib/checkout'
 import {
   formatDeliveryCharge,
@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const {
     cartItems,
     itemsTotal,
+    taxTotal,
     deliveryCharge,
     handlingCharge,
     discount,
@@ -35,6 +36,8 @@ export default function CheckoutPage() {
     deliveryConfig,
     setDeliveryConfig,
     pinDelivery,
+    freeDelivery,
+    isFreeDeliveryEligible,
   } = useCart()
 
   const [addresses, setAddresses] = useState([])
@@ -221,12 +224,25 @@ export default function CheckoutPage() {
       clearCart()
       Swal.fire({
         icon: 'success',
-        title: 'Order placed',
+        title: 'Order Placed Successfully!',
         text: checkout.razorpay
-          ? `Payment successful. Order ${orderNo} confirmed.`
-          : `Order ${orderNo} placed. Pay on delivery.`,
+          ? `Payment successful. Order #${orderNo} confirmed.`
+          : `Order #${orderNo} confirmed. Pay on delivery.`,
+        showCancelButton: true,
+        confirmButtonText: 'Download Invoice',
+        cancelButtonText: 'View My Orders',
         confirmButtonColor: '#047857',
-      }).then(() => navigate('/account?section=orders'))
+        cancelButtonColor: '#334155',
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await downloadOrderInvoice(orderNo, user)
+          } catch (err) {
+            console.error('Invoice download failed:', err)
+          }
+        }
+        navigate('/account?section=orders')
+      })
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -403,7 +419,7 @@ export default function CheckoutPage() {
                       <span>
                         <span className="block font-semibold text-white">
                           {copy.title || (optionId === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery')}
-                          {comingSoon ? ' (coming soon)' : ''}
+                          {comingSoon ? ' (coming soon)' : isFreeDeliveryEligible ? ' — ₹0 (Free)' : ''}
                         </span>
                         {copy.subtitle ? (
                           <span className="mt-1 block text-sm text-muted">{copy.subtitle}</span>
@@ -440,19 +456,31 @@ export default function CheckoutPage() {
                 <span>Item total</span>
                 <span>{formatPrice(itemsTotal)}</span>
               </div>
+              {taxTotal > 0 && (
+                <div className="flex justify-between">
+                  <span>Taxes & GST</span>
+                  <span>{formatPrice(taxTotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Cart handling</span>
                 <span>{formatPrice(handlingCharge)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery charges</span>
-                <span className={deliveryCharge > 0 ? '' : 'text-mint'}>{formatDeliveryCharge(deliveryCharge)}</span>
+                <span className={deliveryCharge > 0 ? '' : 'text-mint'}>
+                  {isFreeDeliveryEligible ? 'Free' : formatDeliveryCharge(deliveryCharge)}
+                </span>
               </div>
-              {remainingForFree > 0 && (
+              {isFreeDeliveryEligible ? (
+                <p className="text-xs text-mint">
+                  🎉 First 3 Orders Offer: Free delivery applied ({freeDelivery?.remaining} left)
+                </p>
+              ) : remainingForFree > 0 ? (
                 <p className="text-xs text-mint">
                   Add {formatPrice(remainingForFree)} more for free delivery
                 </p>
-              )}
+              ) : null}
               {discount > 0 && (
                 <div className="flex justify-between text-mint">
                   <span>Coupon discount</span>

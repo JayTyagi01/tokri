@@ -6,6 +6,7 @@ import { formatCategory, formatProduct, toPublicAssetUrl } from '../utils/format
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { getChargeRates } from '../config/charges.js'
 import { getCart } from '../services/cart.js'
+import { getCustomerFreeDeliveryStatus } from '../services/freeDelivery.js'
 
 const router = Router()
 
@@ -45,11 +46,17 @@ router.get('/bootstrap', optionalCustomer, async (req, res, next) => {
     ])
 
     let cart = null
+    let freeDelivery = { quota: 3, used: 0, remaining: 3, isEligible: true }
     if (req.customer) {
       try {
-        cart = await getCart(req.customer.id)
+        const [customerCart, deliveryStatus] = await Promise.all([
+          getCart(req.customer.id),
+          getCustomerFreeDeliveryStatus(req.customer.id),
+        ])
+        cart = customerCart
+        freeDelivery = deliveryStatus
       } catch (error) {
-        console.error('bootstrap cart failed:', error)
+        console.error('bootstrap cart/freeDelivery failed:', error)
       }
     }
 
@@ -76,6 +83,7 @@ router.get('/bootstrap', optionalCustomer, async (req, res, next) => {
           express: charges.express,
         },
       },
+      freeDelivery,
       cart,
     })
   } catch (error) {

@@ -244,6 +244,15 @@ const OrderDetail = (props) => {
           </div>
         </div>
         <div className="tokri-order-actions">
+          <a
+            className="tokri-order-invoice"
+            href={`/tokri-backoffice/orders/${record.id}/invoice?download=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Download PDF invoice"
+          >
+            Download Invoice
+          </a>
           <button className="tokri-order-save" type="submit" disabled={!dirty || loading || saving}>
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -315,9 +324,16 @@ const OrderDetail = (props) => {
               <div>
                 <dt>Delivery{params.deliveryOption ? ` · ${params.deliveryOption === 'express' ? '90-minute' : 'Morning'}` : ''}</dt>
                 <dd />
-                <dd>{formatMoney(params.deliveryCharge)}</dd>
+                <dd>{params.freeDeliveryApplied || Number(params.deliveryCharge) === 0 ? 'Free (Welcome offer)' : formatMoney(params.deliveryCharge)}</dd>
               </div>
               <div><dt>Handling</dt><dd /><dd>{formatMoney(params.handlingCharge)}</dd></div>
+              {Number(params.taxTotal) > 0 ? (
+                <div>
+                  <dt>Taxes (GST){params.isInterState ? ' · IGST' : ' · CGST+SGST'}</dt>
+                  <dd />
+                  <dd>{formatMoney(params.taxTotal)}</dd>
+                </div>
+              ) : null}
               {Number(params.smallCartCharge) > 0 ? (
                 <div><dt>Small cart</dt><dd /><dd>{formatMoney(params.smallCartCharge)}</dd></div>
               ) : null}

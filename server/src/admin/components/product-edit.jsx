@@ -266,6 +266,46 @@ const ProductEdit = (props) => {
         </section>
 
         <section className="tokri-coupon-card">
+          <h4>Tax & GST</h4>
+          <div className="tokri-choice-row" style={{ marginBottom: 12 }}>
+            <FlagCard
+              selected={params.isTaxable === true || params.isTaxable === 'true'}
+              title="Taxable (Yes)"
+              hint="Charge GST at checkout"
+              onClick={() => {
+                const next = !(params.isTaxable === true || params.isTaxable === 'true')
+                setField('isTaxable', next)
+                if (next && Number(params.gstRate || 0) === 0) setField('gstRate', 5)
+                if (!next) setField('gstRate', 0)
+              }}
+            />
+          </div>
+          <div className="tokri-coupon-two">
+            <label className="tokri-coupon-label">
+              HSN Code
+              <input
+                className="tokri-coupon-input"
+                value={params.hsnCode ?? '0808'}
+                onChange={(event) => setField('hsnCode', event.target.value)}
+                placeholder="0802 or 0808"
+              />
+            </label>
+            <label className="tokri-coupon-label">
+              GST %
+              <input
+                className="tokri-coupon-input"
+                type="number"
+                step="0.01"
+                min="0"
+                value={params.gstRate ?? 0}
+                onChange={(event) => setField('gstRate', Number(event.target.value) || 0)}
+                placeholder="5"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="tokri-coupon-card">
           <h4>Product image</h4>
           <label className="tokri-upload-drop">
             {displayedImageUrl ? (

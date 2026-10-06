@@ -29,6 +29,8 @@ import TeamEdit from '../src/admin/components/team-edit'
 AdminJS.UserComponents.TeamEdit = TeamEdit
 import MediaLibrary from '../src/admin/components/media-library'
 AdminJS.UserComponents.MediaLibrary = MediaLibrary
+import TaxEdit from '../src/admin/components/tax-edit'
+AdminJS.UserComponents.TaxEdit = TaxEdit
 import Login from '../src/admin/components/login'
 AdminJS.UserComponents.Login = Login
 import ActionHeader from '../src/admin/components/action-header'

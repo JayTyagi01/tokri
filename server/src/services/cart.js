@@ -92,6 +92,9 @@ function formatCartItem(item) {
   return {
     ...product,
     quantity: item.quantity,
+    isTaxable: Boolean(item.product.isTaxable),
+    gstRate: Number(item.product.gstRate || 0),
+    hsnCode: item.product.hsnCode || '0808',
     lineTotal: Number(item.product.priceValue) * item.quantity,
   }
 }
@@ -105,7 +108,7 @@ export async function formatCart(cart) {
   const totals = calcCartTotals(items, await getChargeRates())
 
   return {
-    items: items.map(({ id, slug, name, price, priceValue, oldPrice, oldPriceValue, image, weight, quantity, lineTotal, category, stock }) => ({
+    items: items.map(({ id, slug, name, price, priceValue, oldPrice, oldPriceValue, image, weight, quantity, lineTotal, category, stock, isTaxable, gstRate, hsnCode }) => ({
       id,
       slug,
       name,
@@ -119,6 +122,9 @@ export async function formatCart(cart) {
       lineTotal,
       category,
       stock,
+      isTaxable,
+      gstRate,
+      hsnCode,
     })),
     ...totals,
   }

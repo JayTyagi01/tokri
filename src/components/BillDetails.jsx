@@ -1,5 +1,6 @@
 import { Bike, Receipt, ShoppingBag, Tag } from 'lucide-react'
 import {
+  deliveryChargeFor,
   formatDeliveryCharge,
   remainingForFreeDelivery,
   waivedDeliveryAmount,
@@ -38,6 +39,7 @@ function BillRow({ icon: Icon, label, value, oldValue, badge, free }) {
 export default function BillDetails({
   cartItems = [],
   itemsTotal,
+  taxTotal = 0,
   deliveryCharge,
   handlingCharge,
   discount,
@@ -48,7 +50,8 @@ export default function BillDetails({
 }) {
   const itemSavings = cartItems.reduce((sum, item) => sum + itemCutoff(item), 0)
   const remainingForFree = remainingForFreeDelivery(deliveryOption, itemsTotal, deliveryConfig)
-  const deliverySaved = waivedDeliveryAmount(deliveryOption, itemsTotal, deliveryConfig)
+  const standardDelivery = deliveryChargeFor(deliveryOption, itemsTotal, deliveryConfig)
+  const deliverySaved = Number(deliveryCharge) === 0 ? standardDelivery : waivedDeliveryAmount(deliveryOption, itemsTotal, deliveryConfig)
   const totalSavings = Math.round((itemSavings + Number(discount || 0) + deliverySaved) * 100) / 100
   const itemsOriginal = itemsTotal + itemSavings
 
@@ -64,6 +67,9 @@ export default function BillDetails({
           oldValue={itemSavings > 0 ? formatPrice(itemsOriginal) : null}
           badge={itemSavings > 0 ? `Saved ${formatPrice(itemSavings)}` : null}
         />
+        {Number(taxTotal) > 0 ? (
+          <BillRow icon={Receipt} label="Taxes & GST" value={formatPrice(taxTotal)} />
+        ) : null}
         <BillRow icon={ShoppingBag} label="Cart handling" value={formatPrice(handlingCharge)} />
         <BillRow
           icon={Bike}
@@ -71,9 +77,13 @@ export default function BillDetails({
           value={deliveryCharge > 0 ? formatDeliveryCharge(deliveryCharge) : 'FREE'}
           free={!(deliveryCharge > 0)}
         />
-        {remainingForFree > 0 ? (
+        {deliveryCharge > 0 && remainingForFree > 0 ? (
           <p className="-mt-1 mb-1 text-xs font-semibold text-mint">
             Add {formatPrice(remainingForFree)} more for free delivery
+          </p>
+        ) : deliveryCharge === 0 ? (
+          <p className="-mt-1 mb-1 text-xs font-semibold text-mint">
+            🎉 Free delivery applied
           </p>
         ) : null}
         {discount > 0 ? (

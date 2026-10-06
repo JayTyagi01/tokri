@@ -10,6 +10,7 @@ import { getCustomerOrder, listCustomerOrders } from '../services/customerOrders
 import { formatAuthUser } from '../services/jwt.js'
 import { parseDateOfBirth } from '../services/customers.js'
 import { prisma } from '../lib/prisma.js'
+import { generateOrderInvoicePdf } from '../services/invoice.js'
 import {
   addCartItem,
   clearCart,
@@ -106,6 +107,24 @@ router.get('/orders/:orderNo', async (req, res, next) => {
   try {
     const order = await getCustomerOrder(req.customer.id, req.params.orderNo)
     res.json({ order })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get('/orders/:orderNo/invoice', async (req, res, next) => {
+  try {
+    const customerOrder = await getCustomerOrder(req.customer.id, req.params.orderNo)
+    if (!customerOrder) {
+      return res.status(404).json({ message: 'Order not found.' })
+    }
+    const { buffer, order } = await generateOrderInvoicePdf(customerOrder.id)
+    const filename = `invoice-${order.orderNo}.pdf`
+    const disposition = req.query.download === '1' ? 'attachment' : 'inline'
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`)
+    res.setHeader('Content-Length', buffer.length)
+    return res.send(buffer)
   } catch (error) {
     next(error)
   }

@@ -17,6 +17,7 @@ export default function AddressPickerModal({ onDesktopLogin }) {
     selectedAddressId,
     selectAddress,
     refreshAddresses,
+    loading,
   } = useAddress()
 
   const [formOpen, setFormOpen] = useState(false)
@@ -55,7 +56,7 @@ export default function AddressPickerModal({ onDesktopLogin }) {
     }
   }
 
-  const showForm = formOpen || (isLoggedIn && addresses.length === 0)
+  const showForm = formOpen || (isLoggedIn && !loading && addresses.length === 0)
 
   if (!isLoggedIn) {
     return (
@@ -80,6 +81,16 @@ export default function AddressPickerModal({ onDesktopLogin }) {
           >
             Log in to continue
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading && addresses.length === 0) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+        <div className="rounded-2xl border border-line bg-panel p-6 text-center text-sm text-muted">
+          Loading addresses...
         </div>
       </div>
     )

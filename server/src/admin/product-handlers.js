@@ -117,6 +117,32 @@ export async function afterProductForm(response, request) {
           data: { categoryId: postedIds[0] },
         })
       }
+
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: { category: true },
+      })
+      if (product) {
+        const catName = product.category?.label || 'General'
+        await prisma.productTax.upsert({
+          where: { productId },
+          create: {
+            productId,
+            productName: product.name,
+            categoryName: catName,
+            hsnCode: product.hsnCode || '0808',
+            gstRate: product.gstRate || 0,
+            isTaxable: Boolean(product.isTaxable),
+          },
+          update: {
+            productName: product.name,
+            categoryName: catName,
+            hsnCode: product.hsnCode || '0808',
+            gstRate: product.gstRate || 0,
+            isTaxable: Boolean(product.isTaxable),
+          },
+        }).catch((err) => console.error('Failed to upsert ProductTax:', err))
+      }
     }
 
     if (productId && prisma.productCategory) {

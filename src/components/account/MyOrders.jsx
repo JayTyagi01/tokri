@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ChevronDown, ChevronLeft, ChevronRight, Package } from 'lucide-react'
-import { authGet, resolveAssetUrl } from '../../lib/api'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Package } from 'lucide-react'
+import { authGet, downloadOrderInvoice, resolveAssetUrl } from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
 import { deliveryOptionLabel, formatDeliveryCharge } from '../../lib/delivery'
 
@@ -32,7 +32,21 @@ const statusClass = (status) => {
 }
 
 function OrderCard({ order, defaultOpen = false }) {
+  const { user } = useAuth()
   const [open, setOpen] = useState(defaultOpen)
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownloadInvoice = async (e) => {
+    e.stopPropagation()
+    setDownloading(true)
+    try {
+      await downloadOrderInvoice(order.orderNo, user)
+    } catch (err) {
+      alert(err.message || 'Could not download invoice.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-xl border border-line bg-panel-2">
@@ -146,10 +160,22 @@ function OrderCard({ order, defaultOpen = false }) {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
-            <span>Payment: {statusLabel(order.paymentStatus)}</span>
-            <span>·</span>
-            <span>{order.paymentMethod}</span>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
+              <span>Payment: {statusLabel(order.paymentStatus)}</span>
+              <span>·</span>
+              <span>{order.paymentMethod}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={downloading}
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-black transition hover:bg-brand-hover active:scale-95 disabled:opacity-50"
+            >
+              <Download size={14} />
+              {downloading ? 'Downloading...' : 'Download Invoice'}
+            </button>
           </div>
         </div>
       )}
@@ -327,8 +353,8 @@ export default function MyOrders() {
 
       {!loading && !error && orders.length > 0 && (
         <div className="mt-6 space-y-4">
-          {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+          {orders.map((order, index) => (
+            <OrderCard key={order.id} order={order} defaultOpen={index === 0} />
           ))}
           {pagination && (
             <OrdersPagination pagination={pagination} onPageChange={changePage} />

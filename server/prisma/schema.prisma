@@ -122,6 +122,10 @@ model Product {
   stock         Int               @default(100)
   isActive      Boolean           @default(true)
   sortOrder     Int               @default(0)
+  hsnCode       String?           @default("0808")
+  gstRate       Decimal           @default(0.00) @db.Decimal(5, 2)
+  isTaxable     Boolean           @default(false)
+  taxInfo       ProductTax?
   reviews       Review[]
   orderItems    OrderItem[]
   cartItems     CartItem[]
@@ -204,9 +208,15 @@ model Order {
   handlingCharge         Decimal          @db.Decimal(10, 2) @default(2)
   smallCartCharge        Decimal          @db.Decimal(10, 2) @default(0)
   discount               Decimal          @db.Decimal(10, 2) @default(0)
+  taxTotal               Decimal          @db.Decimal(10, 2) @default(0)
+  cgstTotal              Decimal          @db.Decimal(10, 2) @default(0)
+  sgstTotal              Decimal          @db.Decimal(10, 2) @default(0)
+  igstTotal              Decimal          @db.Decimal(10, 2) @default(0)
+  isInterState           Boolean          @default(false)
   grandTotal             Decimal          @db.Decimal(10, 2)
   couponCode             String?
   deliveryOption         String?
+  freeDeliveryApplied    Boolean          @default(false)
   address                Json?
   razorpayOrderId        String?
   razorpayPaymentId      String?
@@ -239,6 +249,13 @@ model OrderItem {
   quantity   Int
   image      String?
   weight     String?
+  hsnCode    String?  @default("0808")
+  isTaxable  Boolean  @default(false)
+  gstRate    Decimal  @default(0.00) @db.Decimal(5, 2)
+  taxAmount  Decimal  @default(0.00) @db.Decimal(10, 2)
+  cgstAmount Decimal  @default(0.00) @db.Decimal(10, 2)
+  sgstAmount Decimal  @default(0.00) @db.Decimal(10, 2)
+  igstAmount Decimal  @default(0.00) @db.Decimal(10, 2)
 }
 
 model Review {
@@ -449,4 +466,19 @@ model PartnerDeviceToken {
   updatedAt DateTime        @updatedAt
 
   @@index([partnerId])
+}
+
+model ProductTax {
+  id           String   @id @default(cuid())
+  productId    String   @unique
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productName  String
+  categoryName String?
+  hsnCode      String   @default("0808")
+  gstRate      Decimal  @default(0.00) @db.Decimal(5, 2)
+  isTaxable    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([productId])
 }

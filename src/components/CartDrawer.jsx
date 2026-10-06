@@ -13,6 +13,7 @@ export default function CartDrawer() {
     cartItems,
     totalCount,
     itemsTotal,
+    taxTotal,
     deliveryCharge,
     handlingCharge,
     discount,
@@ -100,6 +101,12 @@ export default function CartDrawer() {
                 <span>Item total</span>
                 <span>{formatPrice(itemsTotal)}</span>
               </div>
+              {taxTotal > 0 && (
+                <div className="flex items-center justify-between text-sm text-muted">
+                  <span>Taxes & GST</span>
+                  <span>{formatPrice(taxTotal)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>Cart handling</span>
                 <span>{formatPrice(handlingCharge)}</span>

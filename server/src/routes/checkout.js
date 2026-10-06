@@ -50,9 +50,9 @@ async function resolvePreviewItems(rawItems) {
   return items
 }
 
-router.get('/config', async (_req, res, next) => {
+router.get('/config', optionalCustomer, async (req, res, next) => {
   try {
-    const config = await getCheckoutConfig()
+    const config = await getCheckoutConfig(req.customer)
     res.json(config)
   } catch (error) {
     next(error)

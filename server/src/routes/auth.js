@@ -5,6 +5,8 @@ import { requestOtp, verifyOtp } from '../services/otp.js'
 import { formatAuthUser } from '../services/jwt.js'
 import { unregisterDevice } from '../services/devices.js'
 
+import { getCustomerFreeDeliveryStatus } from '../services/freeDelivery.js'
+
 const router = Router()
 
 router.post('/send-otp', async (req, res, next) => {
@@ -23,6 +25,9 @@ router.post('/send-otp', async (req, res, next) => {
 router.post('/verify-otp', async (req, res, next) => {
   try {
     const result = await verifyOtp(req.body?.phone, req.body?.otp)
+    if (result.user?.id) {
+      result.user.freeDelivery = await getCustomerFreeDeliveryStatus(result.user.id)
+    }
     res.json({
       ok: true,
       message: 'Login successful.',
@@ -33,11 +38,19 @@ router.post('/verify-otp', async (req, res, next) => {
   }
 })
 
-router.get('/me', requireCustomer, (req, res) => {
-  res.json({
-    user: formatAuthUser(req.customer),
-    expiresIn: env.jwtExpiresInSeconds,
-  })
+router.get('/me', requireCustomer, async (req, res, next) => {
+  try {
+    const freeDelivery = await getCustomerFreeDeliveryStatus(req.customer.id)
+    res.json({
+      user: {
+        ...formatAuthUser(req.customer),
+        freeDelivery,
+      },
+      expiresIn: env.jwtExpiresInSeconds,
+    })
+  } catch (error) {
+    next(error)
+  }
 })
 
 router.post('/logout', requireCustomer, async (req, res, next) => {

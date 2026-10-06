@@ -54,6 +54,9 @@ export function AddressProvider({ children }) {
       }
 
       return list
+    } catch (err) {
+      console.warn('Failed to load addresses:', err)
+      return []
     } finally {
       setLoading(false)
     }
@@ -104,11 +107,11 @@ export function AddressProvider({ children }) {
     [user?.phone],
   )
 
-  const openPicker = useCallback(async () => {
-    if (isLoggedIn) {
-      await refreshAddresses()
-    }
+  const openPicker = useCallback(() => {
     setPickerOpen(true)
+    if (isLoggedIn) {
+      refreshAddresses().catch(() => {})
+    }
   }, [isLoggedIn, refreshAddresses])
 
   const closePicker = useCallback(() => {

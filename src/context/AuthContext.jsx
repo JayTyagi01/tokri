@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { authPatch } from '../lib/api'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { authGet, authPatch } from '../lib/api'
 
 const STORAGE_KEY = 'tokri_user'
 
@@ -19,6 +19,7 @@ function toUserData(nextUser, token) {
     name: nextUser.name || null,
     dateOfBirth: nextUser.dateOfBirth || null,
     token: token || nextUser.token || null,
+    freeDelivery: nextUser.freeDelivery || null,
   }
 }
 
@@ -28,7 +29,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser)
 
   const persist = useCallback((nextUser) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
+    if (nextUser) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
     setUser(nextUser)
   }, [])
 
@@ -37,9 +42,8 @@ export function AuthProvider({ children }) {
   }, [persist])
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY)
-    setUser(null)
-  }, [])
+    persist(null)
+  }, [persist])
 
   const updateProfile = useCallback(
     async (patch) => {
@@ -51,6 +55,29 @@ export function AuthProvider({ children }) {
     },
     [persist, user],
   )
+
+  useEffect(() => {
+    if (!user?.token) return
+    let ignore = false
+    authGet('/auth/me', user)
+      .then((data) => {
+        if (ignore || !data?.user) return
+        const updated = toUserData(
+          { ...user, ...data.user, freeDelivery: data.user.freeDelivery },
+          user.token,
+        )
+        persist(updated)
+      })
+      .catch((err) => {
+        const msg = String(err.message || '').toLowerCase()
+        if (msg.includes('401') || msg.includes('session') || msg.includes('log in') || msg.includes('token')) {
+          logout()
+        }
+      })
+    return () => {
+      ignore = true
+    }
+  }, [user?.token])
 
   const value = useMemo(
     () => ({

@@ -612,14 +612,29 @@ section[data-css="logged-in"] {
 }
 
 .tokri-order-save,
+.tokri-order-invoice,
 .tokri-order-more > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 36px;
   border-radius: 8px;
   border: 1px solid #cbd5e1;
   background: #fff;
   color: #0f172a;
   font-weight: 700;
+  font-size: 13px;
   padding: 0 12px;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.tokri-order-invoice:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #047857;
 }
 
 .tokri-order-save {
