@@ -56,6 +56,9 @@ function readStoredCart() {
           quantity,
           categorySlug: item.categorySlug || null,
           categories: Array.isArray(item.categories) ? item.categories : [],
+          isTaxable: item.isTaxable !== undefined ? Boolean(item.isTaxable) : false,
+          gstRate: Number(item.gstRate ?? 0),
+          hsnCode: item.hsnCode || '0808',
         }
       })
       .filter(Boolean)
@@ -65,7 +68,7 @@ function readStoredCart() {
 }
 
 export function CartProvider({ children }) {
-  const { user, isLoggedIn } = useAuth()
+  const { user, isLoggedIn, refreshUser } = useAuth()
   const { selectedAddress } = useAddress()
   const [cartItems, setCartItems] = useState(readStoredCart)
   const [showDrawer, setShowDrawer] = useState(false)
@@ -77,12 +80,62 @@ export function CartProvider({ children }) {
   const [couponError, setCouponError] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
 
+  const refreshFreeDelivery = useCallback(async () => {
+    if (isLoggedIn && user?.token) {
+      try {
+        const [bootstrapData, authData] = await Promise.all([
+          authGet('/app/bootstrap', user).catch(() => null),
+          refreshUser ? refreshUser() : null,
+        ])
+        if (bootstrapData?.freeDelivery) {
+          setFreeDelivery(bootstrapData.freeDelivery)
+        } else if (authData?.freeDelivery) {
+          setFreeDelivery(authData.freeDelivery)
+        }
+      } catch (e) {
+        console.error('refreshFreeDelivery failed:', e)
+      }
+    }
+  }, [isLoggedIn, user, refreshUser])
+
   useEffect(() => {
     try {
       if (!cartItems.length) localStorage.removeItem(CART_STORAGE_KEY)
       else localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
     } catch {
       // Private mode / quota — cart still works for this session.
+    }
+  }, [cartItems])
+
+  // Hydrate tax data for cart items if missing (e.g. from older localStorage)
+  useEffect(() => {
+    const missingTax = cartItems.some((item) => item.isTaxable === undefined || item.gstRate === undefined)
+    if (missingTax && cartItems.length > 0) {
+      let isMounted = true
+      Promise.all(
+        cartItems.map(async (item) => {
+          if (item.isTaxable !== undefined && item.gstRate !== undefined) return item
+          try {
+            const p = await fetchJson(`/products/${item.id}`)
+            if (p) {
+              return {
+                ...item,
+                isTaxable: Boolean(p.isTaxable),
+                gstRate: Number(p.gstRate ?? 0),
+                hsnCode: p.hsnCode || item.hsnCode || '0808',
+              }
+            }
+          } catch {
+            // fallback
+          }
+          return item
+        }),
+      ).then((hydrated) => {
+        if (isMounted) setCartItems(hydrated)
+      })
+      return () => {
+        isMounted = false
+      }
     }
   }, [cartItems])
 
@@ -133,6 +186,9 @@ export function CartProvider({ children }) {
     const priceValue = parsePrice(product.price ?? product.priceValue)
     const oldPriceValue = parsePrice(product.oldPriceValue ?? product.oldPrice)
     const oldPrice = product.oldPrice || (oldPriceValue > priceValue ? `₹${oldPriceValue}` : null)
+    const isTaxable = Boolean(product.isTaxable)
+    const gstRate = Number(product.gstRate ?? 0)
+    const hsnCode = product.hsnCode || '0808'
     setCartItems((items) => {
       const existing = items.find((item) => item.id === product.id)
       if (existing) {
@@ -143,6 +199,9 @@ export function CartProvider({ children }) {
                 quantity: item.quantity + 1,
                 oldPriceValue: item.oldPriceValue || (oldPriceValue > priceValue ? oldPriceValue : 0),
                 oldPrice: item.oldPrice || oldPrice,
+                isTaxable,
+                gstRate,
+                hsnCode,
               }
             : item,
         )
@@ -162,6 +221,9 @@ export function CartProvider({ children }) {
           quantity: 1,
           categorySlug: categorySlugFrom(product),
           categories: Array.isArray(product.categories) ? product.categories : [],
+          isTaxable,
+          gstRate,
+          hsnCode,
         },
       ]
     })
@@ -222,10 +284,13 @@ export function CartProvider({ children }) {
     pinDelivery && !pinDelivery[deliveryOption]?.enabled
       ? defaultOptionForAddress(selectedAddress)
       : deliveryOption
-  const activeFreeDelivery = user?.freeDelivery || freeDelivery
-  const isFreeDeliveryEligible = isLoggedIn
-    ? (activeFreeDelivery ? Boolean(activeFreeDelivery.isEligible) : true)
-    : true
+  const activeFreeDelivery = freeDelivery || user?.freeDelivery
+  const isFreeDeliveryEligible = Boolean(
+    isLoggedIn &&
+      activeFreeDelivery &&
+      activeFreeDelivery.isEligible &&
+      (activeFreeDelivery.remaining > 0 || activeFreeDelivery.used < 3),
+  )
   const standardDelivery = hasItems ? deliveryChargeFor(activeOption, itemsTotal, deliveryConfig) : 0
   const deliveryCharge = isFreeDeliveryEligible ? 0 : standardDelivery
   const handlingCharge = hasItems ? charges.handlingCharge : 0
@@ -354,6 +419,7 @@ export function CartProvider({ children }) {
         closeDrawer,
         freeDelivery: activeFreeDelivery,
         isFreeDeliveryEligible,
+        refreshFreeDelivery,
       }}
     >
       {children}

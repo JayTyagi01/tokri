@@ -38,6 +38,9 @@ async function resolvePreviewItems(rawItems) {
       slug: product.slug,
       quantity: Math.max(1, Number(raw?.quantity) || 1),
       priceValue: Number(product.priceValue),
+      isTaxable: Boolean(product.isTaxable),
+      gstRate: Number(product.gstRate ?? 0),
+      hsnCode: product.hsnCode || '0808',
       category: product.category,
       categories: (product.categoryLinks || []).map((row) => row.category).filter(Boolean),
     })

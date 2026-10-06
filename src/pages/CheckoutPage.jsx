@@ -38,6 +38,7 @@ export default function CheckoutPage() {
     pinDelivery,
     freeDelivery,
     isFreeDeliveryEligible,
+    refreshFreeDelivery,
   } = useCart()
 
   const [addresses, setAddresses] = useState([])
@@ -57,10 +58,11 @@ export default function CheckoutPage() {
       setLoading(true)
       try {
         const [config, addressData] = await Promise.all([
-          fetchJson('/checkout/config'),
+          isLoggedIn && user?.token ? authGet('/checkout/config', user) : fetchJson('/checkout/config'),
           isLoggedIn ? authGet('/account/addresses', user) : Promise.resolve({ addresses: [] }),
         ])
         if (ignore) return
+        refreshFreeDelivery?.()
         const onlineOn = Boolean(config?.razorpay?.enabled)
         const allowCod = config?.codEnabled !== false
         setRazorpayEnabled(onlineOn)
@@ -222,6 +224,7 @@ export default function CheckoutPage() {
       }
 
       clearCart()
+      refreshFreeDelivery?.()
       Swal.fire({
         icon: 'success',
         title: 'Order Placed Successfully!',
