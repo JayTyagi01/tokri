@@ -584,8 +584,8 @@ section[data-css="logged-in"] {
 
 .tokri-order-pill.is-pending,
 .tokri-order-mark.is-pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: #e4eeea;
+  color: #21564a;
 }
 
 .tokri-order-pill.is-processing {
