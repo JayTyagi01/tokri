@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ApiClient, useNotice, useRecord } from 'adminjs'
 import { LocalSelect, SearchableSelect, useAnchoredMenu } from './form-controls'
+import { getFulfillmentBadge, getPaymentBadge } from './order-list-badges.jsx'
 
 const api = new ApiClient()
 
 const FULFILLMENT = [
-  { value: 'pending', label: 'Waiting for fulfillment' },
+  { value: 'pending', label: 'New' },
   { value: 'paid', label: 'Processing' },
   { value: 'packed', label: 'Packed' },
   { value: 'shipped', label: 'Shipped' },
@@ -14,7 +15,7 @@ const FULFILLMENT = [
 ]
 
 const PAYMENT_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
+  { value: 'pending', label: 'Unpaid' },
   { value: 'paid', label: 'Paid' },
   { value: 'failed', label: 'Failed' },
   { value: 'refunded', label: 'Refunded' },
@@ -276,7 +277,9 @@ const OrderDetail = (props) => {
 
   if (action?.name === 'show') return null
 
-  const statusLabel = FULFILLMENT.find((item) => item.value === params.status)?.label || 'Waiting for fulfillment'
+  const fulfillment = getFulfillmentBadge(params.status)
+  const payment = getPaymentBadge(params)
+  const statusLabel = fulfillment.label
   const restoreFields = (keys, close) => {
     keys.forEach((key) => handleChange(key, baseline[key] || ''))
     close(false)
@@ -287,7 +290,7 @@ const OrderDetail = (props) => {
     [params.addressCity, params.addressState, params.addressPincode].filter(Boolean).join(', '),
     params.addressLandmark ? `Landmark: ${params.addressLandmark}` : '',
   ].filter(Boolean)
-  const paymentLabel = PAYMENT_OPTIONS.find((item) => item.value === params.paymentStatus)?.label || 'Pending'
+  const paymentLabel = payment.label
   const partnerName = params.deliveryPartnerName
     ? `${params.deliveryPartnerName}${params.deliveryPartnerPhone ? ` · ${params.deliveryPartnerPhone}` : ''}`
     : 'No delivery partner yet'
@@ -301,8 +304,8 @@ const OrderDetail = (props) => {
           <div>
             <div className="tokri-order-title-row">
               <h2>#{params.orderNo}</h2>
-              <span className={`tokri-order-pill is-${params.paymentStatus || 'pending'}`}>{paymentLabel}</span>
-              <span className={`tokri-order-pill is-${params.status || 'pending'}`}>{statusLabel}</span>
+              <span className={`tokri-order-pill is-${payment.tone}`}>{paymentLabel}</span>
+              <span className={`tokri-order-pill is-${fulfillment.tone}`}>{statusLabel}</span>
             </div>
             <p>{formatDateTime(params.createdAt)}</p>
           </div>
@@ -335,7 +338,7 @@ const OrderDetail = (props) => {
         <div className="tokri-order-main">
           <section className="tokri-order-card">
             <div className="tokri-order-card-head">
-              <span className={`tokri-order-mark is-${params.status || 'pending'}`} />
+              <span className={`tokri-order-mark is-${fulfillment.tone}`} />
               <div>
                 <strong>{statusLabel}</strong>
                 <span>{itemCount} {itemCount === 1 ? 'item' : 'items'} · {partnerName}</span>
@@ -372,7 +375,7 @@ const OrderDetail = (props) => {
 
           <section className="tokri-order-card">
             <div className="tokri-order-card-head">
-              <span className={`tokri-order-mark is-${params.paymentStatus || 'pending'}`} />
+              <span className={`tokri-order-mark is-${payment.tone}`} />
               <div>
                 <strong>{paymentLabel}</strong>
                 <span>{params.paymentMethod || 'Cash on delivery'}</span>

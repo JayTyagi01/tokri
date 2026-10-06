@@ -554,7 +554,8 @@ section[data-css="logged-in"] {
   font-size: 13px;
 }
 
-.tokri-order-pill {
+.tokri-order-pill,
+.tokri-list-pill {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
@@ -563,6 +564,10 @@ section[data-css="logged-in"] {
   color: #334155;
   font-size: 12px;
   font-weight: 700;
+}
+
+.tokri-list-pill {
+  white-space: nowrap;
 }
 
 .tokri-order-pill.is-paid,
@@ -583,14 +588,24 @@ section[data-css="logged-in"] {
   color: #92400e;
 }
 
+.tokri-order-pill.is-processing {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.tokri-order-pill.is-waiting,
 .tokri-order-pill.is-failed,
 .tokri-order-pill.is-cancelled,
-.tokri-order-pill.is-refunded,
 .tokri-order-mark.is-failed,
-.tokri-order-mark.is-cancelled,
-.tokri-order-mark.is-refunded {
+.tokri-order-mark.is-cancelled {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.tokri-order-pill.is-refunded,
+.tokri-order-mark.is-refunded {
+  background: #e2e8f0;
+  color: #475569;
 }
 
 .tokri-order-mark.is-paid,

@@ -71,7 +71,13 @@ export const adminLocale = {
         Media: { labels: { 'Media Library': 'Media Library' } },
         Page: { labels: { Pages: 'Pages' } },
         Review: { labels: { Reviews: 'Reviews' } },
-        Order: { labels: { Orders: 'Orders' } },
+        Order: {
+          labels: { Orders: 'Orders' },
+          properties: {
+            status: 'Fulfillment',
+            paymentStatus: 'Payment',
+          },
+        },
         Coupon: {
           labels: { Coupons: 'Coupons' },
           properties: {

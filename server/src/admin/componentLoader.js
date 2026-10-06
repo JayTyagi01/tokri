@@ -20,6 +20,7 @@ export const Components = {
   MediaLibrary: componentLoader.add('MediaLibrary', './components/media-library.jsx'),
   TaxEdit: componentLoader.add('TaxEdit', './components/tax-edit.jsx'),
   RazorpayPaymentId: componentLoader.add('RazorpayPaymentId', './components/razorpay-payment-id.jsx'),
+  OrderListBadge: componentLoader.add('OrderListBadge', './components/order-list-badges.jsx'),
 }
 
 componentLoader.override('Login', './components/login.jsx')
