@@ -545,6 +545,24 @@ export async function buildAdminRouter() {
             customer: { isVisible: false },
             address: { isVisible: false },
             items: { isVisible: false },
+            status: {
+              label: 'Fulfillment',
+              isVisible: { list: true, show: true, edit: true, filter: true },
+              components: {
+                list: Components.OrderListBadge,
+              },
+            },
+            paymentStatus: {
+              label: 'Payment',
+              isVisible: { list: true, show: true, edit: true, filter: true },
+              components: {
+                list: Components.OrderListBadge,
+              },
+            },
+            paymentMode: {
+              label: 'Checkout method',
+              isVisible: { list: false, show: true, edit: false, filter: true },
+            },
             razorpayOrderId: { isVisible: false },
             razorpayPaymentId: {
               label: 'Razorpay payment ID',
@@ -560,7 +578,6 @@ export async function buildAdminRouter() {
             deliveryPartner: { isVisible: false },
             deliveryPartnerName: { label: 'Delivery partner' },
             deliveryOption: { label: 'Delivery option' },
-            paymentMode: { label: 'Checkout method' },
             paymentCollectedAs: { label: 'Collected as' },
           },
         },
