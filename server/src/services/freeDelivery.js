@@ -55,26 +55,21 @@ export async function getCustomerFreeDeliveryStatus(customerId) {
     orderBy: { createdAt: 'asc' },
   })
 
-  let used = 0
-  for (const order of orders) {
-    // If pending online payment older than 15 mins, consider it abandoned (does not consume quota)
-    if (order.paymentMode === 'online' && order.paymentStatus === 'pending') {
-      const ageMs = Date.now() - new Date(order.createdAt).getTime()
-      if (ageMs > 15 * 60 * 1000) {
-        continue
-      }
+  // Count valid completed/placed orders:
+  // - Cancelled/failed/refunded orders are excluded
+  // - For online payments, unpaid orders (paymentStatus !== 'paid') do NOT consume quota
+  const validOrders = orders.filter((order) => {
+    if (order.status === 'cancelled') return false
+    if (['failed', 'refunded'].includes(order.paymentStatus)) return false
+    if (order.paymentMode === 'online' && order.paymentStatus !== 'paid') {
+      return false
     }
+    return true
+  })
 
-    if (order.freeDeliveryApplied) {
-      used += 1
-    } else if (new Date(order.createdAt) < FEATURE_DEPLOY_DATE) {
-      // Legacy order from before this feature was introduced
-      used += 1
-    }
-  }
-
+  const used = validOrders.length
   const remaining = Math.max(0, FREE_DELIVERY_QUOTA - used)
-  const isEligible = remaining > 0
+  const isEligible = used < FREE_DELIVERY_QUOTA
 
   return {
     quota: FREE_DELIVERY_QUOTA,

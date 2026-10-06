@@ -222,11 +222,16 @@ export default function CartScreen({ navigation }) {
       } else {
         // Cards / netbanking / wallets: standard Razorpay Checkout (not S2S).
         // S2S intent is UPI-only on this account.
-        const payment = await openRazorpay({
-          ...checkout.razorpay,
-          onlyMethod: payChoice === 'card' ? 'card' : payChoice,
-        })
-        await verifyPayment(orderNo, payment)
+        try {
+          const payment = await openRazorpay({
+            ...checkout.razorpay,
+            onlyMethod: payChoice === 'card' ? 'card' : payChoice,
+          })
+          await verifyPayment(orderNo, payment)
+        } catch (error) {
+          const synced = await authPost('/checkout/sync-payment', token, { orderNo }).catch(() => null)
+          if (synced?.status !== 'paid') throw error
+        }
       }
 
       await clearCart()

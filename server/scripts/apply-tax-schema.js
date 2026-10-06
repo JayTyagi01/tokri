@@ -176,16 +176,26 @@ async function main() {
   // Populate/Sync ProductTax records for ALL products
   console.log('--- Syncing ProductTax for all products in database ---')
   const allProducts = await prisma.product.findMany({
-    include: { category: true },
+    include: {
+      category: true,
+      categoryLinks: { include: { category: true } },
+    },
   })
 
   let count = 0
   for (const product of allProducts) {
-    const isDryFruit =
-      product.categoryId === dryCategory.id ||
-      /almond|cashew|pistachio|raisin|kaju|badam|pista|kishmish|walnut|dry fruit/i.test(product.name)
+    const categories = [
+      product.category,
+      ...(product.categoryLinks || []).map((l) => l.category),
+    ].filter(Boolean)
 
-    const defaultHsn = isDryFruit ? (product.hsnCode || '0802') : (product.hsnCode || '0808')
+    const isDryFruit =
+      categories.some((c) => c.slug === 'dry-fruits' || /dry fruit/i.test(c.label || '')) ||
+      /almond|cashew|pistachio|raisin|kaju|badam|pista|kishmish|walnut|dates|figs|anjeer|chilgoza|pine nut|mamra|dry fruit/i.test(product.name)
+
+    const defaultHsn = isDryFruit
+      ? (/raisin|kishmish/i.test(product.name) ? '0806' : /date|fig|anjeer/i.test(product.name) ? '0804' : (product.hsnCode && product.hsnCode !== '0808' ? product.hsnCode : '0802'))
+      : (product.hsnCode || '0808')
     const defaultGst = isDryFruit ? (Number(product.gstRate) || 5.00) : (Number(product.gstRate) || 0.00)
     const defaultTaxable = isDryFruit ? (product.isTaxable ?? true) : (product.isTaxable ?? false)
 
@@ -199,7 +209,7 @@ async function main() {
       },
     })
 
-    const catName = product.category?.label || (isDryFruit ? 'Dry Fruits' : 'Fresh Fruits')
+    const catName = categories[0]?.label || (isDryFruit ? 'Dry Fruits' : 'Fresh Fruits')
 
     await prisma.$executeRawUnsafe(`
       INSERT INTO \`ProductTax\` (\`id\`, \`productId\`, \`productName\`, \`categoryName\`, \`hsnCode\`, \`gstRate\`, \`isTaxable\`, \`createdAt\`, \`updatedAt\`)

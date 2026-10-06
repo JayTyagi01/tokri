@@ -38,6 +38,7 @@ export default function CheckoutPage() {
     pinDelivery,
     freeDelivery,
     isFreeDeliveryEligible,
+    refreshFreeDelivery,
   } = useCart()
 
   const [addresses, setAddresses] = useState([])
@@ -57,10 +58,11 @@ export default function CheckoutPage() {
       setLoading(true)
       try {
         const [config, addressData] = await Promise.all([
-          fetchJson('/checkout/config'),
+          isLoggedIn && user?.token ? authGet('/checkout/config', user) : fetchJson('/checkout/config'),
           isLoggedIn ? authGet('/account/addresses', user) : Promise.resolve({ addresses: [] }),
         ])
         if (ignore) return
+        refreshFreeDelivery?.()
         const onlineOn = Boolean(config?.razorpay?.enabled)
         const allowCod = config?.codEnabled !== false
         setRazorpayEnabled(onlineOn)
@@ -127,6 +129,13 @@ export default function CheckoutPage() {
     }
 
     const rzp = checkout.razorpay
+    const orderNo = checkout.order.orderNo
+
+    const confirmFromRazorpay = async () => {
+      const synced = await authPost('/checkout/sync-payment', user, { orderNo })
+      if (synced?.status === 'paid') return orderNo
+      throw new Error('Payment is still pending.')
+    }
 
     return new Promise((resolve, reject) => {
       const options = {
@@ -141,18 +150,29 @@ export default function CheckoutPage() {
         handler: async (response) => {
           try {
             await authPost('/checkout/verify-payment', user, {
-              orderNo: checkout.order.orderNo,
+              orderNo,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             })
-            resolve(checkout.order.orderNo)
+            resolve(orderNo)
           } catch (error) {
-            reject(error)
+            try {
+              resolve(await confirmFromRazorpay())
+            } catch {
+              reject(error)
+            }
           }
         },
         modal: {
-          ondismiss: () => reject(new Error('Payment cancelled.')),
+          ondismiss: async () => {
+            try {
+              await new Promise((wait) => setTimeout(wait, 1200))
+              resolve(await confirmFromRazorpay())
+            } catch {
+              reject(new Error('Payment cancelled.'))
+            }
+          },
         },
       }
 
@@ -222,6 +242,7 @@ export default function CheckoutPage() {
       }
 
       clearCart()
+      refreshFreeDelivery?.()
       Swal.fire({
         icon: 'success',
         title: 'Order Placed Successfully!',

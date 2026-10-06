@@ -56,6 +56,27 @@ export function AuthProvider({ children }) {
     [persist, user],
   )
 
+  const refreshUser = useCallback(async () => {
+    if (!user?.token) return null
+    try {
+      const data = await authGet('/auth/me', user)
+      if (data?.user) {
+        const updated = toUserData(
+          { ...user, ...data.user, freeDelivery: data.user.freeDelivery },
+          user.token,
+        )
+        persist(updated)
+        return updated
+      }
+    } catch (err) {
+      const msg = String(err.message || '').toLowerCase()
+      if (msg.includes('401') || msg.includes('session') || msg.includes('log in') || msg.includes('token')) {
+        logout()
+      }
+    }
+    return user
+  }, [logout, persist, user])
+
   useEffect(() => {
     if (!user?.token) return
     let ignore = false
@@ -86,8 +107,9 @@ export function AuthProvider({ children }) {
       login,
       logout,
       updateProfile,
+      refreshUser,
     }),
-    [user, login, logout, updateProfile],
+    [user, login, logout, updateProfile, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

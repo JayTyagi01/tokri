@@ -127,6 +127,16 @@ export default function UpiPaymentScreen({ navigation, route }) {
               return
             }
           }
+          try {
+            const synced = await authPost('/checkout/sync-payment', token, { orderNo })
+            if (stopped || finished.current) return
+            if (synced?.status === 'paid') {
+              await markPaid()
+              return
+            }
+          } catch {
+            // Keep polling Razorpay until timeout.
+          }
           await new Promise((resolve) => setTimeout(resolve, POLL_MS))
         }
         if (!stopped && !finished.current && !closed) {

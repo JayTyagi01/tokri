@@ -20,6 +20,33 @@ const PAYMENT_OPTIONS = [
   { value: 'refunded', label: 'Refunded' },
 ]
 
+function CopyId({ label, value, href }) {
+  const [copied, setCopied] = useState(false)
+  if (!value) return null
+  return (
+    <div className="tokri-order-rzp-row">
+      <span>{label}</span>
+      <code>{value}</code>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard?.writeText(value)?.then(() => {
+            setCopied(true)
+            window.setTimeout(() => setCopied(false), 1200)
+          }).catch(() => {})
+        }}
+      >
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          Open in Razorpay
+        </a>
+      ) : null}
+    </div>
+  )
+}
+
 const formatMoney = (value) => {
   const amount = Number(value)
   if (Number.isNaN(amount)) return '₹0'
@@ -41,7 +68,7 @@ const resolveImage = (value) => {
   return value
 }
 
-function MoreMenu({ unpaid, busy, onCash, onQr }) {
+function MoreMenu({ unpaid, canSyncRazorpay, busy, onCash, onQr, onSyncRazorpay }) {
   const [open, setOpen] = useState(false)
   const { wrapRef, openUp } = useAnchoredMenu(open)
 
@@ -53,7 +80,7 @@ function MoreMenu({ unpaid, busy, onCash, onQr }) {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [wrapRef])
 
-  if (!unpaid) return null
+  if (!unpaid && !canSyncRazorpay) return null
 
   return (
     <div className="tokri-order-more" ref={wrapRef}>
@@ -83,6 +110,18 @@ function MoreMenu({ unpaid, busy, onCash, onQr }) {
           >
             {busy === 'generateQr' ? 'Creating…' : 'Generate payment QR'}
           </button>
+          {canSyncRazorpay ? (
+            <button
+              type="button"
+              disabled={Boolean(busy)}
+              onClick={() => {
+                setOpen(false)
+                onSyncRazorpay()
+              }}
+            >
+              {busy === 'syncRazorpay' ? 'Checking Razorpay…' : 'Sync Razorpay payment'}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -162,6 +201,31 @@ const OrderDetail = (props) => {
   const dirty = Object.keys(current).some((key) => current[key] !== baseline[key])
   const listUrl = window.location.pathname.replace(/\/records\/.*$/, '')
   const unpaid = params.paymentStatus !== 'paid'
+  const canSyncRazorpay = unpaid && params.paymentMode === 'online'
+
+  useEffect(() => {
+    if (!canSyncRazorpay || !record?.id) return undefined
+    let ignore = false
+    api
+      .recordAction({
+        resourceId: resource.id,
+        recordId: record.id,
+        actionName: 'syncRazorpay',
+      })
+      .then((response) => {
+        if (ignore) return
+        if (response.data?.record) {
+          setRecord(response.data.record)
+          setBaseline(snapshot(response.data.record.params))
+        }
+        const notice = response.data?.notice
+        if (notice?.type === 'success') addNotice(notice)
+      })
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [canSyncRazorpay, record?.id, resource.id, setRecord])
 
   const handleSave = async (event) => {
     event.preventDefault()
@@ -258,9 +322,11 @@ const OrderDetail = (props) => {
           </button>
           <MoreMenu
             unpaid={unpaid}
+            canSyncRazorpay={canSyncRazorpay}
             busy={actionBusy}
             onCash={() => runPaymentAction('collectCash')}
             onQr={() => runPaymentAction('generateQr')}
+            onSyncRazorpay={() => runPaymentAction('syncRazorpay')}
           />
         </div>
       </header>
@@ -347,7 +413,27 @@ const OrderDetail = (props) => {
               <b>{formatMoney(params.grandTotal)}</b>
             </div>
             {params.paymentCollectedAs ? <p className="tokri-order-meta">Collected as {params.paymentCollectedAs}</p> : null}
-            {params.razorpayPaymentId ? <p className="tokri-order-meta">Payment ID {params.razorpayPaymentId}</p> : null}
+            {params.paymentMode === 'online' || params.razorpayPaymentId || params.razorpayOrderId ? (
+              <div className="tokri-order-rzp">
+                <CopyId
+                  label="Payment ID"
+                  value={params.razorpayPaymentId}
+                  href={params.razorpayPaymentId
+                    ? `https://dashboard.razorpay.com/app/payments/${encodeURIComponent(params.razorpayPaymentId)}`
+                    : ''}
+                />
+                <CopyId
+                  label="Razorpay order"
+                  value={params.razorpayOrderId}
+                  href={params.razorpayOrderId
+                    ? `https://dashboard.razorpay.com/app/orders/${encodeURIComponent(params.razorpayOrderId)}`
+                    : ''}
+                />
+                {!params.razorpayPaymentId ? (
+                  <p className="tokri-order-meta">No Razorpay payment ID yet. Use Sync Razorpay payment if money was captured.</p>
+                ) : null}
+              </div>
+            ) : null}
             {params.razorpayQrUrl ? (
               <img className="tokri-order-qr" src={params.razorpayQrUrl} alt="Doorstep payment QR" />
             ) : null}

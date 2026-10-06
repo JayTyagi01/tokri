@@ -120,6 +120,8 @@ export const orderListHandler = {
       ? {
           OR: [
             { orderNo: { contains: searchTerm } },
+            { razorpayPaymentId: { contains: searchTerm } },
+            { razorpayOrderId: { contains: searchTerm } },
             { customer: { is: { name: { contains: searchTerm } } } },
             { customer: { is: { phone: { contains: searchTerm } } } },
           ],
@@ -146,6 +148,9 @@ export const orderListHandler = {
         orderNo: order.orderNo,
         status: order.status,
         paymentStatus: order.paymentStatus,
+        paymentMode: order.paymentMode || '',
+        razorpayPaymentId: order.razorpayPaymentId || '',
+        razorpayOrderId: order.razorpayOrderId || '',
         grandTotal: String(order.grandTotal),
         createdAt: order.createdAt,
         customerName: order.customer?.name || address?.name || 'Guest',
@@ -307,4 +312,24 @@ export const orderEditHandler = {
       notice: { message: 'Order updated successfully.', type: 'success' },
     }
   },
+}
+
+export async function syncRazorpayAction(request, _response, context) {
+  const order = await loadOrder(request.params.recordId)
+  if (!order) {
+    throw Object.assign(new Error('Order not found.'), { status: 404 })
+  }
+  const { reconcileOnlineOrderFromRazorpay } = await import('../services/checkout.js')
+  const result = await reconcileOnlineOrderFromRazorpay(order)
+  const updated = await loadOrder(request.params.recordId)
+  return {
+    record: context.resource.build(flattenOrder(updated)).toJSON(context.currentAdmin),
+    notice: {
+      message:
+        result.status === 'paid'
+          ? 'Razorpay payment found and marked as paid.'
+          : 'No captured Razorpay payment found for this order yet.',
+      type: result.status === 'paid' ? 'success' : 'error',
+    },
+  }
 }
