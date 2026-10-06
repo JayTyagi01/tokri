@@ -1,7 +1,7 @@
 import React from 'react'
 
 const FULFILLMENT = {
-  pending: { label: 'New', tone: 'pending' },
+  pending: { label: 'Waiting for fulfillment', tone: 'pending' },
   paid: { label: 'Processing', tone: 'processing' },
   packed: { label: 'Packed', tone: 'packed' },
   shipped: { label: 'Shipped', tone: 'shipped' },

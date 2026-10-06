@@ -6,7 +6,7 @@ import { getFulfillmentBadge, getPaymentBadge } from './order-list-badges.jsx'
 const api = new ApiClient()
 
 const FULFILLMENT = [
-  { value: 'pending', label: 'New' },
+  { value: 'pending', label: 'Waiting for fulfillment' },
   { value: 'paid', label: 'Processing' },
   { value: 'packed', label: 'Packed' },
   { value: 'shipped', label: 'Shipped' },
@@ -15,7 +15,7 @@ const FULFILLMENT = [
 ]
 
 const PAYMENT_OPTIONS = [
-  { value: 'pending', label: 'Unpaid' },
+  { value: 'pending', label: 'Pending' },
   { value: 'paid', label: 'Paid' },
   { value: 'failed', label: 'Failed' },
   { value: 'refunded', label: 'Refunded' },
