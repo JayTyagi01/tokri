@@ -2,16 +2,19 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
 import { optionalCustomer, requireCustomer } from '../middleware/customerAuth.js'
 import {
+  completeRazorpayCallback,
   confirmCheckoutPayment,
   confirmCodOrder,
   createCheckoutOrder,
   getCheckoutConfig,
+  getCheckoutOrderStatus,
   startUpiIntent,
   syncIntentPayment,
   syncOnlineOrderPayment,
 } from '../services/checkout.js'
 import { previewCoupon } from '../services/coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
+import { env } from '../config/env.js'
 
 const router = Router()
 
@@ -136,6 +139,15 @@ router.post('/sync-payment', async (req, res, next) => {
   }
 })
 
+router.get('/status/:orderNo', async (req, res, next) => {
+  try {
+    const result = await getCheckoutOrderStatus(req.customer, { orderNo: req.params.orderNo })
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+})
+
 router.post('/confirm-cod', async (req, res, next) => {
   try {
     const result = await confirmCodOrder(req.customer, req.body)
@@ -144,5 +156,28 @@ router.post('/confirm-cod', async (req, res, next) => {
     next(error)
   }
 })
+
+export async function handleRazorpayCheckoutCallback(req, res) {
+  const orderNo = String(req.query.orderNo || req.body?.orderNo || '').trim()
+  const razorpayOrderId = req.body?.razorpay_order_id
+  const razorpayPaymentId = req.body?.razorpay_payment_id
+  const razorpaySignature = req.body?.razorpay_signature
+  try {
+    if (razorpayOrderId && razorpayPaymentId && razorpaySignature) {
+      await completeRazorpayCallback({
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        orderNo: orderNo || null,
+      })
+    }
+  } catch (error) {
+    console.error('Razorpay checkout callback failed:', error.message)
+  }
+  const target = orderNo
+    ? `${env.clientUrl}/order/${encodeURIComponent(orderNo)}`
+    : `${env.clientUrl}/account?section=orders`
+  return res.redirect(302, target)
+}
 
 export default router

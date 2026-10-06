@@ -393,6 +393,38 @@ export async function syncOnlineOrderPayment(user, { orderNo }) {
   return reconcileOnlineOrderFromRazorpay(order)
 }
 
+export async function getCheckoutOrderStatus(user, { orderNo }) {
+  let order = await prisma.order.findFirst({
+    where: { orderNo, customerId: user.id },
+  })
+  if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 })
+
+  if (order.paymentMode === 'online' && order.paymentStatus !== 'paid') {
+    const result = await reconcileOnlineOrderFromRazorpay(order)
+    if (result.order) order = result.order
+  }
+
+  return {
+    orderNo: order.orderNo,
+    paymentMode: order.paymentMode,
+    paymentStatus: order.paymentStatus,
+    status: order.status,
+    grandTotal: order.grandTotal,
+  }
+}
+
+export async function completeRazorpayCallback({ razorpayOrderId, razorpayPaymentId, razorpaySignature, orderNo }) {
+  if (razorpayOrderId && razorpayPaymentId && razorpaySignature) {
+    await verifyRazorpayPayment({ razorpayOrderId, razorpayPaymentId, razorpaySignature })
+  }
+  const marked = await markOnlineOrderPaidFromWebhook({
+    orderNo,
+    razorpayOrderId,
+    paymentId: razorpayPaymentId,
+  })
+  return marked
+}
+
 export async function recoverPendingOnlinePayments({ lookbackHours = 24, limit = 20 } = {}) {
   const since = new Date(Date.now() - lookbackHours * 60 * 60 * 1000)
   const orders = await prisma.order.findMany({

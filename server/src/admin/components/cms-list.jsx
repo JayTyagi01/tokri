@@ -14,7 +14,7 @@ const CmsList = (props) => {
   const { resource, setTag } = props
   const titleProp = resource.titleProperty?.name || resource.titleProperty?.propertyPath || 'id'
 
-  const { storeParams, filters } = useQueryParams()
+  const { storeParams, filters, parsedQuery } = useQueryParams()
   const {
     records,
     loading,
@@ -32,13 +32,13 @@ const CmsList = (props) => {
     setSelectedRecords,
   } = useSelectedRecords(records)
 
-  const [query, setQuery] = useState(() => String(filters?.[titleProp] || ''))
+  const [query, setQuery] = useState(() => String(parsedQuery?.q || filters?.[titleProp] || ''))
   const debounceRef = useRef(null)
   const storeParamsRef = useRef(storeParams)
   storeParamsRef.current = storeParams
 
   useEffect(() => {
-    setQuery(String(filters?.[titleProp] || ''))
+    setQuery(String(parsedQuery?.q || filters?.[titleProp] || ''))
     setSelectedRecords([])
   }, [resource.id, titleProp, setSelectedRecords])
 
@@ -55,6 +55,7 @@ const CmsList = (props) => {
       const trimmed = value.trim()
       storeParamsRef.current({
         page: '1',
+        q: trimmed,
         filters: trimmed ? { [titleProp]: trimmed } : {},
       })
     }, 300)
@@ -77,11 +78,18 @@ const CmsList = (props) => {
 
   const goToPage = (nextPage) => {
     const safe = Math.min(Math.max(1, nextPage), totalPages)
-    storeParams({ page: String(safe) })
+    storeParams({
+      page: String(safe),
+      q: parsedQuery?.q || filters?.[titleProp] || undefined,
+    })
   }
 
   const changePerPage = (next) => {
-    storeParams({ page: '1', perPage: String(next) })
+    storeParams({
+      page: '1',
+      perPage: String(next),
+      q: parsedQuery?.q || filters?.[titleProp] || undefined,
+    })
   }
 
   const pageNumbers = []
@@ -109,7 +117,7 @@ const CmsList = (props) => {
         <Input
           value={query}
           onChange={handleQueryChange}
-          placeholder={`Search ${resource.name}...`}
+          placeholder={`Search all ${resource.name}...`}
           style={{ width: '100%', paddingLeft: 36 }}
         />
       </Box>
