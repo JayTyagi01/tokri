@@ -21,7 +21,8 @@
     "db:apply-category-display-limit": "node scripts/apply-category-display-limit.js",
     "db:apply-partner-kyc": "node scripts/apply-partner-kyc.js",
     "db:apply-delivery-options": "node scripts/apply-delivery-options.js",
-    "db:apply-free-delivery": "node scripts/apply-free-delivery-schema.js"
+    "db:apply-free-delivery": "node scripts/apply-free-delivery-schema.js",
+    "db:apply-expected-delivery": "node scripts/apply-expected-delivery.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

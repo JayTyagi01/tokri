@@ -249,6 +249,7 @@ export default function CheckoutPage() {
         state: {
           paymentMode: checkout.razorpay ? 'online' : 'cod',
           confirmed: true,
+          expectedDeliveryDate: checkout.order?.expectedDeliveryDate || null,
         },
       })
     } catch (error) {
