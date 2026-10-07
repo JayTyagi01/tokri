@@ -1,7 +1,30 @@
 import { prisma } from '../lib/prisma.js'
 
+const IST = 'Asia/Kolkata'
+const EXPRESS_CUTOFF_HOUR = 18
+
 export function normalizePincode(value) {
   return String(value || '').replace(/\D/g, '').slice(0, 6)
+}
+
+export function expectedDeliveryDate(option, at = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: IST,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at)
+
+  const num = (type) => Number(parts.find((part) => part.type === type)?.value)
+  const year = num('year')
+  const month = num('month')
+  const day = num('day')
+  const hour = num('hour')
+  const addDays = String(option || '').toLowerCase() === 'express' && hour < EXPRESS_CUTOFF_HOUR ? 0 : 1
+
+  return new Date(Date.UTC(year, month - 1, day + addDays))
 }
 
 export function deliveryAvailability(row) {

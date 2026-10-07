@@ -83,3 +83,15 @@ export function formatDeliveryCharge(amount) {
 export function deliveryOptionLabel(option) {
   return option === 'express' ? '90-minute' : 'Morning'
 }
+
+export function formatExpectedDeliveryDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  })
+}

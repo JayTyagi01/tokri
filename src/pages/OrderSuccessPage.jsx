@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { authGet } from '../lib/api'
+import { formatExpectedDeliveryDate } from '../lib/delivery'
 
 const POLL_MS = 2000
 const POLL_LIMIT = 15
@@ -61,6 +62,7 @@ export default function OrderSuccessPage() {
           orderNo,
           paymentMode: navState.paymentMode || 'cod',
           paymentStatus: navState.paymentMode === 'online' ? 'paid' : 'pending',
+          expectedDeliveryDate: navState.expectedDeliveryDate || null,
         }
       : null,
   )
@@ -94,6 +96,20 @@ export default function OrderSuccessPage() {
       helpersRef.current.refreshFreeDelivery?.()
     }
   }, [knownConfirmed])
+
+  useEffect(() => {
+    if (!isLoggedIn || !token || !orderNo || order?.expectedDeliveryDate) return undefined
+    let cancelled = false
+    authGet(`/checkout/status/${encodeURIComponent(orderNo)}`, userRef.current)
+      .then((data) => {
+        if (cancelled || !data?.expectedDeliveryDate) return
+        setOrder((current) => ({ ...(current || {}), expectedDeliveryDate: data.expectedDeliveryDate }))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [isLoggedIn, order?.expectedDeliveryDate, orderNo, token])
 
   useEffect(() => {
     if (!isLoggedIn || !token || !orderNo || confirmedRef.current) return undefined
@@ -194,6 +210,11 @@ export default function OrderSuccessPage() {
             <StatusMark variant="success" />
             <h1 className="mt-6 text-2xl font-bold text-white">Your order is confirmed</h1>
             <p className="mt-3 text-muted">Order #{orderNo}</p>
+            {formatExpectedDeliveryDate(order?.expectedDeliveryDate) ? (
+              <p className="mt-1 text-muted">
+                Expected delivery: {formatExpectedDeliveryDate(order.expectedDeliveryDate)}
+              </p>
+            ) : null}
             <p className="mt-1 text-muted">
               {paymentMode === 'cod' ? 'Pay cash on delivery' : 'Payment received'}
             </p>

@@ -216,6 +216,7 @@ model Order {
   grandTotal             Decimal          @db.Decimal(10, 2)
   couponCode             String?
   deliveryOption         String?
+  expectedDeliveryDate   DateTime?        @db.Date
   freeDeliveryApplied    Boolean          @default(false)
   address                Json?
   razorpayOrderId        String?

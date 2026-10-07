@@ -16,7 +16,7 @@ import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
 import { sendOrderConfirmation } from './msg91.js'
-import { assignmentForPincode, assertDeliveryOptionEnabled } from './delivery.js'
+import { assignmentForPincode, assertDeliveryOptionEnabled, expectedDeliveryDate } from './delivery.js'
 import { applyFreeDeliveryRates, getCustomerFreeDeliveryStatus } from './freeDelivery.js'
 
 export function isStoreIntraState(customerState) {
@@ -191,10 +191,12 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
     }
   })
 
+  const { deliveryPartnerId, ...deliveryFields } = delivery
+
   const order = await prisma.order.create({
     data: {
       orderNo,
-      customerId: user.id,
+      customer: { connect: { id: user.id } },
       status: 'pending',
       paymentStatus: 'pending',
       paymentMode: requestedMode,
@@ -210,11 +212,13 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
       isInterState,
       couponCode: appliedCoupon?.code || null,
       deliveryOption: option,
+      expectedDeliveryDate: expectedDeliveryDate(option),
       freeDeliveryApplied: isFreeDelivery,
       grandTotal: totals.grandTotal,
       address,
       razorpayOrderId,
-      ...delivery,
+      ...deliveryFields,
+      ...(deliveryPartnerId ? { deliveryPartner: { connect: { id: deliveryPartnerId } } } : {}),
       items: {
         create: orderItemsData,
       },
@@ -265,6 +269,7 @@ export async function createCheckoutOrder(user, { items: rawItems, addressId, ad
       orderNo: order.orderNo,
       grandTotal: Number(order.grandTotal),
       paymentMode: requestedMode,
+      expectedDeliveryDate: order.expectedDeliveryDate,
     },
     razorpay: useRazorpay
       ? {
@@ -410,6 +415,7 @@ export async function getCheckoutOrderStatus(user, { orderNo }) {
     paymentStatus: order.paymentStatus,
     status: order.status,
     grandTotal: order.grandTotal,
+    expectedDeliveryDate: order.expectedDeliveryDate,
   }
 }
 

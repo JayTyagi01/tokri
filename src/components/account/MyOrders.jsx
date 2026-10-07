@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Package } from 'lucide-react'
 import { authGet, downloadOrderInvoice, resolveAssetUrl } from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
-import { deliveryOptionLabel, formatDeliveryCharge } from '../../lib/delivery'
+import { deliveryOptionLabel, formatDeliveryCharge, formatExpectedDeliveryDate } from '../../lib/delivery'
 
 const formatPrice = (value) =>
   `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -35,6 +35,7 @@ function OrderCard({ order, defaultOpen = false }) {
   const { user } = useAuth()
   const [open, setOpen] = useState(defaultOpen)
   const [downloading, setDownloading] = useState(false)
+  const expectedDelivery = formatExpectedDeliveryDate(order.expectedDeliveryDate)
 
   const handleDownloadInvoice = async (e) => {
     e.stopPropagation()
@@ -67,6 +68,9 @@ function OrderCard({ order, defaultOpen = false }) {
             </span>
           </span>
           <span className="mt-1 block text-sm text-muted">{formatDate(order.createdAt)}</span>
+          {expectedDelivery ? (
+            <span className="mt-1 block text-sm text-muted">Expected delivery: {expectedDelivery}</span>
+          ) : null}
           <span className="mt-1 block text-sm text-muted">
             {order.itemCount} item{order.itemCount !== 1 ? 's' : ''} · {order.paymentMethod}
           </span>
@@ -83,6 +87,12 @@ function OrderCard({ order, defaultOpen = false }) {
 
       {open && (
         <div className="border-t border-line px-4 pb-5 pt-4 sm:px-5">
+          <div className="mb-5">
+            <p className="text-sm text-muted">{formatDate(order.createdAt)}</p>
+            {expectedDelivery ? (
+              <p className="mt-1 text-sm text-muted">Expected delivery: {expectedDelivery}</p>
+            ) : null}
+          </div>
           {order.address?.formatted && (
             <div className="mb-5 rounded-xl bg-panel p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">
