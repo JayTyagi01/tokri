@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Package } from 'lucide-react'
 import { authGet, downloadOrderInvoice, resolveAssetUrl } from '../../lib/api'
 import { useAuth } from '../../context/AuthContext'
-import { deliveryOptionLabel, formatDeliveryCharge, formatExpectedDeliveryDate } from '../../lib/delivery'
+import { formatDeliveryCharge, formatExpectedDeliveryDate } from '../../lib/delivery'
 
 const formatPrice = (value) =>
   `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
@@ -152,10 +152,7 @@ function OrderCard({ order, defaultOpen = false }) {
               <span>{formatPrice(order.handlingCharge)}</span>
             </div>
             <div className="flex justify-between">
-              <span>
-                Delivery charges
-                {order.deliveryOption ? ` (${deliveryOptionLabel(order.deliveryOption)})` : ''}
-              </span>
+              <span>Delivery charges</span>
               <span>{formatDeliveryCharge(order.deliveryCharge)}</span>
             </div>
             {order.discount > 0 && (

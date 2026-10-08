@@ -15,7 +15,7 @@ import { clearCart, getCartCheckoutItems } from './cart.js'
 import { applyCouponToItems, findActiveCoupon, redeemCoupon } from './coupons.js'
 import { PRODUCT_CATEGORY_INCLUDE } from '../utils/catalog.js'
 import { notifyOrderStatus } from './push.js'
-import { sendOrderConfirmation } from './msg91.js'
+import { notifyConfirmedOrder } from './msg91.js'
 import { assignmentForPincode, assertDeliveryOptionEnabled, expectedDeliveryDate } from './delivery.js'
 import { applyFreeDeliveryRates, getCustomerFreeDeliveryStatus } from './freeDelivery.js'
 
@@ -314,9 +314,7 @@ async function markOnlineOrderPaid(user, order, razorpayPaymentId) {
 
   await clearCart(user.id).catch((error) => console.error('Failed to clear cart:', error))
   notifyOrderStatus(updated, 'paid').catch((error) => console.error('Failed to send push:', error))
-  sendOrderConfirmation(updated, { phone: user.phone, name: user.name }).catch((error) =>
-    console.error('Failed to send order confirmation:', error),
-  )
+  notifyConfirmedOrder(updated, { phone: user.phone, name: user.name })
 
   return updated
 }
@@ -572,9 +570,7 @@ export async function confirmCodOrder(user, { orderNo }) {
   notifyOrderStatus(order, order.status || 'pending').catch((error) =>
     console.error('Failed to send push:', error),
   )
-  sendOrderConfirmation(order, { phone: user.phone, name: user.name }).catch((error) =>
-    console.error('Failed to send order confirmation:', error),
-  )
+  notifyConfirmedOrder(order, { phone: user.phone, name: user.name })
 
   return { orderNo: order.orderNo, paymentStatus: order.paymentStatus, status: order.status }
 }

@@ -8,7 +8,7 @@ export const DEFAULT_DELIVERY = {
   },
   express: {
     id: 'express',
-    title: '90-Minute Emergency Drops',
+    title: 'Same day',
     subtitle: 'On-Demand Luxury',
     fee: 99,
     freeAbove: 0,
@@ -76,4 +76,16 @@ export function defaultOptionForAddress(address) {
 
 export function deliveryOptionLabel(option) {
   return option === 'express' ? '90-minute' : 'Morning'
+}
+
+export function formatExpectedDeliveryDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  })
 }

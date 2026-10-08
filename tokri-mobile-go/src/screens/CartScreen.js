@@ -380,7 +380,7 @@ export default function CartScreen({ navigation }) {
                       <View style={[styles.optionDot, selected && styles.optionDotOn]} />
                       <View style={styles.optionCopy}>
                         <Text style={styles.optionTitle}>
-                          {copy.title || (optionId === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery')}
+                          {copy.title || (optionId === 'express' ? 'Same day' : 'Flawless Morning Delivery')}
                           {comingSoon ? ' (coming soon)' : ''}
                         </Text>
                         {copy.subtitle ? <Text style={styles.optionSub}>{copy.subtitle}</Text> : null}

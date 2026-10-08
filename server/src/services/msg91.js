@@ -1,8 +1,15 @@
+import dns from 'node:dns'
+import { prisma } from '../lib/prisma.js'
 import { getMsg91Settings } from '../utils/msg91Settings.js'
+import { formatExpectedDeliveryDate } from './delivery.js'
+
+// MSG91 IP security matches IPv4. This machine also has IPv6, and Node
+// prefers it, which MSG91 then rejects as 418 even after IPv4 is whitelisted.
+dns.setDefaultResultOrder('ipv4first')
 
 const MSG91_FLOW_URL = 'https://api.msg91.com/api/v5/flow/'
 const MSG91_WHATSAPP_URL =
-  'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'
+  'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'
 
 function isDltTemplateId(value) {
   return /^\d{16,20}$/.test(String(value || '').trim())
@@ -24,27 +31,41 @@ function toMsg91Mobile(value) {
   return digits
 }
 
+function msg91FailureReason(result, response, label) {
+  const apiError = String(result?.apiError || '')
+  const errors = result?.errors
+  const errorText = typeof errors === 'string'
+    ? errors
+    : Array.isArray(errors)
+      ? errors.filter(Boolean).join(', ')
+      : ''
+
+  if (apiError === '418' || response.status === 418) {
+    return 'MSG91 blocked this server IP (418). In MSG91 open Authkey and turn off IP security, or whitelist this computer’s public IP, then resend.'
+  }
+
+  if (typeof result?.message === 'string' && result.message.trim()) return result.message.trim()
+  if (errorText) return errorText
+  return `MSG91 rejected the ${label} request (HTTP ${response.status}).`
+}
+
 async function postToMsg91(url, authKey, payload, label) {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      authkey: authKey,
+      authkey: String(authKey || '').trim(),
     },
     body: JSON.stringify(payload),
   })
 
   const result = await response.json().catch(() => ({}))
-  const flagged = [result?.type, result?.status].some(
-    (value) => String(value).toLowerCase() === 'error',
+  const flagged = [result?.type, result?.status].some((value) =>
+    ['error', 'fail'].includes(String(value).toLowerCase()),
   )
 
-  if (!response.ok || flagged) {
-    const reason =
-      typeof result?.message === 'string' && result.message
-        ? result.message
-        : `MSG91 rejected the ${label} request (HTTP ${response.status}).`
-    throw new Error(reason)
+  if (!response.ok || flagged || result?.hasError) {
+    throw new Error(msg91FailureReason(result, response, label))
   }
 
   return result
@@ -151,21 +172,24 @@ async function sendWhatsapp({ config, mobiles, templateName, values, otpValue, l
 async function deliver({ phone, label, sms, whatsapp }) {
   const config = await getMsg91Settings()
   const mobiles = toMsg91Mobile(phone)
+  const templateEnabled = whatsapp?.enabledKey ? Boolean(config[whatsapp.enabledKey]) : true
 
-  const smsReady = Boolean(config.smsEnabled && config.authKey && config[sms.templateKey])
+  const smsReady = Boolean(config.smsEnabled && config.authKey && sms?.templateKey && config[sms.templateKey])
   const whatsappReady = Boolean(
     config.whatsappEnabled &&
+      templateEnabled &&
       config.authKey &&
       config.whatsappNumber &&
+      whatsapp?.templateKey &&
       config[whatsapp.templateKey],
   )
 
   if (!mobiles || (!smsReady && !whatsappReady)) {
     console.log(
       `[MSG91 not configured] ${label} -> ${mobiles || 'no number'}`,
-      sms.variables,
+      sms?.variables || whatsapp?.values,
     )
-    return { channel: 'dev', sent: false }
+    return { channel: 'dev', sent: false, reason: 'MSG91 WhatsApp is not configured for this template.' }
   }
 
   const failures = []
@@ -210,16 +234,83 @@ export function sendOtpMessage(phone, code) {
       // MSG91 template: "Please use OTP ##numeric## to login..."
       variables: { numeric: code },
     },
-    whatsapp: { templateKey: 'whatsappOtpTemplate', values: [code], otpValue: code },
+    whatsapp: {
+      templateKey: 'whatsappOtpTemplate',
+      enabledKey: 'whatsappOtpEnabled',
+      values: [code],
+      otpValue: code,
+    },
   })
 }
 
+export function isConfirmedCheckoutOrder(order) {
+  if (!order) return false
+  if (String(order.status || '').toLowerCase() === 'cancelled') return false
+  const mode = String(order.paymentMode || 'cod').toLowerCase()
+  if (mode === 'cod') return true
+  return mode === 'online' && String(order.paymentStatus || '').toLowerCase() === 'paid'
+}
+
+function textOrDash(value) {
+  const text = String(value || '').trim()
+  return text || '-'
+}
+
+function clip(value, max = 1000) {
+  const text = String(value || '')
+  if (text.length <= max) return text
+  return `${text.slice(0, max - 1)}…`
+}
+
+function formatClickablePhone(value) {
+  const digits = String(value || '').replace(/\D/g, '')
+  if (!digits) return '-'
+  const local = digits.length > 10 ? digits.slice(-10) : digits
+  if (local.length !== 10) return `+${digits}`
+  return `+91${local}`
+}
+
+function formatOrderAddress(address) {
+  if (!address || typeof address !== 'object') return '-'
+  return textOrDash(
+    [address.line1, address.line2, address.landmark, address.city, address.state, address.pincode]
+      .map((part) => String(part || '').trim())
+      .filter(Boolean)
+      .join(', '),
+  )
+}
+
+function formatOrderItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return '-'
+  return clip(
+    items
+      .map((item) => {
+        const qty = Math.max(1, Number(item.quantity) || 1)
+        const weight = String(item.weight || '').trim()
+        return `${item.name} x${qty}${weight ? ` (${weight})` : ''}`
+      })
+      .join(', '),
+  )
+}
+
+function partnerPaymentLabel(order) {
+  const mode = String(order.paymentMode || 'cod').toLowerCase()
+  if (mode === 'online' || order.paymentCollectedAs === 'online' || order.razorpayPaymentId) {
+    return String(order.paymentStatus || '').toLowerCase() === 'paid' ? 'Paid online' : 'Online - unpaid'
+  }
+  return 'COD - collect cash'
+}
+
 export async function sendOrderConfirmation(order, { phone, name } = {}) {
+  if (!isConfirmedCheckoutOrder(order)) {
+    return { channel: 'none', sent: false, reason: 'Order is not COD or paid online yet.' }
+  }
+
   const address = order?.address && typeof order.address === 'object' ? order.address : null
   const to = phone || address?.phone || null
 
   if (!order?.orderNo || !to) {
-    return { channel: 'none', sent: false }
+    return { channel: 'none', sent: false, reason: 'Customer phone is missing.' }
   }
 
   const customerName = name || address?.name || 'Customer'
@@ -236,7 +327,87 @@ export async function sendOrderConfirmation(order, { phone, name } = {}) {
     },
     whatsapp: {
       templateKey: 'whatsappOrderTemplate',
+      enabledKey: 'whatsappOrderEnabled',
       values: [customerName, order.orderNo, amount],
     },
   })
+}
+
+export async function sendDeliveryPartnerAssignment(orderLike) {
+  if (!orderLike?.id) {
+    return { channel: 'none', sent: false, reason: 'Order is missing.' }
+  }
+  if (!isConfirmedCheckoutOrder(orderLike)) {
+    return {
+      channel: 'none',
+      sent: false,
+      reason: 'Send only after COD is placed or the online payment is confirmed.',
+    }
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderLike.id },
+    include: {
+      items: { orderBy: { id: 'asc' } },
+      customer: { select: { name: true, phone: true } },
+      deliveryPartner: { select: { name: true, phone: true } },
+    },
+  })
+
+  if (!order) return { channel: 'none', sent: false, reason: 'Order not found.' }
+  if (!isConfirmedCheckoutOrder(order)) {
+    return {
+      channel: 'none',
+      sent: false,
+      reason: 'Send only after COD is placed or the online payment is confirmed.',
+    }
+  }
+
+  const phone = order.deliveryPartner?.phone || order.deliveryPartnerPhone
+  if (!phone) {
+    return { channel: 'none', sent: false, reason: 'Assign a delivery partner first.' }
+  }
+
+  const address = order.address && typeof order.address === 'object' ? order.address : {}
+  const customerName = order.customer?.name || address.name || 'Customer'
+  const customerPhone = order.customer?.phone || address.phone
+
+  try {
+    const result = await deliver({
+      phone,
+      label: `delivery partner ${order.orderNo}`,
+      whatsapp: {
+        templateKey: 'whatsappPartnerTemplate',
+        enabledKey: 'whatsappPartnerEnabled',
+        values: [
+          order.orderNo,
+          textOrDash(customerName),
+          formatClickablePhone(customerPhone),
+          formatOrderAddress(address),
+          formatOrderItems(order.items),
+          formatAmount(order.grandTotal),
+          partnerPaymentLabel(order),
+          formatExpectedDeliveryDate(order.expectedDeliveryDate) || '-',
+        ],
+      },
+    })
+    if (!result.sent) {
+      return {
+        ...result,
+        reason: result.reason || 'WhatsApp is not configured for the delivery-partner template.',
+      }
+    }
+    return result
+  } catch (error) {
+    return { channel: 'whatsapp', sent: false, reason: error.message }
+  }
+}
+
+export function notifyConfirmedOrder(order, { phone, name } = {}) {
+  sendOrderConfirmation(order, { phone, name }).catch((error) =>
+    console.error('Failed to send order confirmation:', error),
+  )
+  sendDeliveryPartnerAssignment(order).catch((error) =>
+    console.error('Failed to notify delivery partner:', error),
+  )
 }

@@ -67,11 +67,14 @@ const TABS = [
       'msg91OrderTemplateId',
       'msg91WhatsappEnabled',
       'msg91WhatsappNumber',
-      'msg91WhatsappOtpTemplate',
-      'msg91WhatsappOrderTemplate',
-      'msg91WhatsappLanguage',
       'msg91WhatsappNamespace',
+      'msg91WhatsappOtpEnabled',
+      'msg91WhatsappOtpTemplate',
       'msg91WhatsappOtpButton',
+      'msg91WhatsappOrderEnabled',
+      'msg91WhatsappOrderTemplate',
+      'msg91WhatsappPartnerEnabled',
+      'msg91WhatsappPartnerTemplate',
     ],
   },
 ]
@@ -310,7 +313,9 @@ const SettingsEdit = (props) => {
                   ? 'Set copy and prices for Morning and 90-Minute delivery. Handling fee is added to every order.'
                   : tab.id === 'homepage'
                     ? 'These images and categories appear on the website homepage. Click Save changes after uploading.'
-                    : 'Update your store settings and click Save changes below.'}
+                    : tab.id === 'notifications'
+                      ? 'Auth key, WhatsApp number, and namespace are shared. Each template has its own name and on/off toggle. Order and partner messages send only after COD is placed or the online payment is confirmed.'
+                      : 'Update your store settings and click Save changes below.'}
               </Text>
               {tab.id === 'charges' ? (
                 <div className="tokri-charges-fields">
@@ -373,7 +378,7 @@ const SettingsEdit = (props) => {
                         type="text"
                         value={record?.params?.expressDeliveryTitle ?? ''}
                         onChange={(event) => handleChange('expressDeliveryTitle', event.target.value)}
-                        placeholder="90-Minute Emergency Drops"
+                        placeholder="Same day"
                       />
                     </label>
                     <label className="tokri-coupon-label">

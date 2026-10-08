@@ -7,6 +7,7 @@ import LoadingView from '../components/LoadingView'
 import { useTheme, useThemedStyles } from '../context/ThemeContext'
 import { authGet, formatPrice, normalizeOrder } from '../lib/api'
 import { formatOrderWhen, paymentLabel, statusLabel } from '../lib/orders'
+import { formatExpectedDeliveryDate } from '../lib/delivery'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
@@ -23,9 +24,7 @@ function invoiceText(order) {
     '',
     `Item total  ${formatPrice(order.itemsTotal)}`,
     `Cart handling  ${formatPrice(order.handlingCharge)}`,
-    `Delivery  ${Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}${
-      order.deliveryOption ? ` (${order.deliveryOption === 'express' ? '90-minute' : 'Morning'})` : ''
-    }`,
+    `Delivery charges  ${Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}`,
     Number(order.discount) ? `Discount  -${formatPrice(order.discount)}` : null,
     `Bill total  ${formatPrice(order.grandTotal)}`,
   ].filter(Boolean)
@@ -89,6 +88,9 @@ export default function OrderDetailScreen({ navigation, route }) {
         <Text style={styles.arrived}>
           {arrived ? `Arrived at ${formatOrderWhen(order.createdAt).split(', ')[1] || ''}` : statusLabel(order)}
         </Text>
+        {formatExpectedDeliveryDate(order.expectedDeliveryDate) ? (
+          <Text style={styles.arrived}>Expected delivery: {formatExpectedDeliveryDate(order.expectedDeliveryDate)}</Text>
+        ) : null}
         <Pressable
           style={styles.invoiceLink}
           onPress={() => Share.share({ title: `Invoice ${order.orderNo}`, message: invoiceText(order) }).catch(() => {})}
@@ -134,7 +136,7 @@ export default function OrderDetailScreen({ navigation, route }) {
         <BillRow label="Item total" value={formatPrice(order.itemsTotal)} />
         <BillRow label="Cart handling" value={`+${formatPrice(order.handlingCharge)}`} />
         <BillRow
-          label={order.deliveryOption === 'express' ? '90-minute delivery' : 'Delivery charges'}
+          label="Delivery charges"
           value={Number(order.deliveryCharge) ? formatPrice(order.deliveryCharge) : 'FREE'}
         />
         {Number(order.discount) ? (
@@ -157,6 +159,12 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Icon name="copy-outline" size={16} color={colors.brand} />
           </Pressable>
         </View>
+        {formatExpectedDeliveryDate(order.expectedDeliveryDate) ? (
+          <>
+            <Text style={styles.detailLabel}>Expected delivery</Text>
+            <Text style={styles.detailValue}>{formatExpectedDeliveryDate(order.expectedDeliveryDate)}</Text>
+          </>
+        ) : null}
         <Text style={styles.detailLabel}>Payment</Text>
         <Text style={styles.detailValue}>{paymentLabel(order)}</Text>
         {order.address?.formatted ? (

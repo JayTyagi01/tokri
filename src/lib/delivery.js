@@ -8,7 +8,7 @@ export const DEFAULT_DELIVERY = {
   },
   express: {
     id: 'express',
-    title: '90-Minute Emergency Drops',
+    title: 'Same day',
     subtitle: 'On-Demand Luxury',
     fee: 99,
     freeAbove: 0,

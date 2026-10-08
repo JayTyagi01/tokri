@@ -38,10 +38,13 @@ export const ALLOWED_SETTING_FIELDS = new Set([
   'msg91WhatsappEnabled',
   'msg91WhatsappNumber',
   'msg91WhatsappNamespace',
-  'msg91WhatsappLanguage',
+  'msg91WhatsappOtpEnabled',
   'msg91WhatsappOtpTemplate',
-  'msg91WhatsappOrderTemplate',
   'msg91WhatsappOtpButton',
+  'msg91WhatsappOrderEnabled',
+  'msg91WhatsappOrderTemplate',
+  'msg91WhatsappPartnerEnabled',
+  'msg91WhatsappPartnerTemplate',
 ])
 
 const NUMBER_FIELDS = new Set([
@@ -58,7 +61,10 @@ const BOOLEAN_FIELDS = new Set([
   'codEnabled',
   'msg91Enabled',
   'msg91WhatsappEnabled',
+  'msg91WhatsappOtpEnabled',
   'msg91WhatsappOtpButton',
+  'msg91WhatsappOrderEnabled',
+  'msg91WhatsappPartnerEnabled',
 ])
 
 function toBoolean(value) {

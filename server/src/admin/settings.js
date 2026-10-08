@@ -52,11 +52,14 @@ export function getSettingResource(SettingsEditComponent) {
         'msg91OrderTemplateId',
         'msg91WhatsappEnabled',
         'msg91WhatsappNumber',
-        'msg91WhatsappOtpTemplate',
-        'msg91WhatsappOrderTemplate',
-        'msg91WhatsappLanguage',
         'msg91WhatsappNamespace',
+        'msg91WhatsappOtpEnabled',
+        'msg91WhatsappOtpTemplate',
         'msg91WhatsappOtpButton',
+        'msg91WhatsappOrderEnabled',
+        'msg91WhatsappOrderTemplate',
+        'msg91WhatsappPartnerEnabled',
+        'msg91WhatsappPartnerTemplate',
       ],
       actions: {
         list: {
@@ -179,25 +182,38 @@ export function getSettingResource(SettingsEditComponent) {
           label: 'WhatsApp business number',
           description: 'The integrated number on your MSG91 WhatsApp account, e.g. 919580280280',
         },
+        msg91WhatsappLanguage: { isVisible: false },
+        msg91WhatsappOtpEnabled: {
+          label: 'Send OTP WhatsApp',
+          description: 'Login OTP to the customer',
+        },
         msg91WhatsappOtpTemplate: {
-          label: 'WhatsApp OTP template name',
-          description: 'Approved template with 1 body variable: the OTP code',
-        },
-        msg91WhatsappOrderTemplate: {
-          label: 'WhatsApp order template name',
-          description: 'Approved template with 3 body variables: name, order number, amount',
-        },
-        msg91WhatsappLanguage: {
-          label: 'WhatsApp template language',
-          description: 'Language code of the approved templates, e.g. en or en_US',
-        },
-        msg91WhatsappNamespace: {
-          label: 'WhatsApp template namespace',
-          description: 'Optional. Only needed if your MSG91 account requires it',
+          label: 'OTP template name',
+          description: 'Approved MSG91 template with 1 body variable: the OTP code',
         },
         msg91WhatsappOtpButton: {
           label: 'OTP template has a copy-code button',
           description: 'Turn on only if your WhatsApp OTP template includes the copy-code button',
+        },
+        msg91WhatsappOrderEnabled: {
+          label: 'Send order WhatsApp',
+          description: 'Customer confirmation after COD is placed or online payment is confirmed',
+        },
+        msg91WhatsappOrderTemplate: {
+          label: 'Order template name',
+          description: 'Approved template with 3 body variables: name, order number, amount',
+        },
+        msg91WhatsappPartnerEnabled: {
+          label: 'Send delivery-partner WhatsApp',
+          description: 'Sent after COD is placed or online payment is confirmed, if a partner is assigned',
+        },
+        msg91WhatsappPartnerTemplate: {
+          label: 'Delivery-partner template name',
+          description: 'Approved template tokriii_delivery_assigned with 8 body variables',
+        },
+        msg91WhatsappNamespace: {
+          label: 'WhatsApp template namespace',
+          description: 'Optional. Only needed if your MSG91 account requires it',
         },
       },
       custom: {

@@ -69,7 +69,7 @@ const resolveImage = (value) => {
   return value
 }
 
-function MoreMenu({ unpaid, canSyncRazorpay, busy, onCash, onQr, onSyncRazorpay }) {
+function MoreMenu({ unpaid, canSyncRazorpay, busy, onCash, onQr, onSyncRazorpay, onResendPartner }) {
   const [open, setOpen] = useState(false)
   const { wrapRef, openUp } = useAnchoredMenu(open)
 
@@ -80,8 +80,6 @@ function MoreMenu({ unpaid, canSyncRazorpay, busy, onCash, onQr, onSyncRazorpay 
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [wrapRef])
-
-  if (!unpaid && !canSyncRazorpay) return null
 
   return (
     <div className="tokri-order-more" ref={wrapRef}>
@@ -96,21 +94,35 @@ function MoreMenu({ unpaid, canSyncRazorpay, busy, onCash, onQr, onSyncRazorpay 
             disabled={Boolean(busy)}
             onClick={() => {
               setOpen(false)
-              onCash()
+              onResendPartner()
             }}
           >
-            {busy === 'collectCash' ? 'Saving…' : 'Mark cash collected'}
+            {busy === 'resendPartnerWhatsapp' ? 'Sending…' : 'Resend message to delivery partner'}
           </button>
-          <button
-            type="button"
-            disabled={Boolean(busy)}
-            onClick={() => {
-              setOpen(false)
-              onQr()
-            }}
-          >
-            {busy === 'generateQr' ? 'Creating…' : 'Generate payment QR'}
-          </button>
+          {unpaid ? (
+            <>
+              <button
+                type="button"
+                disabled={Boolean(busy)}
+                onClick={() => {
+                  setOpen(false)
+                  onCash()
+                }}
+              >
+                {busy === 'collectCash' ? 'Saving…' : 'Mark cash collected'}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(busy)}
+                onClick={() => {
+                  setOpen(false)
+                  onQr()
+                }}
+              >
+                {busy === 'generateQr' ? 'Creating…' : 'Generate payment QR'}
+              </button>
+            </>
+          ) : null}
           {canSyncRazorpay ? (
             <button
               type="button"
@@ -269,7 +281,7 @@ const OrderDetail = (props) => {
       }
       addNotice(response.data?.notice || { message: 'Updated.', type: 'success' })
     } catch (error) {
-      addNotice({ message: error.message || 'Could not update payment.', type: 'error' })
+      addNotice({ message: error.message || 'Could not complete this action.', type: 'error' })
     } finally {
       setActionBusy('')
     }
@@ -330,6 +342,7 @@ const OrderDetail = (props) => {
             onCash={() => runPaymentAction('collectCash')}
             onQr={() => runPaymentAction('generateQr')}
             onSyncRazorpay={() => runPaymentAction('syncRazorpay')}
+            onResendPartner={() => runPaymentAction('resendPartnerWhatsapp')}
           />
         </div>
       </header>
