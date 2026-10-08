@@ -426,7 +426,7 @@ export default function CheckoutPage() {
                       />
                       <span>
                         <span className="block font-semibold text-white">
-                          {copy.title || (optionId === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery')}
+                          {copy.title || (optionId === 'express' ? 'Same day' : 'Flawless Morning Delivery')}
                           {comingSoon ? ' (coming soon)' : isFreeDeliveryEligible ? ' — ₹0 (Free)' : ''}
                         </span>
                         {copy.subtitle ? (

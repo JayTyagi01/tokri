@@ -13,12 +13,23 @@ export async function getMsg91Settings() {
     whatsappNumber: settings?.msg91WhatsappNumber || process.env.MSG91_WHATSAPP_NUMBER || '',
     whatsappNamespace:
       settings?.msg91WhatsappNamespace || process.env.MSG91_WHATSAPP_NAMESPACE || '',
-    whatsappLanguage:
-      settings?.msg91WhatsappLanguage || process.env.MSG91_WHATSAPP_LANGUAGE || 'en',
+    whatsappLanguage: process.env.MSG91_WHATSAPP_LANGUAGE || 'en',
+    whatsappOtpEnabled:
+      settings?.msg91WhatsappOtpEnabled == null ? true : Boolean(settings.msg91WhatsappOtpEnabled),
     whatsappOtpTemplate:
       settings?.msg91WhatsappOtpTemplate || process.env.MSG91_WHATSAPP_OTP_TEMPLATE || '',
+    whatsappOrderEnabled:
+      settings?.msg91WhatsappOrderEnabled == null ? true : Boolean(settings.msg91WhatsappOrderEnabled),
     whatsappOrderTemplate:
       settings?.msg91WhatsappOrderTemplate || process.env.MSG91_WHATSAPP_ORDER_TEMPLATE || '',
+    whatsappPartnerEnabled:
+      settings?.msg91WhatsappPartnerEnabled == null
+        ? true
+        : Boolean(settings.msg91WhatsappPartnerEnabled),
+    whatsappPartnerTemplate:
+      settings?.msg91WhatsappPartnerTemplate ||
+      process.env.MSG91_WHATSAPP_PARTNER_TEMPLATE ||
+      'tokriii_delivery_assigned',
     whatsappOtpButton: Boolean(settings?.msg91WhatsappOtpButton),
   }
 }

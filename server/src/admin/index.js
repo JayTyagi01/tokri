@@ -16,7 +16,13 @@ import { getSettingResource, ensureSettingsRecord } from './settings.js'
 import { prepareProductPayload, afterProductForm } from './product-handlers.js'
 import { prepareCouponPayload } from './coupon-handlers.js'
 import { prepareCategoryPayload, afterCategoryList } from './category-handlers.js'
-import { orderEditHandler, orderListHandler, orderShowHandler, syncRazorpayAction } from './order-handlers.js'
+import {
+  orderEditHandler,
+  orderListHandler,
+  orderShowHandler,
+  resendPartnerWhatsappAction,
+  syncRazorpayAction,
+} from './order-handlers.js'
 import {
   preparePartnerPayload,
   afterPartnerSave,
@@ -510,6 +516,15 @@ export async function buildAdminRouter() {
               isAccessible: canManage('manageOrders'),
               component: false,
               handler: syncRazorpayAction,
+            },
+            resendPartnerWhatsapp: {
+              actionType: 'record',
+              icon: 'Send',
+              label: 'Resend message to delivery partner',
+              isVisible: false,
+              isAccessible: canManage('manageOrders'),
+              component: false,
+              handler: resendPartnerWhatsappAction,
             },
             downloadInvoice: {
               actionType: 'record',

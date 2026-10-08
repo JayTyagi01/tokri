@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit'
 import { prisma } from '../lib/prisma.js'
+import { formatExpectedDeliveryDate } from './delivery.js'
 
 function formatMoney(value) {
   const amount = Number(value || 0)
@@ -276,12 +277,12 @@ export async function generateOrderInvoicePdf(orderIdOrNo) {
         .fontSize(8.5)
         .text(addrSummary, rightBoxX + 10, y + 22, { width: boxWidth - 20, height: 32 })
 
-      const deliveryOptionLabel = order.deliveryOption === 'express' ? '90-Minute Emergency Drops' : 'Flawless Morning Delivery'
+      const expectedDelivery = formatExpectedDeliveryDate(order.expectedDeliveryDate)
       doc
         .fillColor(mutedColor)
         .font('Helvetica')
         .fontSize(8)
-        .text(`Option: ${deliveryOptionLabel}`, rightBoxX + 10, y + 54)
+        .text(expectedDelivery ? `Expected delivery: ${expectedDelivery}` : '', rightBoxX + 10, y + 54)
 
       y += boxHeight + 16
 

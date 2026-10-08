@@ -150,11 +150,20 @@ export async function afterPartnerSave(response, request) {
   if (!id) return sanitizePartnerRecord(response)
   try {
     const partner = await prisma.deliveryPartner.findUnique({ where: { id } })
+    if (partner) {
+      await prisma.order.updateMany({
+        where: { deliveryPartnerId: partner.id },
+        data: {
+          deliveryPartnerName: partner.name,
+          deliveryPartnerPhone: partner.phone,
+        },
+      })
+    }
     if (partner?.email && !partner.password) {
       await sendPartnerSetPasswordEmail(partner, { isReset: false })
     }
   } catch (error) {
-    console.error('Failed to send partner password email:', error)
+    console.error('Failed to sync partner details onto orders:', error)
   }
   return sanitizePartnerRecord(response)
 }

@@ -315,13 +315,17 @@ model Setting {
   msg91SenderId             String?
   msg91OtpTemplateId        String?
   msg91OrderTemplateId      String?
-  msg91WhatsappEnabled      Boolean  @default(false)
-  msg91WhatsappNumber       String?
-  msg91WhatsappNamespace    String?
-  msg91WhatsappLanguage     String?  @default("en")
-  msg91WhatsappOtpTemplate  String?
-  msg91WhatsappOrderTemplate String?
-  msg91WhatsappOtpButton    Boolean  @default(false)
+  msg91WhatsappEnabled           Boolean  @default(false)
+  msg91WhatsappNumber            String?
+  msg91WhatsappNamespace         String?
+  msg91WhatsappLanguage          String?  @default("en")
+  msg91WhatsappOtpEnabled        Boolean  @default(true)
+  msg91WhatsappOtpTemplate       String?
+  msg91WhatsappOtpButton         Boolean  @default(false)
+  msg91WhatsappOrderEnabled      Boolean  @default(true)
+  msg91WhatsappOrderTemplate     String?
+  msg91WhatsappPartnerEnabled    Boolean  @default(true)
+  msg91WhatsappPartnerTemplate   String?
   store                     Json?
   theme                     Json?
   home                      Json?

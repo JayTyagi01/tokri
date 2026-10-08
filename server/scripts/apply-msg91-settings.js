@@ -54,6 +54,10 @@ async function main() {
   await addColumn('Setting', 'msg91WhatsappOtpTemplate', 'VARCHAR(191) NULL')
   await addColumn('Setting', 'msg91WhatsappOrderTemplate', 'VARCHAR(191) NULL')
   await addColumn('Setting', 'msg91WhatsappOtpButton', 'BOOLEAN NOT NULL DEFAULT false')
+  await addColumn('Setting', 'msg91WhatsappOtpEnabled', 'BOOLEAN NOT NULL DEFAULT true')
+  await addColumn('Setting', 'msg91WhatsappOrderEnabled', 'BOOLEAN NOT NULL DEFAULT true')
+  await addColumn('Setting', 'msg91WhatsappPartnerEnabled', 'BOOLEAN NOT NULL DEFAULT true')
+  await addColumn('Setting', 'msg91WhatsappPartnerTemplate', 'VARCHAR(191) NULL')
 
   for (const column of [
     'twilioEnabled',

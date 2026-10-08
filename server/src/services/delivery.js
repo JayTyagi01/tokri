@@ -7,6 +7,18 @@ export function normalizePincode(value) {
   return String(value || '').replace(/\D/g, '').slice(0, 6)
 }
 
+export function formatExpectedDeliveryDate(value) {
+  if (!value) return ''
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: IST,
+  })
+}
+
 export function expectedDeliveryDate(option, at = new Date()) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: IST,

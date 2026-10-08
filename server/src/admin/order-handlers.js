@@ -3,6 +3,11 @@ import { canManage } from './permissions.js'
 import { notifyOrderStatus } from '../services/push.js'
 import { assertPincodeServiceable, normalizePincode } from '../services/delivery.js'
 import { readAdminSearch } from './list-search.js'
+import {
+  isConfirmedCheckoutOrder,
+  sendDeliveryPartnerAssignment,
+  sendOrderConfirmation,
+} from '../services/msg91.js'
 
 function parseAddress(address) {
   if (!address || typeof address !== 'object') return null
@@ -65,8 +70,8 @@ export function flattenOrder(order) {
     addressFormatted: formatAddress(address),
     addressJson: JSON.stringify(address || {}),
     deliveryPartnerId: order.deliveryPartnerId || '',
-    deliveryPartnerName: order.deliveryPartnerName || order.deliveryPartner?.name || '',
-    deliveryPartnerPhone: order.deliveryPartnerPhone || order.deliveryPartner?.phone || '',
+    deliveryPartnerName: order.deliveryPartner?.name || order.deliveryPartnerName || '',
+    deliveryPartnerPhone: order.deliveryPartner?.phone || order.deliveryPartnerPhone || '',
     paymentMode: order.paymentMode || (order.razorpayPaymentId ? 'online' : 'cod'),
     paymentCollectedAs: order.paymentCollectedAs || '',
     itemsJson: JSON.stringify(
@@ -328,11 +333,44 @@ export const orderEditHandler = {
     if (status && previous?.status !== status) {
       notifyOrderStatus(order, status).catch((error) => console.error('Failed to send push:', error))
     }
+
+    const becamePaid = order.paymentStatus === 'paid' && previous?.paymentStatus !== 'paid'
+    const partnerAssigned = Boolean(order.deliveryPartnerId) && previous?.deliveryPartnerId !== order.deliveryPartnerId
+    if (becamePaid) {
+      sendOrderConfirmation(order, {
+        phone: order.customer?.phone,
+        name: order.customer?.name,
+      }).catch((error) => console.error('Failed to send order confirmation:', error))
+    }
+    if (isConfirmedCheckoutOrder(order) && (becamePaid || partnerAssigned)) {
+      sendDeliveryPartnerAssignment(order).catch((error) =>
+        console.error('Failed to notify delivery partner:', error),
+      )
+    }
+
     return {
       record: context.resource.build(flattenOrder(order)).toJSON(context.currentAdmin),
       notice: { message: 'Order updated successfully.', type: 'success' },
     }
   },
+}
+
+export async function resendPartnerWhatsappAction(request, _response, context) {
+  const order = await loadOrder(request.params.recordId)
+  if (!order) {
+    throw Object.assign(new Error('Order not found.'), { status: 404 })
+  }
+
+  const result = await sendDeliveryPartnerAssignment(order)
+  return {
+    record: context.resource.build(flattenOrder(order)).toJSON(context.currentAdmin),
+    notice: {
+      message: result.sent
+        ? 'WhatsApp sent to the delivery partner.'
+        : result.reason || 'Could not send WhatsApp to the delivery partner.',
+      type: result.sent ? 'success' : 'error',
+    },
+  }
 }
 
 export async function syncRazorpayAction(request, _response, context) {
